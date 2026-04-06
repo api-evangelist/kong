@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kong Gateway Admin API - Subway Map</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    padding: 40px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 50px;
+    letter-spacing: 2px;
+  }
+
+  .map {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .line {
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .line-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .line-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: #fff;
+    margin-right: 16px;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(255,255,255,0.15);
+  }
+
+  .line-name {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .line-count {
+    font-size: 12px;
+    color: #888;
+    margin-left: 10px;
+  }
+
+  .stations {
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+    margin-left: 22px;
+    padding-left: 30px;
+    border-left: 4px solid var(--line-color);
+  }
+
+  .station {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    width: 100%;
+    position: relative;
+    padding: 6px 0;
+  }
+
+  .station::before {
+    content: '';
+    position: absolute;
+    left: -34px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #1a1a2e;
+    border: 3px solid var(--line-color);
+    z-index: 2;
+  }
+
+  .station:hover::before {
+    background: var(--line-color);
+    box-shadow: 0 0 10px var(--line-color);
+  }
+
+  .station:last-child::after {
+    content: '';
+    position: absolute;
+    left: -36px;
+    top: 50%;
+    bottom: -10px;
+    width: 8px;
+    background: #1a1a2e;
+    z-index: 1;
+  }
+
+  .method {
+    display: inline-block;
+    width: 62px;
+    padding: 3px 0;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-radius: 3px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .method-GET    { background: #2d6a4f; color: #95d5b2; }
+  .method-POST   { background: #1d3557; color: #a8dadc; }
+  .method-PUT    { background: #5a3e1b; color: #e9c46a; }
+  .method-PATCH  { background: #4a3270; color: #c8b6ff; }
+  .method-DELETE { background: #6b2737; color: #f4978e; }
+
+  .station-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .station-path {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    color: #ccc;
+    word-break: break-all;
+  }
+
+  .station-path .param {
+    color: var(--line-color);
+    font-weight: 600;
+  }
+
+  .station-summary {
+    font-size: 11px;
+    color: #777;
+    margin-top: 2px;
+  }
+
+  .station:hover .station-path { color: #fff; }
+  .station:hover .station-summary { color: #aaa; }
+
+  /* Line colors */
+  .line-information  { --line-color: #06d6a0; }
+  .line-services     { --line-color: #118ab2; }
+  .line-routes       { --line-color: #ef476f; }
+  .line-consumers    { --line-color: #ffd166; }
+  .line-plugins      { --line-color: #8338ec; }
+  .line-upstreams    { --line-color: #ff6b35; }
+  .line-targets      { --line-color: #3a86a7; }
+  .line-certificates { --line-color: #fb5607; }
+  .line-tags         { --line-color: #80ed99; }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .legend-swatch {
+    width: 28px;
+    height: 14px;
+    border-radius: 2px;
+  }
+
+  .transfer {
+    font-size: 10px;
+    color: #666;
+    margin-left: 8px;
+    font-style: italic;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 50px;
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Kong Gateway Admin API</h1>
+<p class="subtitle">v3.13.0 &mdash; Operations Subway Map</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-swatch method-GET"></div>GET</div>
+  <div class="legend-item"><div class="legend-swatch method-POST"></div>POST</div>
+  <div class="legend-item"><div class="legend-swatch method-PUT"></div>PUT</div>
+  <div class="legend-item"><div class="legend-swatch method-PATCH"></div>PATCH</div>
+  <div class="legend-item"><div class="legend-swatch method-DELETE"></div>DELETE</div>
+</div>
+
+<div class="map">
+
+  <!-- Information Line -->
+  <div class="line line-information">
+    <div class="line-header">
+      <div class="line-badge" style="background:#06d6a0;">INF</div>
+      <span class="line-name" style="color:#06d6a0;">Information</span>
+      <span class="line-count">2 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/</div>
+          <div class="station-summary">Retrieve node information</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/status</div>
+          <div class="station-summary">Retrieve node status</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Services Line -->
+  <div class="line line-services">
+    <div class="line-header">
+      <div class="line-badge" style="background:#118ab2;">SVC</div>
+      <span class="line-name" style="color:#118ab2;">Services</span>
+      <span class="line-count">6 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/services</div>
+          <div class="station-summary">List all services</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/services</div>
+          <div class="station-summary">Create a new service</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span></div>
+          <div class="station-summary">Retrieve a service</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PATCH">PATCH</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span></div>
+          <div class="station-summary">Update a service</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PUT">PUT</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span></div>
+          <div class="station-summary">Create or update a service</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-DELETE">DELETE</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span></div>
+          <div class="station-summary">Delete a service</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Routes Line -->
+  <div class="line line-routes">
+    <div class="line-header">
+      <div class="line-badge" style="background:#ef476f;">RTE</div>
+      <span class="line-name" style="color:#ef476f;">Routes</span>
+      <span class="line-count">8 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span>/routes</div>
+          <div class="station-summary">List routes associated with a service</div>
+        </div>
+        <span class="transfer">transfer: Services</span>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span>/routes</div>
+          <div class="station-summary">Create a route associated with a service</div>
+        </div>
+        <span class="transfer">transfer: Services</span>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/routes</div>
+          <div class="station-summary">List all routes</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/routes</div>
+          <div class="station-summary">Create a new route</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/routes/<span class="param">{route_id_or_name}</span></div>
+          <div class="station-summary">Retrieve a route</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PATCH">PATCH</span>
+        <div class="station-info">
+          <div class="station-path">/routes/<span class="param">{route_id_or_name}</span></div>
+          <div class="station-summary">Update a route</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PUT">PUT</span>
+        <div class="station-info">
+          <div class="station-path">/routes/<span class="param">{route_id_or_name}</span></div>
+          <div class="station-summary">Create or update a route</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-DELETE">DELETE</span>
+        <div class="station-info">
+          <div class="station-path">/routes/<span class="param">{route_id_or_name}</span></div>
+          <div class="station-summary">Delete a route</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Consumers Line -->
+  <div class="line line-consumers">
+    <div class="line-header">
+      <div class="line-badge" style="background:#ffd166;color:#333;">CSM</div>
+      <span class="line-name" style="color:#ffd166;">Consumers</span>
+      <span class="line-count">6 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/consumers</div>
+          <div class="station-summary">List all consumers</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/consumers</div>
+          <div class="station-summary">Create a new consumer</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/consumers/<span class="param">{consumer_id_or_username}</span></div>
+          <div class="station-summary">Retrieve a consumer</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PATCH">PATCH</span>
+        <div class="station-info">
+          <div class="station-path">/consumers/<span class="param">{consumer_id_or_username}</span></div>
+          <div class="station-summary">Update a consumer</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PUT">PUT</span>
+        <div class="station-info">
+          <div class="station-path">/consumers/<span class="param">{consumer_id_or_username}</span></div>
+          <div class="station-summary">Create or update a consumer</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-DELETE">DELETE</span>
+        <div class="station-info">
+          <div class="station-path">/consumers/<span class="param">{consumer_id_or_username}</span></div>
+          <div class="station-summary">Delete a consumer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plugins Line -->
+  <div class="line line-plugins">
+    <div class="line-header">
+      <div class="line-badge" style="background:#8338ec;">PLG</div>
+      <span class="line-name" style="color:#8338ec;">Plugins</span>
+      <span class="line-count">13 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span>/plugins</div>
+          <div class="station-summary">List plugins associated with a service</div>
+        </div>
+        <span class="transfer">transfer: Services</span>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/services/<span class="param">{service_id_or_name}</span>/plugins</div>
+          <div class="station-summary">Create a plugin for a service</div>
+        </div>
+        <span class="transfer">transfer: Services</span>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/routes/<span class="param">{route_id_or_name}</span>/plugins</div>
+          <div class="station-summary">List plugins associated with a route</div>
+        </div>
+        <span class="transfer">transfer: Routes</span>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/routes/<span class="param">{route_id_or_name}</span>/plugins</div>
+          <div class="station-summary">Create a plugin for a route</div>
+        </div>
+        <span class="transfer">transfer: Routes</span>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/consumers/<span class="param">{consumer_id_or_username}</span>/plugins</div>
+          <div class="station-summary">List plugins associated with a consumer</div>
+        </div>
+        <span class="transfer">transfer: Consumers</span>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/consumers/<span class="param">{consumer_id_or_username}</span>/plugins</div>
+          <div class="station-summary">Create a plugin for a consumer</div>
+        </div>
+        <span class="transfer">transfer: Consumers</span>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/plugins</div>
+          <div class="station-summary">List all plugins</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/plugins</div>
+          <div class="station-summary">Create a new plugin</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/plugins/<span class="param">{plugin_id}</span></div>
+          <div class="station-summary">Retrieve a plugin</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PATCH">PATCH</span>
+        <div class="station-info">
+          <div class="station-path">/plugins/<span class="param">{plugin_id}</span></div>
+          <div class="station-summary">Update a plugin</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PUT">PUT</span>
+        <div class="station-info">
+          <div class="station-path">/plugins/<span class="param">{plugin_id}</span></div>
+          <div class="station-summary">Create or update a plugin</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-DELETE">DELETE</span>
+        <div class="station-info">
+          <div class="station-path">/plugins/<span class="param">{plugin_id}</span></div>
+          <div class="station-summary">Delete a plugin</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/plugins/enabled</div>
+          <div class="station-summary">List enabled plugins</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upstreams Line -->
+  <div class="line line-upstreams">
+    <div class="line-header">
+      <div class="line-badge" style="background:#ff6b35;">UPS</div>
+      <span class="line-name" style="color:#ff6b35;">Upstreams</span>
+      <span class="line-count">6 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams</div>
+          <div class="station-summary">List all upstreams</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams</div>
+          <div class="station-summary">Create a new upstream</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams/<span class="param">{upstream_id_or_name}</span></div>
+          <div class="station-summary">Retrieve an upstream</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PATCH">PATCH</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams/<span class="param">{upstream_id_or_name}</span></div>
+          <div class="station-summary">Update an upstream</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PUT">PUT</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams/<span class="param">{upstream_id_or_name}</span></div>
+          <div class="station-summary">Create or update an upstream</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-DELETE">DELETE</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams/<span class="param">{upstream_id_or_name}</span></div>
+          <div class="station-summary">Delete an upstream</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Targets Line -->
+  <div class="line line-targets">
+    <div class="line-header">
+      <div class="line-badge" style="background:#3a86a7;">TGT</div>
+      <span class="line-name" style="color:#3a86a7;">Targets</span>
+      <span class="line-count">3 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams/<span class="param">{upstream_id_or_name}</span>/targets</div>
+          <div class="station-summary">List targets for an upstream</div>
+        </div>
+        <span class="transfer">transfer: Upstreams</span>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams/<span class="param">{upstream_id_or_name}</span>/targets</div>
+          <div class="station-summary">Create a target for an upstream</div>
+        </div>
+        <span class="transfer">transfer: Upstreams</span>
+      </div>
+      <div class="station">
+        <span class="method method-DELETE">DELETE</span>
+        <div class="station-info">
+          <div class="station-path">/upstreams/<span class="param">{upstream_id_or_name}</span>/targets/<span class="param">{target_id_or_target}</span></div>
+          <div class="station-summary">Delete a target</div>
+        </div>
+        <span class="transfer">transfer: Upstreams</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Certificates Line -->
+  <div class="line line-certificates">
+    <div class="line-header">
+      <div class="line-badge" style="background:#fb5607;">CRT</div>
+      <span class="line-name" style="color:#fb5607;">Certificates</span>
+      <span class="line-count">5 stops</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/certificates</div>
+          <div class="station-summary">List all certificates</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-POST">POST</span>
+        <div class="station-info">
+          <div class="station-path">/certificates</div>
+          <div class="station-summary">Create a certificate</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/certificates/<span class="param">{certificate_id}</span></div>
+          <div class="station-summary">Retrieve a certificate</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-PATCH">PATCH</span>
+        <div class="station-info">
+          <div class="station-path">/certificates/<span class="param">{certificate_id}</span></div>
+          <div class="station-summary">Update a certificate</div>
+        </div>
+      </div>
+      <div class="station">
+        <span class="method method-DELETE">DELETE</span>
+        <div class="station-info">
+          <div class="station-path">/certificates/<span class="param">{certificate_id}</span></div>
+          <div class="station-summary">Delete a certificate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tags Line -->
+  <div class="line line-tags">
+    <div class="line-header">
+      <div class="line-badge" style="background:#80ed99;color:#333;">TAG</div>
+      <span class="line-name" style="color:#80ed99;">Tags</span>
+      <span class="line-count">1 stop</span>
+    </div>
+    <div class="stations">
+      <div class="station">
+        <span class="method method-GET">GET</span>
+        <div class="station-info">
+          <div class="station-path">/tags</div>
+          <div class="station-summary">List all tags</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Kong Gateway Admin API v3.13.0 &mdash; 50 operations across 9 resource lines
+</div>
+
+</body>
+</html>
