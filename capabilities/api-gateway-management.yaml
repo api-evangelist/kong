@@ -1,0 +1,346 @@
+naftiko: "1.0.0-alpha1"
+
+info:
+  label: "Kong API Gateway Management"
+  description: "API gateway management workflow for platform engineers to configure services, routes, plugins, consumers, upstreams, and TLS certificates on Kong Gateway instances."
+  tags:
+    - Kong
+    - API Gateway
+    - Configuration
+  created: "2026-04-18"
+  modified: "2026-04-18"
+
+binds:
+  - namespace: env
+    keys:
+      KONG_ADMIN_URL: KONG_ADMIN_URL
+
+capability:
+  consumes:
+    - import: kong-admin
+      location: ./shared/kong-admin.yaml
+
+  exposes:
+    - type: rest
+      port: 8080
+      namespace: api-gateway-management-api
+      description: "Unified REST API for Kong Gateway management."
+      resources:
+        - path: /v1/info
+          name: info
+          description: "Gateway node information."
+          operations:
+            - method: GET
+              name: get-node-info
+              description: "Retrieve gateway node info."
+              call: "kong-admin.get-node-info"
+              outputParameters:
+                - type: object
+                  mapping: "$."
+        - path: /v1/services
+          name: services
+          description: "Upstream service management."
+          operations:
+            - method: GET
+              name: list-services
+              description: "List all services."
+              call: "kong-admin.list-services"
+              outputParameters:
+                - type: object
+                  mapping: "$."
+            - method: POST
+              name: create-service
+              description: "Create a new service."
+              call: "kong-admin.create-service"
+              outputParameters:
+                - type: object
+                  mapping: "$."
+        - path: /v1/routes
+          name: routes
+          description: "Route management."
+          operations:
+            - method: GET
+              name: list-routes
+              description: "List all routes."
+              call: "kong-admin.list-routes"
+              outputParameters:
+                - type: object
+                  mapping: "$."
+            - method: POST
+              name: create-route
+              description: "Create a new route."
+              call: "kong-admin.create-route"
+              outputParameters:
+                - type: object
+                  mapping: "$."
+        - path: /v1/consumers
+          name: consumers
+          description: "API consumer management."
+          operations:
+            - method: GET
+              name: list-consumers
+              description: "List all consumers."
+              call: "kong-admin.list-consumers"
+              outputParameters:
+                - type: object
+                  mapping: "$."
+        - path: /v1/plugins
+          name: plugins
+          description: "Plugin management."
+          operations:
+            - method: GET
+              name: list-plugins
+              description: "List all plugins."
+              call: "kong-admin.list-plugins"
+              outputParameters:
+                - type: object
+                  mapping: "$."
+
+    - type: mcp
+      port: 9090
+      namespace: api-gateway-management-mcp
+      transport: http
+      description: "MCP server for AI-assisted Kong Gateway management."
+      tools:
+        - name: get-node-info
+          description: "Retrieve Kong Gateway node information."
+          hints:
+            readOnly: true
+          call: "kong-admin.get-node-info"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: get-node-status
+          description: "Retrieve Kong Gateway node status."
+          hints:
+            readOnly: true
+          call: "kong-admin.get-node-status"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-services
+          description: "List all configured upstream services."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-services"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: create-service
+          description: "Create a new upstream service."
+          hints:
+            readOnly: false
+          call: "kong-admin.create-service"
+          with:
+            name: "tools.name"
+            url: "tools.url"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: get-service
+          description: "Retrieve a specific service."
+          hints:
+            readOnly: true
+          call: "kong-admin.get-service"
+          with:
+            service_id_or_name: "tools.service_id_or_name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: update-service
+          description: "Update a service configuration."
+          hints:
+            readOnly: false
+            idempotent: true
+          call: "kong-admin.update-service"
+          with:
+            service_id_or_name: "tools.service_id_or_name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: delete-service
+          description: "Delete a service."
+          hints:
+            destructive: true
+          call: "kong-admin.delete-service"
+          with:
+            service_id_or_name: "tools.service_id_or_name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-routes
+          description: "List all configured routes."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-routes"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: create-route
+          description: "Create a new route for a service."
+          hints:
+            readOnly: false
+          call: "kong-admin.create-route"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: get-route
+          description: "Retrieve a specific route."
+          hints:
+            readOnly: true
+          call: "kong-admin.get-route"
+          with:
+            route_id_or_name: "tools.route_id_or_name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: update-route
+          description: "Update a route."
+          hints:
+            readOnly: false
+            idempotent: true
+          call: "kong-admin.update-route"
+          with:
+            route_id_or_name: "tools.route_id_or_name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: delete-route
+          description: "Delete a route."
+          hints:
+            destructive: true
+          call: "kong-admin.delete-route"
+          with:
+            route_id_or_name: "tools.route_id_or_name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-consumers
+          description: "List all API consumers."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-consumers"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: create-consumer
+          description: "Create a new API consumer."
+          hints:
+            readOnly: false
+          call: "kong-admin.create-consumer"
+          with:
+            username: "tools.username"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: get-consumer
+          description: "Retrieve a specific consumer."
+          hints:
+            readOnly: true
+          call: "kong-admin.get-consumer"
+          with:
+            consumer_id_or_username: "tools.consumer_id_or_username"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: delete-consumer
+          description: "Delete a consumer."
+          hints:
+            destructive: true
+          call: "kong-admin.delete-consumer"
+          with:
+            consumer_id_or_username: "tools.consumer_id_or_username"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-plugins
+          description: "List all configured plugins."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-plugins"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: create-plugin
+          description: "Create a new plugin configuration."
+          hints:
+            readOnly: false
+          call: "kong-admin.create-plugin"
+          with:
+            name: "tools.name"
+            config: "tools.config"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: get-plugin
+          description: "Retrieve a specific plugin configuration."
+          hints:
+            readOnly: true
+          call: "kong-admin.get-plugin"
+          with:
+            plugin_id: "tools.plugin_id"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: delete-plugin
+          description: "Delete a plugin."
+          hints:
+            destructive: true
+          call: "kong-admin.delete-plugin"
+          with:
+            plugin_id: "tools.plugin_id"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-enabled-plugins
+          description: "List all enabled plugin names on the node."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-enabled-plugins"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-upstreams
+          description: "List all upstream load balancers."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-upstreams"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: create-upstream
+          description: "Create a new upstream for load balancing."
+          hints:
+            readOnly: false
+          call: "kong-admin.create-upstream"
+          with:
+            name: "tools.name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: delete-upstream
+          description: "Delete an upstream."
+          hints:
+            destructive: true
+          call: "kong-admin.delete-upstream"
+          with:
+            upstream_id_or_name: "tools.upstream_id_or_name"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-certificates
+          description: "List all TLS certificates."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-certificates"
+          outputParameters:
+            - type: object
+              mapping: "$."
+        - name: list-tags
+          description: "List all tags and tagged entities."
+          hints:
+            readOnly: true
+          call: "kong-admin.list-tags"
+          outputParameters:
+            - type: object
+              mapping: "$."
