@@ -4,105 +4,73 @@ schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main
 provider: Kong
 providerId: kong
 created: '2026-05-04'
-modified: '2026-05-04'
+modified: '2026-05-05'
+reconciled: false
 tags:
-  - API Gateway
-  - Lua
-  - NGINX
-  - Open Source
   - Rate Limiting
-  - Quotas
-  - Throttling
-description: Machine-readable rate limit definitions for the Kong API surface. Captures per-tier quotas,
-  burst behavior, response signaling, and recovery semantics. Defaults are scaffold values to be replaced
-  with published provider limits.
-headers:
-  limit: X-RateLimit-Limit
-  remaining: X-RateLimit-Remaining
-  reset: X-RateLimit-Reset
-  retryAfter: Retry-After
-  policy: RateLimit-Policy
+  - API Gateway
+  - API Management
+description: Kong's pricing constrains Konnect through plan-level quotas (Plus = 1M API requests/month
+  included, $200/M overage; AI Gateway = 5 LLM models included, $100/extra). The Konnect control-plane
+  API itself does not publicly publish per-second / per-minute throttling thresholds in its developer
+  documentation; consumers should code against the standard 429 / Retry-After contract. Kong's flagship
+  product is itself a rate-limiting plugin set, applied to data-plane traffic the customer terminates.
+sources:
+  - https://konghq.com/pricing
+  - https://developer.konghq.com/konnect-api/
+notes: Konnect control-plane numeric rate limits are not publicly documented. The numbers below describe
+  plan-level request quotas and AI-Gateway model caps (which are billing limits, not gateway throttling).
+  Reconcile control-plane TPS limits with Kong support if needed.
 responseCodes:
   throttled: 429
-  quotaExceeded: 429
   serviceUnavailable: 503
 limits:
-  - tier: free
-    name: Free Tier Default
-    scope: api-key
-    metric: requests_per_minute
-    limit: 10
-    burst: 20
-    timeFrame: minute
-    applies:
-      - Kong Gateway
-      - Kong Gateway Admin API
-      - Kong Konnect API
-      - Kong Mesh
-      - Kong Insomnia
-  - tier: free
-    name: Free Tier Monthly Quota
-    scope: api-key
+  - name: Konnect Plus included API requests
+    scope: organization
     metric: requests_per_month
-    limit: 1000
+    limit: 1000000
     timeFrame: month
-    applies:
-      - Kong Gateway
-      - Kong Gateway Admin API
-      - Kong Konnect API
-      - Kong Mesh
-      - Kong Insomnia
-  - tier: professional
-    name: Professional Tier Default
-    scope: api-key
-    metric: requests_per_minute
-    limit: 100
-    burst: 200
-    timeFrame: minute
-    applies:
-      - Kong Gateway
-      - Kong Gateway Admin API
-      - Kong Konnect API
-      - Kong Mesh
-      - Kong Insomnia
-  - tier: professional
-    name: Professional Tier Monthly Quota
-    scope: api-key
-    metric: requests_per_month
-    limit: 100000
-    timeFrame: month
-    applies:
-      - Kong Gateway
-      - Kong Gateway Admin API
-      - Kong Konnect API
-      - Kong Mesh
-      - Kong Insomnia
-  - tier: enterprise
-    name: Enterprise Negotiated Limit
-    scope: contract
-    metric: requests_per_minute
-    limit: 1000
-    burst: 5000
-    timeFrame: minute
-    applies:
-      - Kong Gateway
-      - Kong Gateway Admin API
-      - Kong Konnect API
-      - Kong Mesh
-      - Kong Insomnia
+    notes: Overage billed at $200 per additional 1M requests on the Plus plan.
+  - name: Konnect Plus AI Gateway models
+    scope: organization
+    metric: llm_models
+    limit: 5
+    notes: Each additional unique LLM model billed at $100/month on the Plus plan.
+  - name: Konnect Plus Serverless gateways
+    scope: organization
+    metric: gateways
+    limit: 5
+  - name: Konnect Plus Hybrid gateways
+    scope: organization
+    metric: gateways
+    limit: 2
+  - name: Konnect Plus Dedicated Cloud gateways
+    scope: organization
+    metric: gateways
+    limit: 2
+  - name: Konnect Plus Developer Portals
+    scope: organization
+    metric: portals
+    limit: 2
+  - name: Konnect Plus Published APIs per Portal
+    scope: portal
+    metric: apis
+    limit: 20
+  - name: Konnect control-plane API throttling
+    scope: organization
+    metric: varies
+    limit: 'see Kong Konnect API documentation; numeric thresholds not publicly published'
 policies:
-  - name: Backoff Strategy
-    description: Clients should implement exponential backoff with jitter, honoring the Retry-After header
-      when present.
-  - name: Burst Handling
-    description: Short bursts above the steady-state limit are tolerated up to the documented burst ceiling
-      before throttling engages.
-  - name: Quota Reset
-    description: Monthly quotas reset at the start of each calendar month in UTC. Per-minute and per-second
-      windows reset on a sliding-window basis.
-  - name: Fair Use
-    description: Even on uncapped enterprise tiers, sustained usage that materially impacts shared infrastructure
-      may be subject to fair-use throttling.
+  - name: Plan quota vs gateway throttling
+    description: Plus-plan request and model caps are billing thresholds, not hard throttles — exceeding
+      them creates overage charges, not 429 responses to your end users.
+  - name: Backoff
+    description: For 429/5xx from the Konnect control-plane API, retry with exponential backoff and jitter;
+      honor Retry-After.
+  - name: Data-plane rate limiting
+    description: Customers configure their own Kong rate-limiting/rate-limiting-advanced plugins on data-plane
+      gateways to throttle their consumers; that configuration is independent of the Konnect platform's
+      own control-plane behavior.
 maintainers:
   - FN: Kin Lane
     email: kin@apievangelist.com
