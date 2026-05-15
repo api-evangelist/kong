@@ -1,0 +1,210 @@
+naftiko: "1.0.0-alpha2"
+
+info:
+  title: Kong Dev Portal Publish
+  description: >-
+    Publishes Naftiko-built REST exposes into a Kong Konnect Developer
+    Portal as API Products with versioning, plans, monetization, and
+    branded developer-facing surfaces — Naftiko's spec lands as a
+    discoverable, subscribable API in the same portal Konnect uses for
+    the rest of the customer's API estate.
+  tags:
+    - Naftiko
+    - Kong
+    - Partnership
+    - Dev-Portal
+    - API-Products
+    - Konnect
+  created: '2026-05-15'
+  modified: '2026-05-15'
+
+binds:
+  - namespace: kong-konnect
+    description: Kong Konnect Platform API endpoint + token.
+    keys:
+      KONG_KONNECT_BASE: KONG_KONNECT_BASE
+      KONG_KONNECT_TOKEN: KONG_KONNECT_TOKEN
+
+capability:
+  consumes:
+    - namespace: kong
+      type: http
+      baseUri: '{{KONG_KONNECT_BASE}}'
+      authentication:
+        type: bearer
+        token: '{{KONG_KONNECT_TOKEN}}'
+      resources:
+        - name: api-products
+          path: '/v1/api-products'
+          operations:
+            - name: list-api-products
+              method: GET
+            - name: create-api-product
+              method: POST
+        - name: api-product
+          path: '/v1/api-products/{{product_id}}'
+          operations:
+            - name: get-api-product
+              method: GET
+              inputParameters:
+                - { name: product_id, in: path, required: true }
+            - name: update-api-product
+              method: PATCH
+              inputParameters:
+                - { name: product_id, in: path, required: true }
+            - name: delete-api-product
+              method: DELETE
+              inputParameters:
+                - { name: product_id, in: path, required: true }
+        - name: api-product-versions
+          path: '/v1/api-products/{{product_id}}/versions'
+          operations:
+            - name: list-api-product-versions
+              method: GET
+              inputParameters:
+                - { name: product_id, in: path, required: true }
+            - name: create-api-product-version
+              method: POST
+              inputParameters:
+                - { name: product_id, in: path, required: true }
+        - name: portals
+          path: '/v1/portals'
+          operations:
+            - name: list-portals
+              method: GET
+            - name: create-portal
+              method: POST
+        - name: portal-products
+          path: '/v1/portals/{{portal_id}}/products'
+          operations:
+            - name: list-portal-products
+              method: GET
+              inputParameters:
+                - { name: portal_id, in: path, required: true }
+            - name: publish-portal-product
+              method: POST
+              inputParameters:
+                - { name: portal_id, in: path, required: true }
+
+  exposes:
+    - type: rest
+      address: 0.0.0.0
+      port: 8080
+      namespace: kong-dev-portal-publish-rest
+      description: REST surface for publishing Naftiko REST exposes as Kong Konnect API Products in a Developer Portal.
+      resources:
+        - name: api-products
+          path: '/api-products'
+          operations:
+            - name: list-api-products
+              method: GET
+              call: kong.list-api-products
+            - name: create-api-product
+              method: POST
+              call: kong.create-api-product
+        - name: api-product
+          path: '/api-products/{product_id}'
+          operations:
+            - name: get-api-product
+              method: GET
+              inputParameters:
+                - { name: product_id, in: path, type: string, required: true }
+              call: kong.get-api-product
+            - name: update-api-product
+              method: PATCH
+              inputParameters:
+                - { name: product_id, in: path, type: string, required: true }
+              call: kong.update-api-product
+            - name: delete-api-product
+              method: DELETE
+              inputParameters:
+                - { name: product_id, in: path, type: string, required: true }
+              call: kong.delete-api-product
+        - name: api-product-versions
+          path: '/api-products/{product_id}/versions'
+          operations:
+            - name: list-api-product-versions
+              method: GET
+              inputParameters:
+                - { name: product_id, in: path, type: string, required: true }
+              call: kong.list-api-product-versions
+            - name: create-api-product-version
+              method: POST
+              inputParameters:
+                - { name: product_id, in: path, type: string, required: true }
+              call: kong.create-api-product-version
+        - name: portals
+          path: '/portals'
+          operations:
+            - name: list-portals
+              method: GET
+              call: kong.list-portals
+            - name: create-portal
+              method: POST
+              call: kong.create-portal
+        - name: portal-products
+          path: '/portals/{portal_id}/products'
+          operations:
+            - name: list-portal-products
+              method: GET
+              inputParameters:
+                - { name: portal_id, in: path, type: string, required: true }
+              call: kong.list-portal-products
+            - name: publish-portal-product
+              method: POST
+              inputParameters:
+                - { name: portal_id, in: path, type: string, required: true }
+              call: kong.publish-portal-product
+
+    - type: mcp
+      address: 0.0.0.0
+      port: 3010
+      namespace: kong-dev-portal-publish-mcp
+      description: MCP server for publishing Naftiko-built APIs into Kong Konnect API Products + Developer Portals.
+      tools:
+        - name: list-api-products
+          description: List Kong Konnect API Products in an organization.
+          hints: { readOnly: true }
+          call: kong.list-api-products
+        - name: create-api-product
+          description: Create a new Kong Konnect API Product (typically a Naftiko-built REST capability).
+          hints: { destructiveHint: false }
+          call: kong.create-api-product
+        - name: get-api-product
+          description: Get a single Kong Konnect API Product.
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: product_id, type: string, required: true }
+          call: kong.get-api-product
+        - name: update-api-product
+          description: Update a Kong Konnect API Product.
+          hints: { destructiveHint: true }
+          inputParameters:
+            - { name: product_id, type: string, required: true }
+          call: kong.update-api-product
+        - name: delete-api-product
+          description: Delete a Kong Konnect API Product.
+          hints: { destructiveHint: true }
+          inputParameters:
+            - { name: product_id, type: string, required: true }
+          call: kong.delete-api-product
+        - name: create-api-product-version
+          description: Create a new version of a Kong Konnect API Product.
+          hints: { destructiveHint: false }
+          inputParameters:
+            - { name: product_id, type: string, required: true }
+          call: kong.create-api-product-version
+        - name: list-portals
+          description: List Kong Konnect Developer Portals.
+          hints: { readOnly: true }
+          call: kong.list-portals
+        - name: create-portal
+          description: Create a new Kong Konnect Developer Portal.
+          hints: { destructiveHint: false }
+          call: kong.create-portal
+        - name: publish-portal-product
+          description: Publish an API Product into a specific Kong Konnect Developer Portal.
+          hints: { destructiveHint: false }
+          inputParameters:
+            - { name: portal_id, type: string, required: true }
+          call: kong.publish-portal-product

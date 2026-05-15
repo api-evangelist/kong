@@ -1,0 +1,207 @@
+naftiko: "1.0.0-alpha2"
+
+info:
+  title: Kong FinOps Bridge
+  description: >-
+    Pulls Kong Konnect analytics — request counts, latency percentiles,
+    error rates, AI token consumption, per-agent cost allocation, audit
+    events — into Naftiko's per-call cost attribution model. Closes the
+    loop between "Kong gateway saw N requests + M tokens for agent A"
+    and "Naftiko knows what each capability call cost the customer."
+  tags:
+    - Naftiko
+    - Kong
+    - Partnership
+    - Analytics
+    - FinOps
+    - Cost-Attribution
+  created: '2026-05-15'
+  modified: '2026-05-15'
+
+binds:
+  - namespace: kong-konnect
+    description: Kong Konnect Platform API endpoint + token.
+    keys:
+      KONG_KONNECT_BASE: KONG_KONNECT_BASE
+      KONG_KONNECT_TOKEN: KONG_KONNECT_TOKEN
+
+capability:
+  consumes:
+    - namespace: kong
+      type: http
+      baseUri: '{{KONG_KONNECT_BASE}}'
+      authentication:
+        type: bearer
+        token: '{{KONG_KONNECT_TOKEN}}'
+      resources:
+        - name: analytics-requests
+          path: '/v1/analytics/requests'
+          operations:
+            - name: get-request-analytics
+              method: GET
+              inputParameters:
+                - { name: from, in: query, required: false }
+                - { name: to, in: query, required: false }
+                - { name: control_plane_id, in: query, required: false }
+        - name: analytics-latency
+          path: '/v1/analytics/latency'
+          operations:
+            - name: get-latency-analytics
+              method: GET
+              inputParameters:
+                - { name: from, in: query, required: false }
+                - { name: to, in: query, required: false }
+                - { name: percentile, in: query, required: false }
+        - name: analytics-errors
+          path: '/v1/analytics/errors'
+          operations:
+            - name: get-error-analytics
+              method: GET
+              inputParameters:
+                - { name: from, in: query, required: false }
+                - { name: to, in: query, required: false }
+        - name: ai-token-usage
+          path: '/v1/analytics/ai/usage'
+          operations:
+            - name: get-ai-token-usage
+              method: GET
+              inputParameters:
+                - { name: from, in: query, required: false }
+                - { name: to, in: query, required: false }
+                - { name: model, in: query, required: false }
+                - { name: agent, in: query, required: false }
+        - name: metering-billing
+          path: '/v1/metering/usage'
+          operations:
+            - name: get-metering-usage
+              method: GET
+              inputParameters:
+                - { name: from, in: query, required: false }
+                - { name: to, in: query, required: false }
+        - name: audit-logs
+          path: '/v1/audit-logs'
+          operations:
+            - name: list-audit-logs
+              method: GET
+              inputParameters:
+                - { name: from, in: query, required: false }
+                - { name: to, in: query, required: false }
+
+  exposes:
+    - type: rest
+      address: 0.0.0.0
+      port: 8080
+      namespace: kong-finops-bridge-rest
+      description: REST surface for pulling Kong Konnect analytics + AI token usage into Naftiko cost attribution.
+      resources:
+        - name: analytics-requests
+          path: '/analytics/requests'
+          operations:
+            - name: get-request-analytics
+              method: GET
+              inputParameters:
+                - { name: from, in: query, type: string, required: false }
+                - { name: to, in: query, type: string, required: false }
+                - { name: control_plane_id, in: query, type: string, required: false }
+              call: kong.get-request-analytics
+        - name: analytics-latency
+          path: '/analytics/latency'
+          operations:
+            - name: get-latency-analytics
+              method: GET
+              inputParameters:
+                - { name: from, in: query, type: string, required: false }
+                - { name: to, in: query, type: string, required: false }
+                - { name: percentile, in: query, type: string, required: false }
+              call: kong.get-latency-analytics
+        - name: analytics-errors
+          path: '/analytics/errors'
+          operations:
+            - name: get-error-analytics
+              method: GET
+              inputParameters:
+                - { name: from, in: query, type: string, required: false }
+                - { name: to, in: query, type: string, required: false }
+              call: kong.get-error-analytics
+        - name: ai-token-usage
+          path: '/analytics/ai/usage'
+          operations:
+            - name: get-ai-token-usage
+              method: GET
+              inputParameters:
+                - { name: from, in: query, type: string, required: false }
+                - { name: to, in: query, type: string, required: false }
+                - { name: model, in: query, type: string, required: false }
+                - { name: agent, in: query, type: string, required: false }
+              call: kong.get-ai-token-usage
+        - name: metering-billing
+          path: '/metering/usage'
+          operations:
+            - name: get-metering-usage
+              method: GET
+              inputParameters:
+                - { name: from, in: query, type: string, required: false }
+                - { name: to, in: query, type: string, required: false }
+              call: kong.get-metering-usage
+        - name: audit-logs
+          path: '/audit-logs'
+          operations:
+            - name: list-audit-logs
+              method: GET
+              inputParameters:
+                - { name: from, in: query, type: string, required: false }
+                - { name: to, in: query, type: string, required: false }
+              call: kong.list-audit-logs
+
+    - type: mcp
+      address: 0.0.0.0
+      port: 3010
+      namespace: kong-finops-bridge-mcp
+      description: MCP server exposing Kong Konnect analytics + AI token usage as agent-callable cost-attribution tools.
+      tools:
+        - name: get-request-analytics
+          description: Get Kong Konnect request count analytics (per Service / Route / Consumer / time window).
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: from, type: string, required: false }
+            - { name: to, type: string, required: false }
+            - { name: control_plane_id, type: string, required: false }
+          call: kong.get-request-analytics
+        - name: get-latency-analytics
+          description: Get Kong Konnect latency percentile analytics (P50 / P95 / P99).
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: from, type: string, required: false }
+            - { name: to, type: string, required: false }
+            - { name: percentile, type: string, required: false }
+          call: kong.get-latency-analytics
+        - name: get-error-analytics
+          description: Get Kong Konnect error-rate analytics.
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: from, type: string, required: false }
+            - { name: to, type: string, required: false }
+          call: kong.get-error-analytics
+        - name: get-ai-token-usage
+          description: Get Kong AI Gateway token usage stats per model + agent + period (drives Naftiko AI cost attribution).
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: from, type: string, required: false }
+            - { name: to, type: string, required: false }
+            - { name: model, type: string, required: false }
+            - { name: agent, type: string, required: false }
+          call: kong.get-ai-token-usage
+        - name: get-metering-usage
+          description: Get Kong Konnect metering + billing usage (per-million-request overage, per-LLM-model, per-portal).
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: from, type: string, required: false }
+            - { name: to, type: string, required: false }
+          call: kong.get-metering-usage
+        - name: list-audit-logs
+          description: List Kong Konnect audit logs (compliance + change attribution).
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: from, type: string, required: false }
+            - { name: to, type: string, required: false }
+          call: kong.list-audit-logs

@@ -1,0 +1,163 @@
+naftiko: "1.0.0-alpha2"
+
+info:
+  title: Kong AI Gateway Bridge
+  description: >-
+    Routes Naftiko-side LLM calls through Kong AI Gateway's universal LLM
+    API (OpenAI / Anthropic / Gemini / Bedrock / Azure / Databricks /
+    Mistral / HuggingFace under one OpenAI-compatible surface) — automatic
+    semantic caching, token budgets, prompt firewalls, PII guardrails,
+    automated RAG injection, and per-token observability with no
+    per-capability LLM-vendor wiring.
+  tags:
+    - Naftiko
+    - Kong
+    - Partnership
+    - AI-Gateway
+    - LLM-Proxy
+    - Token-Budget
+  created: '2026-05-15'
+  modified: '2026-05-15'
+
+binds:
+  - namespace: kong-ai-env
+    description: Kong AI Gateway endpoint + token.
+    keys:
+      KONG_AI_BASE: KONG_AI_BASE
+      KONG_AI_TOKEN: KONG_AI_TOKEN
+
+capability:
+  consumes:
+    - namespace: kong-ai
+      type: http
+      baseUri: '{{KONG_AI_BASE}}'
+      authentication:
+        type: bearer
+        token: '{{KONG_AI_TOKEN}}'
+      resources:
+        - name: chat-completions
+          path: '/v1/chat/completions'
+          operations:
+            - name: chat-completion
+              method: POST
+        - name: completions
+          path: '/v1/completions'
+          operations:
+            - name: completion
+              method: POST
+        - name: embeddings
+          path: '/v1/embeddings'
+          operations:
+            - name: embedding
+              method: POST
+        - name: list-models
+          path: '/v1/models'
+          operations:
+            - name: list-models
+              method: GET
+        - name: token-budgets
+          path: '/v1/ai/token-budgets'
+          operations:
+            - name: list-token-budgets
+              method: GET
+            - name: create-token-budget
+              method: POST
+        - name: token-usage
+          path: '/v1/ai/usage'
+          operations:
+            - name: get-token-usage
+              method: GET
+              inputParameters:
+                - { name: since, in: query, required: false }
+                - { name: model, in: query, required: false }
+                - { name: agent, in: query, required: false }
+
+  exposes:
+    - type: rest
+      address: 0.0.0.0
+      port: 8080
+      namespace: kong-ai-gateway-bridge-rest
+      description: OpenAI-compatible REST surface backed by Kong AI Gateway with semantic cache, token budget, prompt firewall layered in.
+      resources:
+        - name: chat-completion
+          path: '/v1/chat/completions'
+          operations:
+            - name: chat-completion
+              method: POST
+              call: kong-ai.chat-completion
+        - name: completion
+          path: '/v1/completions'
+          operations:
+            - name: completion
+              method: POST
+              call: kong-ai.completion
+        - name: embedding
+          path: '/v1/embeddings'
+          operations:
+            - name: embedding
+              method: POST
+              call: kong-ai.embedding
+        - name: list-models
+          path: '/v1/models'
+          operations:
+            - name: list-models
+              method: GET
+              call: kong-ai.list-models
+        - name: token-budgets
+          path: '/v1/ai/token-budgets'
+          operations:
+            - name: list-token-budgets
+              method: GET
+              call: kong-ai.list-token-budgets
+            - name: create-token-budget
+              method: POST
+              call: kong-ai.create-token-budget
+        - name: token-usage
+          path: '/v1/ai/usage'
+          operations:
+            - name: get-token-usage
+              method: GET
+              inputParameters:
+                - { name: since, in: query, type: string, required: false }
+                - { name: model, in: query, type: string, required: false }
+                - { name: agent, in: query, type: string, required: false }
+              call: kong-ai.get-token-usage
+
+    - type: mcp
+      address: 0.0.0.0
+      port: 3010
+      namespace: kong-ai-gateway-bridge-mcp
+      description: MCP server exposing Kong AI Gateway's universal LLM proxy as agent-callable LLM tools.
+      tools:
+        - name: chat-completion
+          description: Run an OpenAI-compatible chat completion through Kong AI Gateway (semantic cache + token budget + prompt firewall + PII guardrails).
+          hints: { destructiveHint: false }
+          call: kong-ai.chat-completion
+        - name: completion
+          description: Run an OpenAI-compatible text completion through Kong AI Gateway.
+          hints: { destructiveHint: false }
+          call: kong-ai.completion
+        - name: embedding
+          description: Compute embeddings through Kong AI Gateway.
+          hints: { readOnly: true }
+          call: kong-ai.embedding
+        - name: list-models
+          description: List the LLM models available through Kong AI Gateway (provider-agnostic).
+          hints: { readOnly: true }
+          call: kong-ai.list-models
+        - name: list-token-budgets
+          description: List Kong AI Gateway token budgets (per-agent / per-period token caps).
+          hints: { readOnly: true }
+          call: kong-ai.list-token-budgets
+        - name: create-token-budget
+          description: Create a new Kong AI Gateway token budget.
+          hints: { destructiveHint: false }
+          call: kong-ai.create-token-budget
+        - name: get-token-usage
+          description: Get Kong AI Gateway token consumption stats per model / agent / period.
+          hints: { readOnly: true }
+          inputParameters:
+            - { name: since, type: string, required: false }
+            - { name: model, type: string, required: false }
+            - { name: agent, type: string, required: false }
+          call: kong-ai.get-token-usage
