@@ -4,7 +4,7 @@ schema: https://www.finops.org/framework/
 provider: Kong
 providerId: kong
 created: '2026-05-04'
-modified: '2026-05-05'
+modified: '2026-05-15'
 reconciled: true
 tags:
   - FinOps
@@ -12,9 +12,12 @@ tags:
   - API Gateway
   - API Management
   - AI Gateway
+  - MCP Registry
 description: 'FOCUS-aligned FinOps for Kong Konnect: per-Gateway-per-month subscription with included
-  request quotas and per-million overages, plus per-LLM-model AI Gateway charges and seat-based Insomnia
-  pricing.'
+  request quotas (1M/mo) and per-million overages (capped at 10M/mo on Plus), plus per-LLM-model AI
+  Gateway charges, per-portal and per-published-API overages, and seat-based Insomnia pricing.
+  AI Gateway / Agent Gateway / MCP Registry / Event Gateway / Context Mesh ride inside the Plus or
+  Enterprise envelope rather than as separate SKUs.'
 sources:
   - https://konghq.com/pricing
 alignedWith:
@@ -75,6 +78,24 @@ meters:
     aggregation: max
     dimensions:
       - plan
+  - name: mcp_registry_tools
+    unit: tool
+    aggregation: max
+    dimensions:
+      - registry
+      - tool_type
+  - name: a2a_traffic
+    unit: message
+    aggregation: sum
+    dimensions:
+      - source_agent
+      - destination_agent
+  - name: event_gateway_throughput
+    unit: byte
+    aggregation: sum
+    dimensions:
+      - virtual_cluster
+      - topic
 principles:
   - name: Visibility
     description: Use Konnect Analytics and the Konnect API to track per-gateway request counts, model
@@ -84,8 +105,10 @@ principles:
       overages and AI-model fees can be allocated to the consuming team.
   - name: Optimization
     description: Consolidate low-traffic services onto fewer Serverless gateways (each one billed); cap
-      AI Gateway to the 5 LLM models the team actually uses; move to Enterprise once you exceed Plus
-      gateway/portal limits or accrue meaningful overage spend.
+      AI Gateway to the 5 LLM models the team actually uses; collapse extra Developer Portals (each
+      additional portal is $200/mo) and prune low-traffic published APIs ($20 / $10 per API per portal);
+      move to Enterprise once you exceed Plus gateway/portal limits, hit the 10M/mo request ceiling, or
+      accrue meaningful overage spend.
   - name: Accountability
     description: Platform owners review monthly Konnect usage vs included quotas, alert on overage thresholds
       via Konnect Analytics, and reconcile Insomnia seat counts with the IdP each renewal.

@@ -4,18 +4,22 @@ schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main
 provider: Kong
 providerId: kong
 created: '2026-05-04'
-modified: '2026-05-05'
+modified: '2026-05-15'
 reconciled: true
 tags:
   - API Gateway
   - Service Mesh
   - API Management
   - AI Gateway
+  - MCP Registry
   - Developer Tools
 description: Kong Konnect prices on a hybrid tiered/usage model — Free Trial, Plus (per-Gateway-per-month
-  with included API requests and per-million overages), and Enterprise (custom annual). Add-on AI Gateway
-  is metered per unique LLM model. Kong Insomnia (API testing) is sold separately on a per-user-per-month
-  basis.
+  with included API requests and per-million overages, additional Dev Portals and published APIs
+  individually metered), and Enterprise (custom annual). Add-on AI Gateway is metered per unique LLM
+  model. Kong Insomnia (API design and testing) is sold separately on a per-user-per-month basis. The
+  Konnect catalog now includes AI Gateway, Agent Gateway, MCP Registry, Event Gateway and Context Mesh
+  as governed surfaces, but those are exposed inside the same Plus / Enterprise pricing envelope rather
+  than as separate SKUs on the public pricing page.
 sources:
   - https://konghq.com/pricing
 plans:
@@ -42,8 +46,10 @@ plans:
     name: Konnect Plus
     type: subscription
     description: Per-Gateway-per-month subscription with 1M API requests/month included; $200/month per
-      additional 1M; AI Gateway up to 5 LLM models with $100/model overage. Up to 5 Serverless, 2 Hybrid,
-      2 Dedicated Cloud Gateways and 2 Developer Portals (max 20 published APIs).
+      additional 1M (up to 10M/month maximum on Plus); AI Gateway up to 5 LLM models with $100/model
+      overage. Up to 5 Serverless, 2 Hybrid, 2 Dedicated Cloud Gateways and 2 Developer Portals
+      ($200/month per additional portal; first 10 published APIs $20/month each, additional APIs
+      $10/month each, max 20 per portal). Service Catalog includes 2 services.
     entries:
       - label: Per Gateway per month
         name: plus_gateway_month
@@ -69,11 +75,41 @@ plans:
         name: plus_request_overage
         type: metered
         metric: request
-        limit: -1
+        limit: 10000000
         timeFrame: month
         geo: global
         unit: 1000000
         price: '200.00'
+        userMultiplied: false
+      - label: Additional Developer Portal
+        name: plus_additional_portal
+        type: metered
+        metric: portal
+        limit: -1
+        timeFrame: month
+        geo: global
+        unit: 1
+        price: '200.00'
+        userMultiplied: false
+      - label: Published API (1-10) per portal
+        name: plus_api_tier1
+        type: metered
+        metric: published_api
+        limit: 10
+        timeFrame: month
+        geo: global
+        unit: 1
+        price: '20.00'
+        userMultiplied: false
+      - label: Published API (11-20) per portal
+        name: plus_api_tier2
+        type: metered
+        metric: published_api
+        limit: 10
+        timeFrame: month
+        geo: global
+        unit: 1
+        price: '10.00'
         userMultiplied: false
       - label: AI Gateway included LLM models
         name: plus_ai_models_included
@@ -101,6 +137,9 @@ plans:
       - name: Up to 2 Hybrid gateways
       - name: Up to 2 Dedicated Cloud gateways
       - name: Up to 2 Developer Portals (20 APIs each)
+      - name: 2 Service Catalog services included
+      - name: Advanced analytics for 1M API requests/month
+      - name: AI Gateway, Agent Gateway, MCP Registry, Event Gateway and Context Mesh access (where in tech preview / GA)
       - name: Email support (2-business-day SLA)
   - id: kong-konnect-enterprise
     name: Konnect Enterprise
@@ -119,16 +158,18 @@ plans:
         price: custom
         userMultiplied: false
     elements:
+      - name: Everything in Plus
       - name: Unlimited Hybrid + Dedicated Cloud Gateways
       - name: Unlimited Developer Portals + published APIs
       - name: Unlimited Service Catalog services
       - name: SSO + Audit Logs
       - name: Dedicated Customer Success Manager
       - name: Custom SLAs
+      - name: Professional services available
   - id: kong-insomnia-essentials
     name: Insomnia Essentials
     type: freemium
-    description: Free tier of Kong Insomnia API testing tool.
+    description: Free tier of Kong Insomnia. Unlimited projects, 3 Git Sync users, 1,000 mock server requests/month.
     entries:
       - label: Per user per month
         name: insomnia_essentials
@@ -142,10 +183,13 @@ plans:
         userMultiplied: true
     elements:
       - name: Core API design + test
+      - name: Unlimited projects
+      - name: 3 Git Sync users
+      - name: 1,000 mock server requests/month
   - id: kong-insomnia-pro
     name: Insomnia Pro
     type: subscription
-    description: $12/user/month (15% annual discount).
+    description: $12/user/month (15% annual discount). Adds unlimited Git Sync users, RBAC, and 10,000 mock server requests/month.
     entries:
       - label: Per user per month
         name: insomnia_pro
@@ -160,10 +204,13 @@ plans:
     elements:
       - name: Team collaboration
       - name: Cloud sync
+      - name: Unlimited Git Sync users
+      - name: RBAC
+      - name: 10,000 mock server requests/month
   - id: kong-insomnia-enterprise
     name: Insomnia Enterprise
     type: subscription
-    description: $45/user/month, self-serve up to 50 users.
+    description: $45/user/month, self-serve up to 50 users. Adds SSO/SCIM, domain capture, unlimited mock requests, and native vault integrations.
     entries:
       - label: Per user per month
         name: insomnia_enterprise
@@ -176,8 +223,11 @@ plans:
         price: '45.00'
         userMultiplied: true
     elements:
-      - name: SSO
+      - name: SSO/SCIM
+      - name: Domain capture
       - name: Audit logs
+      - name: Native vault integrations
+      - name: Unlimited mock server requests
       - name: Self-serve up to 50 users
 maintainers:
   - FN: Kin Lane

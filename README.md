@@ -1,5 +1,5 @@
 # Kong (kong)
-Kong Gateway is the world's most popular open-source API gateway, built on NGINX and Lua, offering a plugin ecosystem for authentication, rate limiting, observability, and traffic management at any scale.
+Kong is the AI Connectivity Company. Its platform spans Kong Gateway (open-source API gateway on NGINX and Lua), Kong Konnect (SaaS control plane), Kong AI Gateway (LLM, MCP, and agent-to-agent governance), Kong Agent Gateway, Kong Event Gateway (Kafka-native governance), Kong Mesh (service mesh on Kuma and Envoy), Kong MCP Registry, Kong Context Mesh, and Kong Insomnia (API design and testing). Together they unify governance across APIs, real-time event streams, LLM calls, MCP tools, and agent-to-agent communication for the agentic era.
 
 **URL:** [Visit APIs.json URL](https://raw.githubusercontent.com/api-evangelist/kong/refs/heads/main/apis.yml)
 
@@ -7,17 +7,17 @@ Kong Gateway is the world's most popular open-source API gateway, built on NGINX
 
 ## Tags:
 
- - API Gateway, Lua, NGINX, Open Source
+ - API Gateway, AI Gateway, AI Connectivity, Agent Gateway, Event Gateway, MCP Registry, Service Mesh, LLM, Kafka, Konnect, Open Source
 
 ## Timestamps
 
-- **Created:** 2026-03-18 
-- **Modified:** 2026-04-18 
+- **Created:** 2026-03-18
+- **Modified:** 2026-05-15
 
 ## APIs
 
 ### Kong Gateway
-Kong Gateway is an open-source, lightweight API gateway optimized for microservices, delivering unparalleled latency performance and scalability through a rich plugin ecosystem.
+Open-source, lightweight, cloud-native API gateway optimized for microservices, delivering low-latency performance and scalability through a rich plugin ecosystem. The data-plane foundation under every other Kong product.
 
 **Human URL:** [https://konghq.com/products/kong-gateway](https://konghq.com/products/kong-gateway)
 
@@ -28,14 +28,14 @@ Kong Gateway is an open-source, lightweight API gateway optimized for microservi
 #### Properties
 
 - [Documentation](https://developer.konghq.com/gateway/)
-- [GettingStarted](https://docs.konghq.com/gateway/latest/get-started/)
+- [GettingStarted](https://developer.konghq.com/gateway/install/)
 - [ChangeLog](https://developer.konghq.com/gateway/changelog/)
 - [GitHubRepository](https://github.com/Kong/kong)
 
 ### Kong Gateway Admin API
-The Kong Gateway Admin API provides a RESTful interface for configuring and managing Kong Gateway instances, including services, routes, plugins, consumers, and certificates. It is used by operators to configure the gateway programmatically or via decK declarative configuration.
+RESTful interface for configuring and managing Kong Gateway instances — services, routes, plugins, consumers, certificates, RBAC, workspaces, event hooks. The programmatic surface operators use directly or via decK declarative configuration.
 
-**Human URL:** [https://developer.konghq.com/admin-api/](https://developer.konghq.com/admin-api/)
+**Human URL:** [https://developer.konghq.com/api/gateway/admin-ee/](https://developer.konghq.com/api/gateway/admin-ee/)
 
 #### Tags:
 
@@ -43,16 +43,16 @@ The Kong Gateway Admin API provides a RESTful interface for configuring and mana
 
 #### Properties
 
-- [Documentation](https://developer.konghq.com/admin-api/)
+- [Documentation](https://developer.konghq.com/api/gateway/admin-ee/3.14/)
 - [OpenAPI](openapi/kong-gateway-admin-api.yml)
 - [JSONSchema](json-schema/kong-service-schema.json)
 - [JSONLD](json-ld/kong-context.jsonld)
 - [GitHubRepository](https://github.com/Kong/kong)
 
-### Kong Konnect API
-The Kong Konnect API provides a programmatic interface for managing the Konnect cloud platform, including control planes, API products, teams, system accounts, and developer portal configuration. It is used to automate Konnect operations and integrate with CI/CD pipelines.
+### Kong Konnect Platform API
+Unified programmatic surface for the Konnect SaaS control plane — control planes, API products, developer portals, service catalog, identity and team management, analytics dashboards, audit logging, dedicated cloud gateways, CMEK, Event Gateway, MCP Registry, Mesh Manager, metering & billing, notification hub, search. Over 20 individual API surfaces under one OpenAPI 3.1 document.
 
-**Human URL:** [https://developer.konghq.com/konnect-api/](https://developer.konghq.com/konnect-api/)
+**Human URL:** [https://developer.konghq.com/api/](https://developer.konghq.com/api/)
 
 #### Tags:
 
@@ -60,13 +60,84 @@ The Kong Konnect API provides a programmatic interface for managing the Konnect 
 
 #### Properties
 
-- [Documentation](https://developer.konghq.com/konnect-api/)
+- [Documentation](https://developer.konghq.com/api/)
+- [OpenAPI](openapi/kong-konnect-platform-api.yml)
 - [APIReference](https://developer.konghq.com/api/)
-- [Authentication](https://developer.konghq.com/konnect-api/)
+- [Authentication](https://developer.konghq.com/konnect-platform/personal-access-tokens/)
+- [SDK](https://github.com/Kong/sdk-konnect-go)
+
+### Kong AI Gateway
+Connectivity and governance layer for AI-native applications, built on Kong Gateway. Universal LLM API across OpenAI, Anthropic, Gemini, Bedrock, Azure AI, Databricks, Mistral, HuggingFace and more, with semantic caching, prompt firewalls, PII guardrails, automated RAG injection, token-level observability, MCP traffic governance, and Agent Gateway support for A2A communication.
+
+**Human URL:** [https://konghq.com/products/kong-ai-gateway](https://konghq.com/products/kong-ai-gateway)
+
+#### Tags:
+
+ - AI Gateway, LLM, MCP, A2A
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/ai-gateway/)
+- [ChangeLog](https://developer.konghq.com/gateway/changelog/)
 - [GitHubRepository](https://github.com/Kong/kong)
 
+### Kong Agent Gateway
+Capability of Kong AI Gateway (GA April 2026 with AI Gateway 3.14) that governs agent-to-agent (A2A) communication. Enforces agent identity verification, real-time policy and prompt-injection inspection, per-agent cost allocation, and unified observability across LLM calls, MCP tool invocations, and A2A messages.
+
+**Human URL:** [https://konghq.com/blog/product-releases/kong-agent-gateway](https://konghq.com/blog/product-releases/kong-agent-gateway)
+
+#### Tags:
+
+ - Agent Gateway, A2A, AI Gateway
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/ai-gateway/)
+- [Blog](https://konghq.com/blog/product-releases/kong-agent-gateway)
+
+### Kong Event Gateway
+Kafka-native gateway that proxies the native Kafka protocol between producers, consumers, and backend clusters. Governs Kafka through virtual clusters, listener-level policies, identity-aware ACLs, mTLS, and per-topic quotas — bringing Kong's HTTP/gRPC governance pattern to real-time event streams.
+
+**Human URL:** [https://konghq.com/products/event-gateway](https://konghq.com/products/event-gateway)
+
+#### Tags:
+
+ - Event Gateway, Kafka, Streaming, Governance
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/event-gateway/)
+- [OpenAPI](https://developer.konghq.com/api/konnect/event-gateway/v1/)
+
+### Kong MCP Registry
+Enterprise directory inside Kong Konnect for registering, discovering, and governing MCP servers and AI-native tools. Provides dynamic discovery for AI agents, governance gates on which MCP resources are approved, and centralized observability of tool usage, health, and failures. Launched February 2026.
+
+**Human URL:** [https://konghq.com/products/mcp-registry](https://konghq.com/products/mcp-registry)
+
+#### Tags:
+
+ - MCP, Registry, Konnect, Agentic AI
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/)
+- [Blog](https://konghq.com/blog/product-releases/kong-mcp-registry-tech-preview)
+
+### Kong Context Mesh
+Automatically discovers enterprise APIs, transforms them into agent-consumable tooling, packages them as MCP definitions with schemas and authentication, and publishes them to Kong AI Gateway with inherited access controls and runtime policy enforcement. Tech preview in Konnect since February 2026.
+
+**Human URL:** [https://konghq.com/blog/product-releases/introducing-kong-context-mesh](https://konghq.com/blog/product-releases/introducing-kong-context-mesh)
+
+#### Tags:
+
+ - Context Mesh, MCP, Agentic AI, Konnect
+
+#### Properties
+
+- [Blog](https://konghq.com/blog/product-releases/introducing-kong-context-mesh)
+
 ### Kong Mesh
-Kong Mesh is an enterprise-grade service mesh built on top of Kuma and Envoy, providing universal service mesh capabilities across Kubernetes and virtual machine environments. It supports mTLS, traffic policies, service discovery, observability, and multi-zone deployments.
+Enterprise-grade service mesh built on Kuma and Envoy. Provides universal service mesh capabilities across Kubernetes and VM environments — mTLS, traffic policies, service discovery, observability, multi-zone deployments.
 
 **Human URL:** [https://developer.konghq.com/mesh/](https://developer.konghq.com/mesh/)
 
@@ -81,7 +152,7 @@ Kong Mesh is an enterprise-grade service mesh built on top of Kuma and Envoy, pr
 - [GettingStarted](https://developer.konghq.com/mesh/)
 
 ### Kong Insomnia
-Kong Insomnia is an open-source API development platform for designing, debugging, and testing APIs. It supports REST, GraphQL, gRPC, and WebSocket protocols and provides collections, environments, mock servers, and OpenAPI spec editing for developers.
+Open-source API development platform for designing, debugging, and testing APIs. Supports REST, GraphQL, gRPC, and WebSocket; provides collections, environments, mock servers, OpenAPI editing, Git Sync, and native vault integrations.
 
 **Human URL:** [https://developer.konghq.com/insomnia/](https://developer.konghq.com/insomnia/)
 
@@ -97,47 +168,59 @@ Kong Insomnia is an open-source API development platform for designing, debuggin
 ## Common Properties
 
 - [Documentation](https://developer.konghq.com/)
-- [GettingStarted](https://docs.konghq.com/gateway/latest/get-started/)
+- [GettingStarted](https://developer.konghq.com/gateway/install/)
 - [Blog](https://konghq.com/blog)
 - [ChangeLog](https://developer.konghq.com/gateway/changelog/)
 - [GitHubOrganization](https://github.com/Kong)
 - [GitHubRepository](https://github.com/Kong/kong)
-- [SDK](https://github.com/Kong/sdk-konnect-go)
-- [CLI](https://github.com/Kong/kongctl)
+- [SDK: Kong Konnect Go SDK](https://github.com/Kong/sdk-konnect-go)
+- [SDK: Kong Portal JS SDK](https://github.com/Kong/sdk-portal-js)
+- [CLI: Kong Developer CLI](https://github.com/Kong/kongctl)
 - [Support](https://discuss.konghq.com/)
+- [Pricing](https://konghq.com/pricing)
+- [Plans](plans/kong-plans-pricing.yml)
+- [RateLimits](rate-limits/kong-rate-limits.yml)
+- [FinOps](finops/kong-finops.yml)
 
 ## Features
 
 | Name | Description |
 |------|-------------|
-| Plugin Ecosystem | Extensible plugin architecture for authentication, rate limiting, logging, transformations, and custom business logic. |
-| Service and Route Management | Define upstream services and routing rules to direct client requests to the correct backend services. |
-| Consumer Management | Create and manage API consumers with per-consumer authentication credentials and plugin configurations. |
-| Load Balancing | Built-in upstream load balancing with health checks, circuit breaking, and weighted target distribution. |
-| TLS Certificate Management | Manage TLS certificates and SNI mappings for secure HTTPS traffic termination at the gateway. |
-| Declarative Configuration | Configure Kong Gateway declaratively using decK or the Admin API for infrastructure-as-code workflows. |
-| Kong Konnect Cloud Platform | Centralized cloud control plane for managing multiple Kong Gateway instances, teams, and API products. |
-| Service Mesh with Kong Mesh | Enterprise service mesh built on Kuma and Envoy for mTLS, traffic policies, and multi-zone deployments. |
+| Plugin Ecosystem | Authentication, rate limiting, logging, transformations, custom business logic. |
+| Service and Route Management | Define upstream services and routing rules. |
+| Consumer Management | Per-consumer authentication credentials and plugin configurations. |
+| Load Balancing | Health checks, circuit breaking, weighted target distribution. |
+| TLS Certificate Management | Certificates and SNI mappings for HTTPS termination. |
+| Declarative Configuration | decK / Admin API infrastructure-as-code workflows. |
+| Kong Konnect Cloud Platform | Centralized control plane for gateways, teams, products, Dev Portals. |
+| Universal LLM API | Provider-agnostic LLM proxy with semantic caching and token-level governance. |
+| MCP Registry and Tool Governance | Centralized directory of MCP servers and tools agents can discover, with approval enforcement. |
+| Agent-to-Agent Governance | Kong Agent Gateway provides identity, policy, and observability for A2A traffic inside AI Gateway 3.14+. |
+| Kafka-Native Event Governance | Kong Event Gateway proxies native Kafka with virtual clusters, identity-aware ACLs, and quotas. |
+| Service Mesh with Kong Mesh | Kuma + Envoy mesh for mTLS, traffic policies, and multi-zone deployments. |
 
 ## Use Cases
 
 | Name | Description |
 |------|-------------|
-| API Gateway for Microservices | Route, secure, and observe traffic to microservices with authentication, rate limiting, and request transformations. |
-| Multi-Cloud API Management | Manage APIs across hybrid and multi-cloud environments with centralized control through Kong Konnect. |
-| Zero-Trust Security | Implement zero-trust security with mTLS, OAuth2, JWT validation, and API key authentication at the gateway layer. |
-| API Lifecycle Management | Manage the full API lifecycle from design with Insomnia to deployment and monitoring with Kong Gateway. |
-| Rate Limiting and Traffic Control | Protect backend services with configurable rate limiting, request size limits, and traffic shaping policies. |
+| API Gateway for Microservices | Route, secure, observe microservice traffic. |
+| Multi-Cloud API Management | Manage APIs across hybrid and multi-cloud through Konnect. |
+| Zero-Trust Security | mTLS, OAuth2, JWT, API key authentication at the gateway. |
+| AI and Agent Connectivity | Govern LLM, MCP, and A2A traffic with prompt firewalls, semantic caching, token budgets, per-agent cost allocation. |
+| Kafka Governance at Scale | Per-topic identity-aware policies and quotas without rebuilding producers/consumers. |
+| API Lifecycle Management | Design with Insomnia, deploy and monetize through Konnect. |
+| Rate Limiting and Traffic Control | Configurable rate limiting, request size limits, traffic shaping. |
 
 ## Integrations
 
 | Name | Description |
 |------|-------------|
-| Kubernetes | Deploy Kong Gateway as a Kubernetes Ingress Controller with CRD-based configuration for cloud-native environments. |
-| Prometheus and Grafana | Export gateway metrics to Prometheus and visualize API performance and health in Grafana dashboards. |
-| OpenTelemetry | Distributed tracing integration with OpenTelemetry for end-to-end request visibility across services. |
-| HashiCorp Vault | Secrets management integration for storing and retrieving API keys, certificates, and credentials. |
-| Datadog | Send gateway logs, metrics, and traces to Datadog for comprehensive API monitoring and alerting. |
+| Kubernetes | Kong Gateway as Kubernetes Ingress Controller or Kong Operator with CRDs. |
+| Prometheus and Grafana | Metrics export and dashboards. |
+| OpenTelemetry | Distributed tracing across services, LLM calls, and A2A traffic. |
+| HashiCorp Vault | Secrets management. |
+| Datadog | Logs, metrics, traces for API and AI monitoring. |
+| Akamai | Reference architecture combining AI Gateway with Akamai distributed compute. |
 
 ## Artifacts
 
@@ -145,7 +228,9 @@ Machine-readable API specifications organized by format.
 
 ### OpenAPI
 
-- [Kong Gateway Admin API](openapi/kong-gateway-admin-api.yml)
+- [Kong Gateway Admin API (Enterprise) v3.14](openapi/kong-gateway-admin-api.yml)
+- [Kong Konnect Platform API v3.14](openapi/kong-konnect-platform-api.yml)
+- [Kong Konnect Event Gateway API (linked)](https://developer.konghq.com/api/konnect/event-gateway/v1/)
 
 ## Capabilities
 
