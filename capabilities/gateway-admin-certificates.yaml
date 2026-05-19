@@ -1,0 +1,174 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — Certificates
+  description: 'Kong Enterprise Admin API — Certificates. 4 operations. Lead operation: Create a new Certificate. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Certificates
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-certificates
+    baseUri: ''
+    description: Kong Enterprise Admin API — Certificates business capability. Self-contained, no shared references.
+    resources:
+    - name: workspace-certificates
+      path: /{workspace}/certificates
+      operations:
+      - name: createcertificate
+        method: POST
+        description: Create a new Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-certificates-CertificateId
+      path: /{workspace}/certificates/{CertificateId}
+      operations:
+      - name: deletecertificate
+        method: DELETE
+        description: Delete a Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getcertificate
+        method: GET
+        description: Get a Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertcertificate
+        method: PUT
+        description: Upsert a Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-certificates-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — Certificates. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/{workspace}/certificates
+      name: workspace-certificates
+      description: REST surface for workspace-certificates.
+      operations:
+      - method: POST
+        name: createcertificate
+        description: Create a new Certificate
+        call: gateway-admin-certificates.createcertificate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/{workspace}/certificates/{certificateid}
+      name: workspace-certificates-certificateid
+      description: REST surface for workspace-certificates-CertificateId.
+      operations:
+      - method: DELETE
+        name: deletecertificate
+        description: Delete a Certificate
+        call: gateway-admin-certificates.deletecertificate
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getcertificate
+        description: Get a Certificate
+        call: gateway-admin-certificates.getcertificate
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertcertificate
+        description: Upsert a Certificate
+        call: gateway-admin-certificates.upsertcertificate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-certificates-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — Certificates. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: create-new-certificate
+      description: Create a new Certificate
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-certificates.createcertificate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-certificate
+      description: Delete a Certificate
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-certificates.deletecertificate
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-certificate
+      description: Get a Certificate
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-certificates.getcertificate
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-certificate
+      description: Upsert a Certificate
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: gateway-admin-certificates.upsertcertificate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

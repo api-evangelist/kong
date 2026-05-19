@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Vaults
+  description: 'Konnect API - Go SDK — Vaults. 5 operations. Lead operation: List all Vaults. Self-contained Naftiko capability
+    covering one Kong business surface.'
+  tags:
+  - Kong
+  - Vaults
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-vaults
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Vaults business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-control-planes-controlPlaneId-core-entities-vaults
+      path: /v2/control-planes/{controlPlaneId}/core-entities/vaults
+      operations:
+      - name: listvault
+        method: GET
+        description: List all Vaults
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createvault
+        method: POST
+        description: Create a new Vault
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-control-planes-controlPlaneId-core-entities-vaults-VaultId
+      path: /v2/control-planes/{controlPlaneId}/core-entities/vaults/{VaultId}
+      operations:
+      - name: deletevault
+        method: DELETE
+        description: Delete a Vault
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getvault
+        method: GET
+        description: Get a Vault
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertvault
+        method: PUT
+        description: Upsert a Vault
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-vaults-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Vaults. One Spectral-compliant resource per consumed operation, prefixed
+      with /v1.
+    resources:
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/vaults
+      name: v2-control-planes-controlplaneid-core-entities-vaults
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-vaults.
+      operations:
+      - method: GET
+        name: listvault
+        description: List all Vaults
+        call: konnect-platform-vaults.listvault
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createvault
+        description: Create a new Vault
+        call: konnect-platform-vaults.createvault
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/vaults/{vaultid}
+      name: v2-control-planes-controlplaneid-core-entities-vaults-vaultid
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-vaults-VaultId.
+      operations:
+      - method: DELETE
+        name: deletevault
+        description: Delete a Vault
+        call: konnect-platform-vaults.deletevault
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getvault
+        description: Get a Vault
+        call: konnect-platform-vaults.getvault
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertvault
+        description: Upsert a Vault
+        call: konnect-platform-vaults.upsertvault
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-vaults-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Vaults. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: list-all-vaults
+      description: List all Vaults
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-vaults.listvault
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-vault
+      description: Create a new Vault
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-vaults.createvault
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-vault
+      description: Delete a Vault
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-vaults.deletevault
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-vault
+      description: Get a Vault
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-vaults.getvault
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-vault
+      description: Upsert a Vault
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-vaults.upsertvault
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

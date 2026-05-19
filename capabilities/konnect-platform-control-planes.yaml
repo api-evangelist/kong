@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Control Planes
+  description: 'Konnect API - Go SDK — Control Planes. 5 operations. Lead operation: List Control Planes. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Control Planes
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-control-planes
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Control Planes business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-control-planes
+      path: /v2/control-planes
+      operations:
+      - name: listcontrolplanes
+        method: GET
+        description: List Control Planes
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createcontrolplane
+        method: POST
+        description: Create Control Plane
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-control-planes-controlPlaneId
+      path: /v2/control-planes/{controlPlaneId}
+      operations:
+      - name: getcontrolplane
+        method: GET
+        description: Get a Control Plane
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: updatecontrolplane
+        method: PATCH
+        description: Update Control Plane
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+      - name: deletecontrolplane
+        method: DELETE
+        description: Delete Control Plane
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-control-planes-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Control Planes. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/control-planes
+      name: v2-control-planes
+      description: REST surface for v2-control-planes.
+      operations:
+      - method: GET
+        name: listcontrolplanes
+        description: List Control Planes
+        call: konnect-platform-control-planes.listcontrolplanes
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createcontrolplane
+        description: Create Control Plane
+        call: konnect-platform-control-planes.createcontrolplane
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}
+      name: v2-control-planes-controlplaneid
+      description: REST surface for v2-control-planes-controlPlaneId.
+      operations:
+      - method: GET
+        name: getcontrolplane
+        description: Get a Control Plane
+        call: konnect-platform-control-planes.getcontrolplane
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updatecontrolplane
+        description: Update Control Plane
+        call: konnect-platform-control-planes.updatecontrolplane
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deletecontrolplane
+        description: Delete Control Plane
+        call: konnect-platform-control-planes.deletecontrolplane
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-control-planes-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Control Planes. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-control-planes
+      description: List Control Planes
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-control-planes.listcontrolplanes
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-control-plane
+      description: Create Control Plane
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-control-planes.createcontrolplane
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-control-plane
+      description: Get a Control Plane
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-control-planes.getcontrolplane
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-control-plane
+      description: Update Control Plane
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-control-planes.updatecontrolplane
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-control-plane
+      description: Delete Control Plane
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-control-planes.deletecontrolplane
+      outputParameters:
+      - type: object
+        mapping: $.

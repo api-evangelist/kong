@@ -1,0 +1,203 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — API Version
+  description: 'Konnect API - Go SDK — API Version. 5 operations. Lead operation: Create API Version. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - API Version
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-api-version
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — API Version business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-apis-apiId-versions
+      path: /v3/apis/{apiId}/versions
+      operations:
+      - name: createapiversion
+        method: POST
+        description: Create API Version
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: listapiversions
+        method: GET
+        description: List API Versions
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v3-apis-apiId-versions-versionId
+      path: /v3/apis/{apiId}/versions/{versionId}
+      operations:
+      - name: fetchapiversion
+        method: GET
+        description: Get an API Version
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: updateapiversion
+        method: PATCH
+        description: Update API Version
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: force
+          in: query
+          type: string
+          description: If true, allows operations to be removed from the current version when using access control enforcement.
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deleteapiversion
+        method: DELETE
+        description: Delete API Version
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-api-version-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — API Version. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/apis/{apiid}/versions
+      name: v3-apis-apiid-versions
+      description: REST surface for v3-apis-apiId-versions.
+      operations:
+      - method: POST
+        name: createapiversion
+        description: Create API Version
+        call: konnect-platform-api-version.createapiversion
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: listapiversions
+        description: List API Versions
+        call: konnect-platform-api-version.listapiversions
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/apis/{apiid}/versions/{versionid}
+      name: v3-apis-apiid-versions-versionid
+      description: REST surface for v3-apis-apiId-versions-versionId.
+      operations:
+      - method: GET
+        name: fetchapiversion
+        description: Get an API Version
+        call: konnect-platform-api-version.fetchapiversion
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updateapiversion
+        description: Update API Version
+        call: konnect-platform-api-version.updateapiversion
+        with:
+          force: rest.force
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteapiversion
+        description: Delete API Version
+        call: konnect-platform-api-version.deleteapiversion
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-api-version-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — API Version. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: create-api-version
+      description: Create API Version
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-api-version.createapiversion
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-api-versions
+      description: List API Versions
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-version.listapiversions
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-api-version
+      description: Get an API Version
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-version.fetchapiversion
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-api-version
+      description: Update API Version
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-version.updateapiversion
+      with:
+        force: tools.force
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-api-version
+      description: Delete API Version
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-api-version.deleteapiversion
+      outputParameters:
+      - type: object
+        mapping: $.

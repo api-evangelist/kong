@@ -1,0 +1,114 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — RBACUserGroups
+  description: 'Kong Enterprise Admin API — RBACUserGroups. 2 operations. Lead operation: Create a new RBAC User Group. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - RBACUserGroups
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-rbacusergroups
+    baseUri: ''
+    description: Kong Enterprise Admin API — RBACUserGroups business capability. Self-contained, no shared references.
+    resources:
+    - name: workspace-rbac-users-RBACUserIdForNestedEntities-groups
+      path: /{workspace}/rbac/users/{RBACUserIdForNestedEntities}/groups
+      operations:
+      - name: createrbacusergroup
+        method: POST
+        description: Create a new RBAC User Group
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-rbac-users-RBACUserIdForNestedEntities-groups-RBACUserGroupId
+      path: /{workspace}/rbac/users/{RBACUserIdForNestedEntities}/groups/{RBACUserGroupId}
+      operations:
+      - name: deleterbacusergroup
+        method: DELETE
+        description: Delete a RBAC User Group
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-rbacusergroups-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — RBACUserGroups. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/{workspace}/rbac/users/{rbacuseridfornestedentities}/groups
+      name: workspace-rbac-users-rbacuseridfornestedentities-groups
+      description: REST surface for workspace-rbac-users-RBACUserIdForNestedEntities-groups.
+      operations:
+      - method: POST
+        name: createrbacusergroup
+        description: Create a new RBAC User Group
+        call: gateway-admin-rbacusergroups.createrbacusergroup
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/{workspace}/rbac/users/{rbacuseridfornestedentities}/groups/{rbacusergroupid}
+      name: workspace-rbac-users-rbacuseridfornestedentities-groups-rbacusergroupid
+      description: REST surface for workspace-rbac-users-RBACUserIdForNestedEntities-groups-RBACUserGroupId.
+      operations:
+      - method: DELETE
+        name: deleterbacusergroup
+        description: Delete a RBAC User Group
+        call: gateway-admin-rbacusergroups.deleterbacusergroup
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-rbacusergroups-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — RBACUserGroups. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: create-new-rbac-user-group
+      description: Create a new RBAC User Group
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-rbacusergroups.createrbacusergroup
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-rbac-user-group
+      description: Delete a RBAC User Group
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-rbacusergroups.deleterbacusergroup
+      outputParameters:
+      - type: object
+        mapping: $.

@@ -1,0 +1,80 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Metering Events
+  description: 'Konnect API - Go SDK — Metering Events. 1 operations. Lead operation: Ingest metering events. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Metering Events
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-metering-events
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Metering Events business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-openmeter-events
+      path: /v3/openmeter/events
+      operations:
+      - name: ingestmeteringevents
+        method: POST
+        description: Ingest metering events
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-metering-events-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Metering Events. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/openmeter/events
+      name: v3-openmeter-events
+      description: REST surface for v3-openmeter-events.
+      operations:
+      - method: POST
+        name: ingestmeteringevents
+        description: Ingest metering events
+        call: konnect-platform-metering-events.ingestmeteringevents
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-metering-events-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Metering Events. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: ingest-metering-events
+      description: Ingest metering events
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-metering-events.ingestmeteringevents
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

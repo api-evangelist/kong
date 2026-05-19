@@ -1,0 +1,70 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Criteria Templates
+  description: 'Konnect API - Go SDK — Criteria Templates. 1 operations. Lead operation: List Criteria Templates. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Criteria Templates
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-criteria-templates
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Criteria Templates business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-criteria-templates
+      path: /v1/criteria-templates
+      operations:
+      - name: listcriteriatemplates
+        method: GET
+        description: List Criteria Templates
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-criteria-templates-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Criteria Templates. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v1/criteria-templates
+      name: v1-criteria-templates
+      description: REST surface for v1-criteria-templates.
+      operations:
+      - method: GET
+        name: listcriteriatemplates
+        description: List Criteria Templates
+        call: konnect-platform-criteria-templates.listcriteriatemplates
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-criteria-templates-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Criteria Templates. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-criteria-templates
+      description: List Criteria Templates
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-criteria-templates.listcriteriatemplates
+      outputParameters:
+      - type: object
+        mapping: $.

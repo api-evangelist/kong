@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Partials
+  description: 'Konnect API - Go SDK — Partials. 5 operations. Lead operation: List all Partials. Self-contained Naftiko capability
+    covering one Kong business surface.'
+  tags:
+  - Kong
+  - Partials
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-partials
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Partials business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-control-planes-controlPlaneId-core-entities-partials
+      path: /v2/control-planes/{controlPlaneId}/core-entities/partials
+      operations:
+      - name: listpartial
+        method: GET
+        description: List all Partials
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createpartial
+        method: POST
+        description: Create a new Partial
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-control-planes-controlPlaneId-core-entities-partials-PartialId
+      path: /v2/control-planes/{controlPlaneId}/core-entities/partials/{PartialId}
+      operations:
+      - name: deletepartial
+        method: DELETE
+        description: Delete a Partial
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getpartial
+        method: GET
+        description: Get a Partial
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertpartial
+        method: PUT
+        description: Upsert a Partial
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-partials-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Partials. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/partials
+      name: v2-control-planes-controlplaneid-core-entities-partials
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-partials.
+      operations:
+      - method: GET
+        name: listpartial
+        description: List all Partials
+        call: konnect-platform-partials.listpartial
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createpartial
+        description: Create a new Partial
+        call: konnect-platform-partials.createpartial
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/partials/{partialid}
+      name: v2-control-planes-controlplaneid-core-entities-partials-partialid
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-partials-PartialId.
+      operations:
+      - method: DELETE
+        name: deletepartial
+        description: Delete a Partial
+        call: konnect-platform-partials.deletepartial
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getpartial
+        description: Get a Partial
+        call: konnect-platform-partials.getpartial
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertpartial
+        description: Upsert a Partial
+        call: konnect-platform-partials.upsertpartial
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-partials-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Partials. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: list-all-partials
+      description: List all Partials
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-partials.listpartial
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-partial
+      description: Create a new Partial
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-partials.createpartial
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-partial
+      description: Delete a Partial
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-partials.deletepartial
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-partial
+      description: Get a Partial
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-partials.getpartial
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-partial
+      description: Upsert a Partial
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-partials.upsertpartial
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

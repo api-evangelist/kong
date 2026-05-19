@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — KeySets
+  description: 'Konnect API - Go SDK — KeySets. 5 operations. Lead operation: List all KeySets. Self-contained Naftiko capability
+    covering one Kong business surface.'
+  tags:
+  - Kong
+  - KeySets
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-keysets
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — KeySets business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-control-planes-controlPlaneId-core-entities-key-sets
+      path: /v2/control-planes/{controlPlaneId}/core-entities/key-sets
+      operations:
+      - name: listkeyset
+        method: GET
+        description: List all KeySets
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createkeyset
+        method: POST
+        description: Create a new KeySet
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v2-control-planes-controlPlaneId-core-entities-key-sets-KeySetId
+      path: /v2/control-planes/{controlPlaneId}/core-entities/key-sets/{KeySetId}
+      operations:
+      - name: deletekeyset
+        method: DELETE
+        description: Delete a KeySet
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getkeyset
+        method: GET
+        description: Get a KeySet
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertkeyset
+        method: PUT
+        description: Upsert a KeySet
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-keysets-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — KeySets. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/key-sets
+      name: v2-control-planes-controlplaneid-core-entities-key-sets
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-key-sets.
+      operations:
+      - method: GET
+        name: listkeyset
+        description: List all KeySets
+        call: konnect-platform-keysets.listkeyset
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createkeyset
+        description: Create a new KeySet
+        call: konnect-platform-keysets.createkeyset
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/key-sets/{keysetid}
+      name: v2-control-planes-controlplaneid-core-entities-key-sets-keysetid
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-key-sets-KeySetId.
+      operations:
+      - method: DELETE
+        name: deletekeyset
+        description: Delete a KeySet
+        call: konnect-platform-keysets.deletekeyset
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getkeyset
+        description: Get a KeySet
+        call: konnect-platform-keysets.getkeyset
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertkeyset
+        description: Upsert a KeySet
+        call: konnect-platform-keysets.upsertkeyset
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-keysets-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — KeySets. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: list-all-keysets
+      description: List all KeySets
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-keysets.listkeyset
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-keyset
+      description: Create a new KeySet
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-keysets.createkeyset
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-keyset
+      description: Delete a KeySet
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-keysets.deletekeyset
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-keyset
+      description: Get a KeySet
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-keysets.getkeyset
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-keyset
+      description: Upsert a KeySet
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-keysets.upsertkeyset
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

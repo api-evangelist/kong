@@ -1,0 +1,174 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — CA Certificates
+  description: 'Kong Enterprise Admin API — CA Certificates. 4 operations. Lead operation: Create a new CA Certificate. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - CA Certificates
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-ca-certificates
+    baseUri: ''
+    description: Kong Enterprise Admin API — CA Certificates business capability. Self-contained, no shared references.
+    resources:
+    - name: ca_certificates
+      path: /ca_certificates
+      operations:
+      - name: createcacertificate
+        method: POST
+        description: Create a new CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: ca_certificates-CACertificateId
+      path: /ca_certificates/{CACertificateId}
+      operations:
+      - name: deletecacertificate
+        method: DELETE
+        description: Delete a CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getcacertificate
+        method: GET
+        description: Get a CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertcacertificate
+        method: PUT
+        description: Upsert a CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-ca-certificates-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — CA Certificates. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/ca-certificates
+      name: ca-certificates
+      description: REST surface for ca_certificates.
+      operations:
+      - method: POST
+        name: createcacertificate
+        description: Create a new CA Certificate
+        call: gateway-admin-ca-certificates.createcacertificate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/ca-certificates/{cacertificateid}
+      name: ca-certificates-cacertificateid
+      description: REST surface for ca_certificates-CACertificateId.
+      operations:
+      - method: DELETE
+        name: deletecacertificate
+        description: Delete a CA Certificate
+        call: gateway-admin-ca-certificates.deletecacertificate
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getcacertificate
+        description: Get a CA Certificate
+        call: gateway-admin-ca-certificates.getcacertificate
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertcacertificate
+        description: Upsert a CA Certificate
+        call: gateway-admin-ca-certificates.upsertcacertificate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-ca-certificates-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — CA Certificates. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: create-new-ca-certificate
+      description: Create a new CA Certificate
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-ca-certificates.createcacertificate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-ca-certificate
+      description: Delete a CA Certificate
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-ca-certificates.deletecacertificate
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-ca-certificate
+      description: Get a CA Certificate
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-ca-certificates.getcacertificate
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-ca-certificate
+      description: Upsert a CA Certificate
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: gateway-admin-ca-certificates.upsertcacertificate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

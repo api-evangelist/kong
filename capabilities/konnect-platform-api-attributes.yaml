@@ -1,0 +1,70 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — API Attributes
+  description: 'Konnect API - Go SDK — API Attributes. 1 operations. Lead operation: List API Attributes. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - API Attributes
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-api-attributes
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — API Attributes business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-api-attributes
+      path: /v3/api-attributes
+      operations:
+      - name: listapiattributes
+        method: GET
+        description: List API Attributes
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-api-attributes-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — API Attributes. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/api-attributes
+      name: v3-api-attributes
+      description: REST surface for v3-api-attributes.
+      operations:
+      - method: GET
+        name: listapiattributes
+        description: List API Attributes
+        call: konnect-platform-api-attributes.listapiattributes
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-api-attributes-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — API Attributes. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-api-attributes
+      description: List API Attributes
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-attributes.listapiattributes
+      outputParameters:
+      - type: object
+        mapping: $.

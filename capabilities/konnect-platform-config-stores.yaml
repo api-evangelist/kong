@@ -1,0 +1,207 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Config Stores
+  description: 'Konnect API - Go SDK — Config Stores. 5 operations. Lead operation: List all config stores for a control plane.
+    Self-contained Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Config Stores
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-config-stores
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Config Stores business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-control-planes-controlPlaneId-config-stores
+      path: /v2/control-planes/{controlPlaneId}/config-stores
+      operations:
+      - name: listconfigstores
+        method: GET
+        description: List all config stores for a control plane
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createconfigstore
+        method: POST
+        description: Create Config Store
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v2-control-planes-controlPlaneId-config-stores-configStoreId
+      path: /v2/control-planes/{controlPlaneId}/config-stores/{configStoreId}
+      operations:
+      - name: getconfigstore
+        method: GET
+        description: Get a Config Store
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: updateconfigstore
+        method: PUT
+        description: Update an individual Config Store
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deleteconfigstore
+        method: DELETE
+        description: Delete Config Store
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: force
+          in: query
+          type: string
+          description: If true, delete specified config store and all secrets, even if there are secrets linked to the config
+            store If false, do not allow deletion if there are secret
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-config-stores-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Config Stores. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/control-planes/{controlplaneid}/config-stores
+      name: v2-control-planes-controlplaneid-config-stores
+      description: REST surface for v2-control-planes-controlPlaneId-config-stores.
+      operations:
+      - method: GET
+        name: listconfigstores
+        description: List all config stores for a control plane
+        call: konnect-platform-config-stores.listconfigstores
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createconfigstore
+        description: Create Config Store
+        call: konnect-platform-config-stores.createconfigstore
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}/config-stores/{configstoreid}
+      name: v2-control-planes-controlplaneid-config-stores-configstoreid
+      description: REST surface for v2-control-planes-controlPlaneId-config-stores-configStoreId.
+      operations:
+      - method: GET
+        name: getconfigstore
+        description: Get a Config Store
+        call: konnect-platform-config-stores.getconfigstore
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: updateconfigstore
+        description: Update an individual Config Store
+        call: konnect-platform-config-stores.updateconfigstore
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteconfigstore
+        description: Delete Config Store
+        call: konnect-platform-config-stores.deleteconfigstore
+        with:
+          force: rest.force
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-config-stores-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Config Stores. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-all-config-stores-control
+      description: List all config stores for a control plane
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-config-stores.listconfigstores
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-config-store
+      description: Create Config Store
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-config-stores.createconfigstore
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-config-store
+      description: Get a Config Store
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-config-stores.getconfigstore
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-individual-config-store
+      description: Update an individual Config Store
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-config-stores.updateconfigstore
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-config-store
+      description: Delete Config Store
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-config-stores.deleteconfigstore
+      with:
+        force: tools.force
+      outputParameters:
+      - type: object
+        mapping: $.

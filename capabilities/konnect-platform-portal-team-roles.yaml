@@ -1,0 +1,169 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Portal Team Roles
+  description: 'Konnect API - Go SDK — Portal Team Roles. 4 operations. Lead operation: List Portal Roles. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Portal Team Roles
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-portal-team-roles
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Portal Team Roles business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-portal-roles
+      path: /v3/portal-roles
+      operations:
+      - name: listportalroles
+        method: GET
+        description: List Portal Roles
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v3-portals-portalId-teams-teamId-assigned-roles
+      path: /v3/portals/{portalId}/teams/{teamId}/assigned-roles
+      operations:
+      - name: listportalteamroles
+        method: GET
+        description: List Team Roles
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: assignroletoportalteams
+        method: POST
+        description: Assign Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-portals-portalId-teams-teamId-assigned-roles-roleId
+      path: /v3/portals/{portalId}/teams/{teamId}/assigned-roles/{roleId}
+      operations:
+      - name: removerolefromportalteam
+        method: DELETE
+        description: Remove Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-portal-team-roles-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Portal Team Roles. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/portal-roles
+      name: v3-portal-roles
+      description: REST surface for v3-portal-roles.
+      operations:
+      - method: GET
+        name: listportalroles
+        description: List Portal Roles
+        call: konnect-platform-portal-team-roles.listportalroles
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/portals/{portalid}/teams/{teamid}/assigned-roles
+      name: v3-portals-portalid-teams-teamid-assigned-roles
+      description: REST surface for v3-portals-portalId-teams-teamId-assigned-roles.
+      operations:
+      - method: GET
+        name: listportalteamroles
+        description: List Team Roles
+        call: konnect-platform-portal-team-roles.listportalteamroles
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: assignroletoportalteams
+        description: Assign Role
+        call: konnect-platform-portal-team-roles.assignroletoportalteams
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/portals/{portalid}/teams/{teamid}/assigned-roles/{roleid}
+      name: v3-portals-portalid-teams-teamid-assigned-roles-roleid
+      description: REST surface for v3-portals-portalId-teams-teamId-assigned-roles-roleId.
+      operations:
+      - method: DELETE
+        name: removerolefromportalteam
+        description: Remove Role
+        call: konnect-platform-portal-team-roles.removerolefromportalteam
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-portal-team-roles-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Portal Team Roles. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-portal-roles
+      description: List Portal Roles
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-portal-team-roles.listportalroles
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-team-roles
+      description: List Team Roles
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-portal-team-roles.listportalteamroles
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: assign-role
+      description: Assign Role
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-portal-team-roles.assignroletoportalteams
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: remove-role
+      description: Remove Role
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-portal-team-roles.removerolefromportalteam
+      outputParameters:
+      - type: object
+        mapping: $.

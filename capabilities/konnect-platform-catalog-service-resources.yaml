@@ -1,0 +1,70 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Catalog Service Resources
+  description: 'Konnect API - Go SDK — Catalog Service Resources. 1 operations. Lead operation: List Service Resources. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Catalog Service Resources
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-catalog-service-resources
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Catalog Service Resources business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-catalog-services-id-resources
+      path: /v1/catalog-services/{id}/resources
+      operations:
+      - name: listcatalogserviceresources
+        method: GET
+        description: List Service Resources
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-catalog-service-resources-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Catalog Service Resources. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v1/catalog-services/{id}/resources
+      name: v1-catalog-services-id-resources
+      description: REST surface for v1-catalog-services-id-resources.
+      operations:
+      - method: GET
+        name: listcatalogserviceresources
+        description: List Service Resources
+        call: konnect-platform-catalog-service-resources.listcatalogserviceresources
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-catalog-service-resources-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Catalog Service Resources. One tool per consumed operation, routed
+      inline through this capability's consumes block.
+    tools:
+    - name: list-service-resources
+      description: List Service Resources
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-catalog-service-resources.listcatalogserviceresources
+      outputParameters:
+      - type: object
+        mapping: $.

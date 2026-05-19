@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Dashboards
+  description: 'Konnect API - Go SDK — Dashboards. 5 operations. Lead operation: List dashboards. Self-contained Naftiko capability
+    covering one Kong business surface.'
+  tags:
+  - Kong
+  - Dashboards
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-dashboards
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Dashboards business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-dashboards
+      path: /v2/dashboards
+      operations:
+      - name: dashboardslist
+        method: GET
+        description: List dashboards
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: dashboardscreate
+        method: POST
+        description: Create a new dashboard
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-dashboards-dashboardId
+      path: /v2/dashboards/{dashboardId}
+      operations:
+      - name: dashboardsget
+        method: GET
+        description: Get a single dashboard
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: dashboardsupdate
+        method: PUT
+        description: Update an existing dashboard
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+      - name: dashboardsdelete
+        method: DELETE
+        description: Delete an existing dashboard
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-dashboards-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Dashboards. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/dashboards
+      name: v2-dashboards
+      description: REST surface for v2-dashboards.
+      operations:
+      - method: GET
+        name: dashboardslist
+        description: List dashboards
+        call: konnect-platform-dashboards.dashboardslist
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: dashboardscreate
+        description: Create a new dashboard
+        call: konnect-platform-dashboards.dashboardscreate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/dashboards/{dashboardid}
+      name: v2-dashboards-dashboardid
+      description: REST surface for v2-dashboards-dashboardId.
+      operations:
+      - method: GET
+        name: dashboardsget
+        description: Get a single dashboard
+        call: konnect-platform-dashboards.dashboardsget
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: dashboardsupdate
+        description: Update an existing dashboard
+        call: konnect-platform-dashboards.dashboardsupdate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: dashboardsdelete
+        description: Delete an existing dashboard
+        call: konnect-platform-dashboards.dashboardsdelete
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-dashboards-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Dashboards. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-dashboards
+      description: List dashboards
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-dashboards.dashboardslist
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-dashboard
+      description: Create a new dashboard
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-dashboards.dashboardscreate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-single-dashboard
+      description: Get a single dashboard
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-dashboards.dashboardsget
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-existing-dashboard
+      description: Update an existing dashboard
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-dashboards.dashboardsupdate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-existing-dashboard
+      description: Delete an existing dashboard
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-dashboards.dashboardsdelete
+      outputParameters:
+      - type: object
+        mapping: $.

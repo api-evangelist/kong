@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Integration Instances
+  description: 'Konnect API - Go SDK — Integration Instances. 5 operations. Lead operation: Create Integration Instance. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Integration Instances
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-integration-instances
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Integration Instances business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-integration-instances
+      path: /v1/integration-instances
+      operations:
+      - name: createintegrationinstance
+        method: POST
+        description: Create Integration Instance
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: listintegrationinstances
+        method: GET
+        description: List Integration Instances
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v1-integration-instances-id
+      path: /v1/integration-instances/{id}
+      operations:
+      - name: fetchintegrationinstance
+        method: GET
+        description: Get an Integration Instance
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: updateintegrationinstance
+        method: PATCH
+        description: Update Integration Instance
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deleteintegrationinstance
+        method: DELETE
+        description: Delete Integration Instance
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-integration-instances-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Integration Instances. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v1/integration-instances
+      name: v1-integration-instances
+      description: REST surface for v1-integration-instances.
+      operations:
+      - method: POST
+        name: createintegrationinstance
+        description: Create Integration Instance
+        call: konnect-platform-integration-instances.createintegrationinstance
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: listintegrationinstances
+        description: List Integration Instances
+        call: konnect-platform-integration-instances.listintegrationinstances
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/integration-instances/{id}
+      name: v1-integration-instances-id
+      description: REST surface for v1-integration-instances-id.
+      operations:
+      - method: GET
+        name: fetchintegrationinstance
+        description: Get an Integration Instance
+        call: konnect-platform-integration-instances.fetchintegrationinstance
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updateintegrationinstance
+        description: Update Integration Instance
+        call: konnect-platform-integration-instances.updateintegrationinstance
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteintegrationinstance
+        description: Delete Integration Instance
+        call: konnect-platform-integration-instances.deleteintegrationinstance
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-integration-instances-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Integration Instances. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: create-integration-instance
+      description: Create Integration Instance
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-integration-instances.createintegrationinstance
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-integration-instances
+      description: List Integration Instances
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-integration-instances.listintegrationinstances
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-integration-instance
+      description: Get an Integration Instance
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-integration-instances.fetchintegrationinstance
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-integration-instance
+      description: Update Integration Instance
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-integration-instances.updateintegrationinstance
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-integration-instance
+      description: Delete Integration Instance
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-integration-instances.deleteintegrationinstance
+      outputParameters:
+      - type: object
+        mapping: $.

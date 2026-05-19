@@ -1,0 +1,187 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — System Accounts - Team Membership
+  description: 'Konnect API - Go SDK — System Accounts - Team Membership. 4 operations. Lead operation: List Teams for a System
+    Account. Self-contained Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - System Accounts - Team Membership
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-system-accounts-team-membership
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — System Accounts - Team Membership business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-system-accounts-accountId-teams
+      path: /v3/system-accounts/{accountId}/teams
+      operations:
+      - name: getsystemaccountsaccountidteams
+        method: GET
+        description: List Teams for a System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: filter
+          in: query
+          type: object
+          description: Filter teams returned in the response.
+    - name: v3-teams-teamId-system-accounts
+      path: /v3/teams/{teamId}/system-accounts
+      operations:
+      - name: getteamsteamidsystemaccounts
+        method: GET
+        description: List System Accounts on a Team
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: filter
+          in: query
+          type: object
+          description: Filter system accounts returned in the response.
+      - name: postteamsteamidsystemaccounts
+        method: POST
+        description: Add System Account to a Team
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-teams-teamId-system-accounts-accountId
+      path: /v3/teams/{teamId}/system-accounts/{accountId}
+      operations:
+      - name: deleteteamsteamidsystemaccountsaccountid
+        method: DELETE
+        description: Remove System Account From Team
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-system-accounts-team-membership-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — System Accounts - Team Membership. One Spectral-compliant resource
+      per consumed operation, prefixed with /v1.
+    resources:
+    - path: /v1/v3/system-accounts/{accountid}/teams
+      name: v3-system-accounts-accountid-teams
+      description: REST surface for v3-system-accounts-accountId-teams.
+      operations:
+      - method: GET
+        name: getsystemaccountsaccountidteams
+        description: List Teams for a System Account
+        call: konnect-platform-system-accounts-team-membership.getsystemaccountsaccountidteams
+        with:
+          filter: rest.filter
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/teams/{teamid}/system-accounts
+      name: v3-teams-teamid-system-accounts
+      description: REST surface for v3-teams-teamId-system-accounts.
+      operations:
+      - method: GET
+        name: getteamsteamidsystemaccounts
+        description: List System Accounts on a Team
+        call: konnect-platform-system-accounts-team-membership.getteamsteamidsystemaccounts
+        with:
+          filter: rest.filter
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postteamsteamidsystemaccounts
+        description: Add System Account to a Team
+        call: konnect-platform-system-accounts-team-membership.postteamsteamidsystemaccounts
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/teams/{teamid}/system-accounts/{accountid}
+      name: v3-teams-teamid-system-accounts-accountid
+      description: REST surface for v3-teams-teamId-system-accounts-accountId.
+      operations:
+      - method: DELETE
+        name: deleteteamsteamidsystemaccountsaccountid
+        description: Remove System Account From Team
+        call: konnect-platform-system-accounts-team-membership.deleteteamsteamidsystemaccountsaccountid
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-system-accounts-team-membership-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — System Accounts - Team Membership. One tool per consumed operation,
+      routed inline through this capability's consumes block.
+    tools:
+    - name: list-teams-system-account
+      description: List Teams for a System Account
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-system-accounts-team-membership.getsystemaccountsaccountidteams
+      with:
+        filter: tools.filter
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-system-accounts-team
+      description: List System Accounts on a Team
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-system-accounts-team-membership.getteamsteamidsystemaccounts
+      with:
+        filter: tools.filter
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: add-system-account-team
+      description: Add System Account to a Team
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-system-accounts-team-membership.postteamsteamidsystemaccounts
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: remove-system-account-team
+      description: Remove System Account From Team
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-system-accounts-team-membership.deleteteamsteamidsystemaccountsaccountid
+      outputParameters:
+      - type: object
+        mapping: $.

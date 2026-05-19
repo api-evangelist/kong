@@ -1,0 +1,174 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — SNIs
+  description: 'Kong Enterprise Admin API — SNIs. 4 operations. Lead operation: Create a new SNI. Self-contained Naftiko capability
+    covering one Kong business surface.'
+  tags:
+  - Kong
+  - SNIs
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-snis
+    baseUri: ''
+    description: Kong Enterprise Admin API — SNIs business capability. Self-contained, no shared references.
+    resources:
+    - name: workspace-snis
+      path: /{workspace}/snis
+      operations:
+      - name: createsni
+        method: POST
+        description: Create a new SNI
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-snis-SNIIdOrName
+      path: /{workspace}/snis/{SNIIdOrName}
+      operations:
+      - name: deletesni
+        method: DELETE
+        description: Delete an SNI
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getsni
+        method: GET
+        description: Get an SNI
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertsni
+        method: PUT
+        description: Upsert a SNI
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-snis-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — SNIs. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/{workspace}/snis
+      name: workspace-snis
+      description: REST surface for workspace-snis.
+      operations:
+      - method: POST
+        name: createsni
+        description: Create a new SNI
+        call: gateway-admin-snis.createsni
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/{workspace}/snis/{sniidorname}
+      name: workspace-snis-sniidorname
+      description: REST surface for workspace-snis-SNIIdOrName.
+      operations:
+      - method: DELETE
+        name: deletesni
+        description: Delete an SNI
+        call: gateway-admin-snis.deletesni
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getsni
+        description: Get an SNI
+        call: gateway-admin-snis.getsni
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertsni
+        description: Upsert a SNI
+        call: gateway-admin-snis.upsertsni
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-snis-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — SNIs. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: create-new-sni
+      description: Create a new SNI
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-snis.createsni
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-sni
+      description: Delete an SNI
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-snis.deletesni
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-sni
+      description: Get an SNI
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-snis.getsni
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-sni
+      description: Upsert a SNI
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: gateway-admin-snis.upsertsni
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

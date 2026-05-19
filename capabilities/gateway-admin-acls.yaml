@@ -1,0 +1,139 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — ACLs
+  description: 'Kong Enterprise Admin API — ACLs. 3 operations. Lead operation: Create a new ACL associated with a Consumer.
+    Self-contained Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - ACLs
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-acls
+    baseUri: ''
+    description: Kong Enterprise Admin API — ACLs business capability. Self-contained, no shared references.
+    resources:
+    - name: workspace-consumers-ConsumerIdForNestedEntities-acls
+      path: /{workspace}/consumers/{ConsumerIdForNestedEntities}/acls
+      operations:
+      - name: createaclwithconsumer
+        method: POST
+        description: Create a new ACL associated with a Consumer
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-consumers-ConsumerIdForNestedEntities-acls-ACLId
+      path: /{workspace}/consumers/{ConsumerIdForNestedEntities}/acls/{ACLId}
+      operations:
+      - name: deleteaclwithconsumer
+        method: DELETE
+        description: Delete a an ACL associated with a Consumer
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getaclwithconsumer
+        method: GET
+        description: Get an ACL associated with a Consumer
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-acls-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — ACLs. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/{workspace}/consumers/{consumeridfornestedentities}/acls
+      name: workspace-consumers-consumeridfornestedentities-acls
+      description: REST surface for workspace-consumers-ConsumerIdForNestedEntities-acls.
+      operations:
+      - method: POST
+        name: createaclwithconsumer
+        description: Create a new ACL associated with a Consumer
+        call: gateway-admin-acls.createaclwithconsumer
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/{workspace}/consumers/{consumeridfornestedentities}/acls/{aclid}
+      name: workspace-consumers-consumeridfornestedentities-acls-aclid
+      description: REST surface for workspace-consumers-ConsumerIdForNestedEntities-acls-ACLId.
+      operations:
+      - method: DELETE
+        name: deleteaclwithconsumer
+        description: Delete a an ACL associated with a Consumer
+        call: gateway-admin-acls.deleteaclwithconsumer
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getaclwithconsumer
+        description: Get an ACL associated with a Consumer
+        call: gateway-admin-acls.getaclwithconsumer
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-acls-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — ACLs. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: create-new-acl-associated-consumer
+      description: Create a new ACL associated with a Consumer
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-acls.createaclwithconsumer
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-acl-associated-consumer
+      description: Delete a an ACL associated with a Consumer
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-acls.deleteaclwithconsumer
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-acl-associated-consumer
+      description: Get an ACL associated with a Consumer
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-acls.getaclwithconsumer
+      outputParameters:
+      - type: object
+        mapping: $.

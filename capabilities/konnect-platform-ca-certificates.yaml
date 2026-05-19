@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — CA Certificates
+  description: 'Konnect API - Go SDK — CA Certificates. 5 operations. Lead operation: List all CA Certificates. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - CA Certificates
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-ca-certificates
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — CA Certificates business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-control-planes-controlPlaneId-core-entities-ca_certificates
+      path: /v2/control-planes/{controlPlaneId}/core-entities/ca_certificates
+      operations:
+      - name: listcacertificate
+        method: GET
+        description: List all CA Certificates
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createcacertificate
+        method: POST
+        description: Create a new CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-control-planes-controlPlaneId-core-entities-ca_certificates-CACertificateId
+      path: /v2/control-planes/{controlPlaneId}/core-entities/ca_certificates/{CACertificateId}
+      operations:
+      - name: deletecacertificate
+        method: DELETE
+        description: Delete a CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getcacertificate
+        method: GET
+        description: Get a CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertcacertificate
+        method: PUT
+        description: Upsert a CA Certificate
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-ca-certificates-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — CA Certificates. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/ca-certificates
+      name: v2-control-planes-controlplaneid-core-entities-ca-certificates
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-ca_certificates.
+      operations:
+      - method: GET
+        name: listcacertificate
+        description: List all CA Certificates
+        call: konnect-platform-ca-certificates.listcacertificate
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createcacertificate
+        description: Create a new CA Certificate
+        call: konnect-platform-ca-certificates.createcacertificate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/ca-certificates/{cacertificateid}
+      name: v2-control-planes-controlplaneid-core-entities-ca-certificates-cacertificateid
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-ca_certificates-CACertificateId.
+      operations:
+      - method: DELETE
+        name: deletecacertificate
+        description: Delete a CA Certificate
+        call: konnect-platform-ca-certificates.deletecacertificate
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getcacertificate
+        description: Get a CA Certificate
+        call: konnect-platform-ca-certificates.getcacertificate
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertcacertificate
+        description: Upsert a CA Certificate
+        call: konnect-platform-ca-certificates.upsertcacertificate
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-ca-certificates-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — CA Certificates. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-all-ca-certificates
+      description: List all CA Certificates
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-ca-certificates.listcacertificate
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-ca-certificate
+      description: Create a new CA Certificate
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-ca-certificates.createcacertificate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-ca-certificate
+      description: Delete a CA Certificate
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-ca-certificates.deletecacertificate
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-ca-certificate
+      description: Get a CA Certificate
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-ca-certificates.getcacertificate
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-ca-certificate
+      description: Upsert a CA Certificate
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-ca-certificates.upsertcacertificate
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

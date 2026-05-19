@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Catalog Services
+  description: 'Konnect API - Go SDK — Catalog Services. 5 operations. Lead operation: Create Service. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Catalog Services
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-catalog-services
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Catalog Services business capability. Self-contained, no shared references.
+    resources:
+    - name: v1-catalog-services
+      path: /v1/catalog-services
+      operations:
+      - name: createcatalogservice
+        method: POST
+        description: Create Service
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: listcatalogservices
+        method: GET
+        description: List Services
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v1-catalog-services-id
+      path: /v1/catalog-services/{id}
+      operations:
+      - name: fetchcatalogservice
+        method: GET
+        description: Get a Service
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: updatecatalogservice
+        method: PATCH
+        description: Update Service
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deletecatalogservice
+        method: DELETE
+        description: Delete Service
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-catalog-services-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Catalog Services. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v1/catalog-services
+      name: v1-catalog-services
+      description: REST surface for v1-catalog-services.
+      operations:
+      - method: POST
+        name: createcatalogservice
+        description: Create Service
+        call: konnect-platform-catalog-services.createcatalogservice
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: listcatalogservices
+        description: List Services
+        call: konnect-platform-catalog-services.listcatalogservices
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v1/catalog-services/{id}
+      name: v1-catalog-services-id
+      description: REST surface for v1-catalog-services-id.
+      operations:
+      - method: GET
+        name: fetchcatalogservice
+        description: Get a Service
+        call: konnect-platform-catalog-services.fetchcatalogservice
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updatecatalogservice
+        description: Update Service
+        call: konnect-platform-catalog-services.updatecatalogservice
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deletecatalogservice
+        description: Delete Service
+        call: konnect-platform-catalog-services.deletecatalogservice
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-catalog-services-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Catalog Services. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: create-service
+      description: Create Service
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-catalog-services.createcatalogservice
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-services
+      description: List Services
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-catalog-services.listcatalogservices
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-service
+      description: Get a Service
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-catalog-services.fetchcatalogservice
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-service
+      description: Update Service
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-catalog-services.updatecatalogservice
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-service
+      description: Delete Service
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-catalog-services.deletecatalogservice
+      outputParameters:
+      - type: object
+        mapping: $.

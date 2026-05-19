@@ -1,0 +1,206 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — System Accounts
+  description: 'Konnect API - Go SDK — System Accounts. 5 operations. Lead operation: List System Accounts. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - System Accounts
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-system-accounts
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — System Accounts business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-system-accounts
+      path: /v3/system-accounts
+      operations:
+      - name: getsystemaccounts
+        method: GET
+        description: List System Accounts
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: filter
+          in: query
+          type: object
+          description: Filter system accounts returned in the response.
+      - name: postsystemaccounts
+        method: POST
+        description: Create System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-system-accounts-accountId
+      path: /v3/system-accounts/{accountId}
+      operations:
+      - name: getsystemaccountsid
+        method: GET
+        description: Get a System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: patchsystemaccountsid
+        method: PATCH
+        description: Update System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deletesystemaccountsid
+        method: DELETE
+        description: Delete System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-system-accounts-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — System Accounts. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/system-accounts
+      name: v3-system-accounts
+      description: REST surface for v3-system-accounts.
+      operations:
+      - method: GET
+        name: getsystemaccounts
+        description: List System Accounts
+        call: konnect-platform-system-accounts.getsystemaccounts
+        with:
+          filter: rest.filter
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postsystemaccounts
+        description: Create System Account
+        call: konnect-platform-system-accounts.postsystemaccounts
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/system-accounts/{accountid}
+      name: v3-system-accounts-accountid
+      description: REST surface for v3-system-accounts-accountId.
+      operations:
+      - method: GET
+        name: getsystemaccountsid
+        description: Get a System Account
+        call: konnect-platform-system-accounts.getsystemaccountsid
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: patchsystemaccountsid
+        description: Update System Account
+        call: konnect-platform-system-accounts.patchsystemaccountsid
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deletesystemaccountsid
+        description: Delete System Account
+        call: konnect-platform-system-accounts.deletesystemaccountsid
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-system-accounts-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — System Accounts. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-system-accounts
+      description: List System Accounts
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-system-accounts.getsystemaccounts
+      with:
+        filter: tools.filter
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-system-account
+      description: Create System Account
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-system-accounts.postsystemaccounts
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-system-account
+      description: Get a System Account
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-system-accounts.getsystemaccountsid
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-system-account
+      description: Update System Account
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-system-accounts.patchsystemaccountsid
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-system-account
+      description: Delete System Account
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-system-accounts.deletesystemaccountsid
+      outputParameters:
+      - type: object
+        mapping: $.

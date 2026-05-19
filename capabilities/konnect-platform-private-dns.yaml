@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Private DNS
+  description: 'Konnect API - Go SDK — Private DNS. 5 operations. Lead operation: List Private DNS. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Private DNS
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-private-dns
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Private DNS business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-cloud-gateways-networks-networkId-private-dns
+      path: /v2/cloud-gateways/networks/{networkId}/private-dns
+      operations:
+      - name: listprivatedns
+        method: GET
+        description: List Private DNS
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createprivatedns
+        method: POST
+        description: Create Private DNS
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-cloud-gateways-networks-networkId-private-dns-privateDnsId
+      path: /v2/cloud-gateways/networks/{networkId}/private-dns/{privateDnsId}
+      operations:
+      - name: getprivatedns
+        method: GET
+        description: Get Private DNS
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: updateprivatedns
+        method: PATCH
+        description: Update Private DNS
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+      - name: deleteprivatedns
+        method: DELETE
+        description: Delete Private DNS
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-private-dns-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Private DNS. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/cloud-gateways/networks/{networkid}/private-dns
+      name: v2-cloud-gateways-networks-networkid-private-dns
+      description: REST surface for v2-cloud-gateways-networks-networkId-private-dns.
+      operations:
+      - method: GET
+        name: listprivatedns
+        description: List Private DNS
+        call: konnect-platform-private-dns.listprivatedns
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createprivatedns
+        description: Create Private DNS
+        call: konnect-platform-private-dns.createprivatedns
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/cloud-gateways/networks/{networkid}/private-dns/{privatednsid}
+      name: v2-cloud-gateways-networks-networkid-private-dns-privatednsid
+      description: REST surface for v2-cloud-gateways-networks-networkId-private-dns-privateDnsId.
+      operations:
+      - method: GET
+        name: getprivatedns
+        description: Get Private DNS
+        call: konnect-platform-private-dns.getprivatedns
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updateprivatedns
+        description: Update Private DNS
+        call: konnect-platform-private-dns.updateprivatedns
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteprivatedns
+        description: Delete Private DNS
+        call: konnect-platform-private-dns.deleteprivatedns
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-private-dns-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Private DNS. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-private-dns
+      description: List Private DNS
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-private-dns.listprivatedns
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-private-dns
+      description: Create Private DNS
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-private-dns.createprivatedns
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-private-dns
+      description: Get Private DNS
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-private-dns.getprivatedns
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-private-dns
+      description: Update Private DNS
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-private-dns.updateprivatedns
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-private-dns
+      description: Delete Private DNS
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-private-dns.deleteprivatedns
+      outputParameters:
+      - type: object
+        mapping: $.

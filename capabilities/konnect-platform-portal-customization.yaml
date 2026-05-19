@@ -1,0 +1,140 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Portal Customization
+  description: 'Konnect API - Go SDK — Portal Customization. 3 operations. Lead operation: Get Customization. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Portal Customization
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-portal-customization
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Portal Customization business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-portals-portalId-customization
+      path: /v3/portals/{portalId}/customization
+      operations:
+      - name: getportalcustomization
+        method: GET
+        description: Get Customization
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: replaceportalcustomization
+        method: PUT
+        description: Replace Customization
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: updateportalcustomization
+        method: PATCH
+        description: Update Customization
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-portal-customization-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Portal Customization. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v3/portals/{portalid}/customization
+      name: v3-portals-portalid-customization
+      description: REST surface for v3-portals-portalId-customization.
+      operations:
+      - method: GET
+        name: getportalcustomization
+        description: Get Customization
+        call: konnect-platform-portal-customization.getportalcustomization
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: replaceportalcustomization
+        description: Replace Customization
+        call: konnect-platform-portal-customization.replaceportalcustomization
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updateportalcustomization
+        description: Update Customization
+        call: konnect-platform-portal-customization.updateportalcustomization
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-portal-customization-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Portal Customization. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: get-customization
+      description: Get Customization
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-portal-customization.getportalcustomization
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: replace-customization
+      description: Replace Customization
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-portal-customization.replaceportalcustomization
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-customization
+      description: Update Customization
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-portal-customization.updateportalcustomization
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

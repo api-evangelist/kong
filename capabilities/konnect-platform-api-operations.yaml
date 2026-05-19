@@ -1,0 +1,102 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — API Operations
+  description: 'Konnect API - Go SDK — API Operations. 2 operations. Lead operation: List API Operations. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - API Operations
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-api-operations
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — API Operations business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-apis-apiId-operations
+      path: /v3/apis/{apiId}/operations
+      operations:
+      - name: listapioperations
+        method: GET
+        description: List API Operations
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v3-apis-apiId-operations-operationId
+      path: /v3/apis/{apiId}/operations/{operationId}
+      operations:
+      - name: fetchapioperation
+        method: GET
+        description: Get an API Operation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-api-operations-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — API Operations. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/apis/{apiid}/operations
+      name: v3-apis-apiid-operations
+      description: REST surface for v3-apis-apiId-operations.
+      operations:
+      - method: GET
+        name: listapioperations
+        description: List API Operations
+        call: konnect-platform-api-operations.listapioperations
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/apis/{apiid}/operations/{operationid}
+      name: v3-apis-apiid-operations-operationid
+      description: REST surface for v3-apis-apiId-operations-operationId.
+      operations:
+      - method: GET
+        name: fetchapioperation
+        description: Get an API Operation
+        call: konnect-platform-api-operations.fetchapioperation
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-api-operations-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — API Operations. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-api-operations
+      description: List API Operations
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-operations.listapioperations
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-api-operation
+      description: Get an API Operation
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-operations.fetchapioperation
+      outputParameters:
+      - type: object
+        mapping: $.

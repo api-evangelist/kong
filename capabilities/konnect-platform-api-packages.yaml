@@ -1,0 +1,197 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — API Packages
+  description: 'Konnect API - Go SDK — API Packages. 5 operations. Lead operation: List API Packages. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - API Packages
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-api-packages
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — API Packages business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-api-packages
+      path: /v3/api-packages
+      operations:
+      - name: listapipackages
+        method: GET
+        description: List API Packages
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createapipackage
+        method: POST
+        description: Create API Package
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-api-packages-packageId
+      path: /v3/api-packages/{packageId}
+      operations:
+      - name: getapipackage
+        method: GET
+        description: Get API Package
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: patchapipackage
+        method: PATCH
+        description: Patch API Package
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deleteapipackage
+        method: DELETE
+        description: Delete API Package
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-api-packages-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — API Packages. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/api-packages
+      name: v3-api-packages
+      description: REST surface for v3-api-packages.
+      operations:
+      - method: GET
+        name: listapipackages
+        description: List API Packages
+        call: konnect-platform-api-packages.listapipackages
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createapipackage
+        description: Create API Package
+        call: konnect-platform-api-packages.createapipackage
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/api-packages/{packageid}
+      name: v3-api-packages-packageid
+      description: REST surface for v3-api-packages-packageId.
+      operations:
+      - method: GET
+        name: getapipackage
+        description: Get API Package
+        call: konnect-platform-api-packages.getapipackage
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: patchapipackage
+        description: Patch API Package
+        call: konnect-platform-api-packages.patchapipackage
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteapipackage
+        description: Delete API Package
+        call: konnect-platform-api-packages.deleteapipackage
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-api-packages-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — API Packages. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-api-packages
+      description: List API Packages
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-packages.listapipackages
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-api-package
+      description: Create API Package
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-api-packages.createapipackage
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-api-package
+      description: Get API Package
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-packages.getapipackage
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: patch-api-package
+      description: Patch API Package
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-packages.patchapipackage
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-api-package
+      description: Delete API Package
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-api-packages.deleteapipackage
+      outputParameters:
+      - type: object
+        mapping: $.

@@ -1,0 +1,174 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — RBACRoles
+  description: 'Kong Enterprise Admin API — RBACRoles. 4 operations. Lead operation: Create a new RBAC Role. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - RBACRoles
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-rbacroles
+    baseUri: ''
+    description: Kong Enterprise Admin API — RBACRoles business capability. Self-contained, no shared references.
+    resources:
+    - name: workspace-rbac-roles
+      path: /{workspace}/rbac/roles
+      operations:
+      - name: createrbacrole
+        method: POST
+        description: Create a new RBAC Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-rbac-roles-RBACRoleId
+      path: /{workspace}/rbac/roles/{RBACRoleId}
+      operations:
+      - name: deleterbacrole
+        method: DELETE
+        description: Delete a RBAC Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getrbacrole
+        method: GET
+        description: Get a RBAC Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertrbacrole
+        method: PUT
+        description: Upsert a RBAC Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-rbacroles-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — RBACRoles. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/{workspace}/rbac/roles
+      name: workspace-rbac-roles
+      description: REST surface for workspace-rbac-roles.
+      operations:
+      - method: POST
+        name: createrbacrole
+        description: Create a new RBAC Role
+        call: gateway-admin-rbacroles.createrbacrole
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/{workspace}/rbac/roles/{rbacroleid}
+      name: workspace-rbac-roles-rbacroleid
+      description: REST surface for workspace-rbac-roles-RBACRoleId.
+      operations:
+      - method: DELETE
+        name: deleterbacrole
+        description: Delete a RBAC Role
+        call: gateway-admin-rbacroles.deleterbacrole
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getrbacrole
+        description: Get a RBAC Role
+        call: gateway-admin-rbacroles.getrbacrole
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertrbacrole
+        description: Upsert a RBAC Role
+        call: gateway-admin-rbacroles.upsertrbacrole
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-rbacroles-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — RBACRoles. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: create-new-rbac-role
+      description: Create a new RBAC Role
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-rbacroles.createrbacrole
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-rbac-role
+      description: Delete a RBAC Role
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-rbacroles.deleterbacrole
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-rbac-role
+      description: Get a RBAC Role
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-rbacroles.getrbacrole
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-rbac-role
+      description: Upsert a RBAC Role
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: gateway-admin-rbacroles.upsertrbacrole
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

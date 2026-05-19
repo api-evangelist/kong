@@ -1,0 +1,171 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — System Accounts - Roles
+  description: 'Konnect API - Go SDK — System Accounts - Roles. 4 operations. Lead operation: List Assigned Roles for System
+    Account. Self-contained Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - System Accounts - Roles
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-system-accounts-roles
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — System Accounts - Roles business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-system-accounts-accountId-assigned-roles
+      path: /v3/system-accounts/{accountId}/assigned-roles
+      operations:
+      - name: getsystemaccountsaccountidassignedroles
+        method: GET
+        description: List Assigned Roles for System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: filter
+          in: query
+          type: object
+          description: Filter roles returned in the response.
+      - name: postsystemaccountsaccountidassignedroles
+        method: POST
+        description: Create Assigned Role for System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-system-accounts-accountId-assigned-roles-roleId
+      path: /v3/system-accounts/{accountId}/assigned-roles/{roleId}
+      operations:
+      - name: getsystemaccountrole
+        method: GET
+        description: Get System Account Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: deletesystemaccountsaccountidassignedrolesroleid
+        method: DELETE
+        description: Delete Assigned Role from System Account
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-system-accounts-roles-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — System Accounts - Roles. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v3/system-accounts/{accountid}/assigned-roles
+      name: v3-system-accounts-accountid-assigned-roles
+      description: REST surface for v3-system-accounts-accountId-assigned-roles.
+      operations:
+      - method: GET
+        name: getsystemaccountsaccountidassignedroles
+        description: List Assigned Roles for System Account
+        call: konnect-platform-system-accounts-roles.getsystemaccountsaccountidassignedroles
+        with:
+          filter: rest.filter
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: postsystemaccountsaccountidassignedroles
+        description: Create Assigned Role for System Account
+        call: konnect-platform-system-accounts-roles.postsystemaccountsaccountidassignedroles
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/system-accounts/{accountid}/assigned-roles/{roleid}
+      name: v3-system-accounts-accountid-assigned-roles-roleid
+      description: REST surface for v3-system-accounts-accountId-assigned-roles-roleId.
+      operations:
+      - method: GET
+        name: getsystemaccountrole
+        description: Get System Account Role
+        call: konnect-platform-system-accounts-roles.getsystemaccountrole
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deletesystemaccountsaccountidassignedrolesroleid
+        description: Delete Assigned Role from System Account
+        call: konnect-platform-system-accounts-roles.deletesystemaccountsaccountidassignedrolesroleid
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-system-accounts-roles-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — System Accounts - Roles. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-assigned-roles-system-account
+      description: List Assigned Roles for System Account
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-system-accounts-roles.getsystemaccountsaccountidassignedroles
+      with:
+        filter: tools.filter
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-assigned-role-system-account
+      description: Create Assigned Role for System Account
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-system-accounts-roles.postsystemaccountsaccountidassignedroles
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-system-account-role
+      description: Get System Account Role
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-system-accounts-roles.getsystemaccountrole
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-assigned-role-system-account
+      description: Delete Assigned Role from System Account
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-system-accounts-roles.deletesystemaccountsaccountidassignedrolesroleid
+      outputParameters:
+      - type: object
+        mapping: $.

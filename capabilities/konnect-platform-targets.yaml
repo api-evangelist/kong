@@ -1,0 +1,229 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Targets
+  description: 'Konnect API - Go SDK — Targets. 6 operations. Lead operation: List all targets for a control plane. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Targets
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-targets
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Targets business capability. Self-contained, no shared references.
+    resources:
+    - name: v2-control-planes-controlPlaneId-core-entities-targets
+      path: /v2/control-planes/{controlPlaneId}/core-entities/targets
+      operations:
+      - name: listtargets
+        method: GET
+        description: List all targets for a control plane
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v2-control-planes-controlPlaneId-core-entities-upstreams-UpstreamIdForTarget-tar
+      path: /v2/control-planes/{controlPlaneId}/core-entities/upstreams/{UpstreamIdForTarget}/targets
+      operations:
+      - name: listtargetwithupstream
+        method: GET
+        description: List all Targets associated with an Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createtargetwithupstream
+        method: POST
+        description: Create a new Target associated with an Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-control-planes-controlPlaneId-core-entities-upstreams-UpstreamIdForTarget-tar
+      path: /v2/control-planes/{controlPlaneId}/core-entities/upstreams/{UpstreamIdForTarget}/targets/{TargetId}
+      operations:
+      - name: deletetargetwithupstream
+        method: DELETE
+        description: Delete a a Target associated with an Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: gettargetwithupstream
+        method: GET
+        description: Get a Target associated with an Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upserttargetwithupstream
+        method: PUT
+        description: Upsert a Target associated with an Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-targets-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Targets. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/targets
+      name: v2-control-planes-controlplaneid-core-entities-targets
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-targets.
+      operations:
+      - method: GET
+        name: listtargets
+        description: List all targets for a control plane
+        call: konnect-platform-targets.listtargets
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/upstreams/{upstreamidfortarget}/targets
+      name: v2-control-planes-controlplaneid-core-entities-upstreams-upstreamidfortarget-tar
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-upstreams-UpstreamIdForTarget-tar.
+      operations:
+      - method: GET
+        name: listtargetwithupstream
+        description: List all Targets associated with an Upstream
+        call: konnect-platform-targets.listtargetwithupstream
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createtargetwithupstream
+        description: Create a new Target associated with an Upstream
+        call: konnect-platform-targets.createtargetwithupstream
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v2/control-planes/{controlplaneid}/core-entities/upstreams/{upstreamidfortarget}/targets/{targetid}
+      name: v2-control-planes-controlplaneid-core-entities-upstreams-upstreamidfortarget-tar
+      description: REST surface for v2-control-planes-controlPlaneId-core-entities-upstreams-UpstreamIdForTarget-tar.
+      operations:
+      - method: DELETE
+        name: deletetargetwithupstream
+        description: Delete a a Target associated with an Upstream
+        call: konnect-platform-targets.deletetargetwithupstream
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: gettargetwithupstream
+        description: Get a Target associated with an Upstream
+        call: konnect-platform-targets.gettargetwithupstream
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upserttargetwithupstream
+        description: Upsert a Target associated with an Upstream
+        call: konnect-platform-targets.upserttargetwithupstream
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-targets-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Targets. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: list-all-targets-control-plane
+      description: List all targets for a control plane
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-targets.listtargets
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-all-targets-associated-upstream
+      description: List all Targets associated with an Upstream
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-targets.listtargetwithupstream
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-target-associated-upstream
+      description: Create a new Target associated with an Upstream
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: false
+      call: konnect-platform-targets.createtargetwithupstream
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-target-associated-upstream
+      description: Delete a a Target associated with an Upstream
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-targets.deletetargetwithupstream
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-target-associated-upstream
+      description: Get a Target associated with an Upstream
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-targets.gettargetwithupstream
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-target-associated-upstream
+      description: Upsert a Target associated with an Upstream
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-targets.upserttargetwithupstream
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

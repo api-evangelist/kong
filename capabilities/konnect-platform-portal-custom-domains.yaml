@@ -1,0 +1,165 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Portal Custom Domains
+  description: 'Konnect API - Go SDK — Portal Custom Domains. 4 operations. Lead operation: Get Custom Domain. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Portal Custom Domains
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-portal-custom-domains
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Portal Custom Domains business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-portals-portalId-custom-domain
+      path: /v3/portals/{portalId}/custom-domain
+      operations:
+      - name: getportalcustomdomain
+        method: GET
+        description: Get Custom Domain
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createportalcustomdomain
+        method: POST
+        description: Create Custom Domain
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: updateportalcustomdomain
+        method: PATCH
+        description: Enable or Disable Domain
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deleteportalcustomdomain
+        method: DELETE
+        description: Remove Domain
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-portal-custom-domains-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Portal Custom Domains. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v3/portals/{portalid}/custom-domain
+      name: v3-portals-portalid-custom-domain
+      description: REST surface for v3-portals-portalId-custom-domain.
+      operations:
+      - method: GET
+        name: getportalcustomdomain
+        description: Get Custom Domain
+        call: konnect-platform-portal-custom-domains.getportalcustomdomain
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createportalcustomdomain
+        description: Create Custom Domain
+        call: konnect-platform-portal-custom-domains.createportalcustomdomain
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updateportalcustomdomain
+        description: Enable or Disable Domain
+        call: konnect-platform-portal-custom-domains.updateportalcustomdomain
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteportalcustomdomain
+        description: Remove Domain
+        call: konnect-platform-portal-custom-domains.deleteportalcustomdomain
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-portal-custom-domains-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Portal Custom Domains. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: get-custom-domain
+      description: Get Custom Domain
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-portal-custom-domains.getportalcustomdomain
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-custom-domain
+      description: Create Custom Domain
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-portal-custom-domains.createportalcustomdomain
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: enable-disable-domain
+      description: Enable or Disable Domain
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-portal-custom-domains.updateportalcustomdomain
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: remove-domain
+      description: Remove Domain
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-portal-custom-domains.deleteportalcustomdomain
+      outputParameters:
+      - type: object
+        mapping: $.

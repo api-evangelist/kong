@@ -1,0 +1,169 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — API Implementation
+  description: 'Konnect API - Go SDK — API Implementation. 4 operations. Lead operation: List API Implementations. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - API Implementation
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-api-implementation
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — API Implementation business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-api-implementations
+      path: /v3/api-implementations
+      operations:
+      - name: listapiimplementations
+        method: GET
+        description: List API Implementations
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v3-apis-apiId-implementations
+      path: /v3/apis/{apiId}/implementations
+      operations:
+      - name: createapiimplementation
+        method: POST
+        description: Create API Implementation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-apis-apiId-implementations-implementationId
+      path: /v3/apis/{apiId}/implementations/{implementationId}
+      operations:
+      - name: fetchapiimplementation
+        method: GET
+        description: Get an API Implementation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: deleteapiimplementation
+        method: DELETE
+        description: Delete API Implementation
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-api-implementation-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — API Implementation. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/v3/api-implementations
+      name: v3-api-implementations
+      description: REST surface for v3-api-implementations.
+      operations:
+      - method: GET
+        name: listapiimplementations
+        description: List API Implementations
+        call: konnect-platform-api-implementation.listapiimplementations
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/apis/{apiid}/implementations
+      name: v3-apis-apiid-implementations
+      description: REST surface for v3-apis-apiId-implementations.
+      operations:
+      - method: POST
+        name: createapiimplementation
+        description: Create API Implementation
+        call: konnect-platform-api-implementation.createapiimplementation
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/apis/{apiid}/implementations/{implementationid}
+      name: v3-apis-apiid-implementations-implementationid
+      description: REST surface for v3-apis-apiId-implementations-implementationId.
+      operations:
+      - method: GET
+        name: fetchapiimplementation
+        description: Get an API Implementation
+        call: konnect-platform-api-implementation.fetchapiimplementation
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteapiimplementation
+        description: Delete API Implementation
+        call: konnect-platform-api-implementation.deleteapiimplementation
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-api-implementation-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — API Implementation. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-api-implementations
+      description: List API Implementations
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-implementation.listapiimplementations
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-api-implementation
+      description: Create API Implementation
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-api-implementation.createapiimplementation
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-api-implementation
+      description: Get an API Implementation
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-api-implementation.fetchapiimplementation
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-api-implementation
+      description: Delete API Implementation
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-api-implementation.deleteapiimplementation
+      outputParameters:
+      - type: object
+        mapping: $.

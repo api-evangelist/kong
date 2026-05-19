@@ -1,0 +1,174 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — Upstreams
+  description: 'Kong Enterprise Admin API — Upstreams. 4 operations. Lead operation: Create a new Upstream. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Upstreams
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-upstreams
+    baseUri: ''
+    description: Kong Enterprise Admin API — Upstreams business capability. Self-contained, no shared references.
+    resources:
+    - name: workspace-upstreams
+      path: /{workspace}/upstreams
+      operations:
+      - name: createupstream
+        method: POST
+        description: Create a new Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-upstreams-UpstreamIdOrName
+      path: /{workspace}/upstreams/{UpstreamIdOrName}
+      operations:
+      - name: deleteupstream
+        method: DELETE
+        description: Delete an Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getupstream
+        method: GET
+        description: Get an Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertupstream
+        method: PUT
+        description: Upsert a Upstream
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-upstreams-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — Upstreams. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/{workspace}/upstreams
+      name: workspace-upstreams
+      description: REST surface for workspace-upstreams.
+      operations:
+      - method: POST
+        name: createupstream
+        description: Create a new Upstream
+        call: gateway-admin-upstreams.createupstream
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/{workspace}/upstreams/{upstreamidorname}
+      name: workspace-upstreams-upstreamidorname
+      description: REST surface for workspace-upstreams-UpstreamIdOrName.
+      operations:
+      - method: DELETE
+        name: deleteupstream
+        description: Delete an Upstream
+        call: gateway-admin-upstreams.deleteupstream
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getupstream
+        description: Get an Upstream
+        call: gateway-admin-upstreams.getupstream
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertupstream
+        description: Upsert a Upstream
+        call: gateway-admin-upstreams.upsertupstream
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-upstreams-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — Upstreams. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: create-new-upstream
+      description: Create a new Upstream
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-upstreams.createupstream
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-upstream
+      description: Delete an Upstream
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-upstreams.deleteupstream
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-upstream
+      description: Get an Upstream
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-upstreams.getupstream
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-upstream
+      description: Upsert a Upstream
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: gateway-admin-upstreams.upsertupstream
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

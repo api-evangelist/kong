@@ -1,0 +1,206 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Teams
+  description: 'Konnect API - Go SDK — Teams. 5 operations. Lead operation: List Teams. Self-contained Naftiko capability
+    covering one Kong business surface.'
+  tags:
+  - Kong
+  - Teams
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-teams
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Teams business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-teams
+      path: /v3/teams
+      operations:
+      - name: listteams
+        method: GET
+        description: List Teams
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: filter
+          in: query
+          type: object
+          description: Filter teams returned in the response.
+      - name: createteam
+        method: POST
+        description: Create Team
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-teams-teamId
+      path: /v3/teams/{teamId}
+      operations:
+      - name: getteam
+        method: GET
+        description: Get a Team
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: updateteam
+        method: PATCH
+        description: Update Team
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+      - name: deleteteam
+        method: DELETE
+        description: Delete Team
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-teams-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Teams. One Spectral-compliant resource per consumed operation, prefixed
+      with /v1.
+    resources:
+    - path: /v1/v3/teams
+      name: v3-teams
+      description: REST surface for v3-teams.
+      operations:
+      - method: GET
+        name: listteams
+        description: List Teams
+        call: konnect-platform-teams.listteams
+        with:
+          filter: rest.filter
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createteam
+        description: Create Team
+        call: konnect-platform-teams.createteam
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/teams/{teamid}
+      name: v3-teams-teamid
+      description: REST surface for v3-teams-teamId.
+      operations:
+      - method: GET
+        name: getteam
+        description: Get a Team
+        call: konnect-platform-teams.getteam
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PATCH
+        name: updateteam
+        description: Update Team
+        call: konnect-platform-teams.updateteam
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deleteteam
+        description: Delete Team
+        call: konnect-platform-teams.deleteteam
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-teams-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Teams. One tool per consumed operation, routed inline through this
+      capability's consumes block.
+    tools:
+    - name: list-teams
+      description: List Teams
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-teams.listteams
+      with:
+        filter: tools.filter
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-team
+      description: Create Team
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-teams.createteam
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-team
+      description: Get a Team
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-teams.getteam
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-team
+      description: Update Team
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-teams.updateteam
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-team
+      description: Delete Team
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-teams.deleteteam
+      outputParameters:
+      - type: object
+        mapping: $.

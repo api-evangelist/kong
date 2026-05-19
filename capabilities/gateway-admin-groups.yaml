@@ -1,0 +1,257 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — Groups
+  description: 'Kong Enterprise Admin API — Groups. 6 operations. Lead operation: Create a new Group. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Groups
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-groups
+    baseUri: ''
+    description: Kong Enterprise Admin API — Groups business capability. Self-contained, no shared references.
+    resources:
+    - name: groups
+      path: /groups
+      operations:
+      - name: creategroup
+        method: POST
+        description: Create a new Group
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: groups-GroupId
+      path: /groups/{GroupId}
+      operations:
+      - name: deletegroup
+        method: DELETE
+        description: Delete a Group
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getgroup
+        method: GET
+        description: Get a Group
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: upsertgroup
+        method: PUT
+        description: Upsert a Group
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: groups-GroupId-roles
+      path: /groups/{GroupId}/roles
+      operations:
+      - name: deletegroupsgroupidornameroles
+        method: DELETE
+        description: Delete a Group’s Role
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: rbac_role_id
+          in: query
+          type: string
+          description: ID of the role to remove from the group.
+          required: true
+        - name: workspace_id
+          in: query
+          type: string
+          required: true
+      - name: creategroupsgroupidornameroles
+        method: POST
+        description: Create Group's Roles
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-groups-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — Groups. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/groups
+      name: groups
+      description: REST surface for groups.
+      operations:
+      - method: POST
+        name: creategroup
+        description: Create a new Group
+        call: gateway-admin-groups.creategroup
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/groups/{groupid}
+      name: groups-groupid
+      description: REST surface for groups-GroupId.
+      operations:
+      - method: DELETE
+        name: deletegroup
+        description: Delete a Group
+        call: gateway-admin-groups.deletegroup
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getgroup
+        description: Get a Group
+        call: gateway-admin-groups.getgroup
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: upsertgroup
+        description: Upsert a Group
+        call: gateway-admin-groups.upsertgroup
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/groups/{groupid}/roles
+      name: groups-groupid-roles
+      description: REST surface for groups-GroupId-roles.
+      operations:
+      - method: DELETE
+        name: deletegroupsgroupidornameroles
+        description: Delete a Group’s Role
+        call: gateway-admin-groups.deletegroupsgroupidornameroles
+        with:
+          rbac_role_id: rest.rbac_role_id
+          workspace_id: rest.workspace_id
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: creategroupsgroupidornameroles
+        description: Create Group's Roles
+        call: gateway-admin-groups.creategroupsgroupidornameroles
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-groups-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — Groups. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: create-new-group
+      description: Create a new Group
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-groups.creategroup
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-group
+      description: Delete a Group
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-groups.deletegroup
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-group
+      description: Get a Group
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-groups.getgroup
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: upsert-group
+      description: Upsert a Group
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: gateway-admin-groups.upsertgroup
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-group-s-role
+      description: Delete a Group’s Role
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-groups.deletegroupsgroupidornameroles
+      with:
+        rbac_role_id: tools.rbac_role_id
+        workspace_id: tools.workspace_id
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-group-s-roles
+      description: Create Group's Roles
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-groups.creategroupsgroupidornameroles
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.

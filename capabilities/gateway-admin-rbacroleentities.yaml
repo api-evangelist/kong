@@ -1,0 +1,139 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Kong Enterprise Admin API — RBACRoleEntities
+  description: 'Kong Enterprise Admin API — RBACRoleEntities. 3 operations. Lead operation: Create a new RBAC Role Entity.
+    Self-contained Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - RBACRoleEntities
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: gateway-admin-rbacroleentities
+    baseUri: ''
+    description: Kong Enterprise Admin API — RBACRoleEntities business capability. Self-contained, no shared references.
+    resources:
+    - name: workspace-rbac-roles-RBACRoleIdForNestedEntities-entities
+      path: /{workspace}/rbac/roles/{RBACRoleIdForNestedEntities}/entities
+      operations:
+      - name: createrbacroleentitie
+        method: POST
+        description: Create a new RBAC Role Entity
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-rbac-roles-RBACRoleIdForNestedEntities-entities-RBACRoleEntityId
+      path: /{workspace}/rbac/roles/{RBACRoleIdForNestedEntities}/entities/{RBACRoleEntityId}
+      operations:
+      - name: deleterbacroleentitie
+        method: DELETE
+        description: Delete a RBAC Role Entity
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: getrbacroleentitie
+        method: GET
+        description: Get a RBAC Role Entity
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    authentication:
+      type: apikey
+      key: Kong-Admin-Token
+      value: '{{env.KONG_API_KEY}}'
+      placement: header
+  exposes:
+  - type: rest
+    namespace: gateway-admin-rbacroleentities-rest
+    port: 8080
+    description: REST adapter for Kong Enterprise Admin API — RBACRoleEntities. One Spectral-compliant resource per consumed
+      operation, prefixed with /v1.
+    resources:
+    - path: /v1/{workspace}/rbac/roles/{rbacroleidfornestedentities}/entities
+      name: workspace-rbac-roles-rbacroleidfornestedentities-entities
+      description: REST surface for workspace-rbac-roles-RBACRoleIdForNestedEntities-entities.
+      operations:
+      - method: POST
+        name: createrbacroleentitie
+        description: Create a new RBAC Role Entity
+        call: gateway-admin-rbacroleentities.createrbacroleentitie
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/{workspace}/rbac/roles/{rbacroleidfornestedentities}/entities/{rbacroleentityid}
+      name: workspace-rbac-roles-rbacroleidfornestedentities-entities-rbacroleentityid
+      description: REST surface for workspace-rbac-roles-RBACRoleIdForNestedEntities-entities-RBACRoleEntityId.
+      operations:
+      - method: DELETE
+        name: deleterbacroleentitie
+        description: Delete a RBAC Role Entity
+        call: gateway-admin-rbacroleentities.deleterbacroleentitie
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: GET
+        name: getrbacroleentitie
+        description: Get a RBAC Role Entity
+        call: gateway-admin-rbacroleentities.getrbacroleentitie
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: gateway-admin-rbacroleentities-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Kong Enterprise Admin API — RBACRoleEntities. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: create-new-rbac-role-entity
+      description: Create a new RBAC Role Entity
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: gateway-admin-rbacroleentities.createrbacroleentitie
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-rbac-role-entity
+      description: Delete a RBAC Role Entity
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: gateway-admin-rbacroleentities.deleterbacroleentitie
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-rbac-role-entity
+      description: Get a RBAC Role Entity
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: gateway-admin-rbacroleentities.getrbacroleentitie
+      outputParameters:
+      - type: object
+        mapping: $.

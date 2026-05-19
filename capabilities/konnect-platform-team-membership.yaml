@@ -1,0 +1,187 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — Team Membership
+  description: 'Konnect API - Go SDK — Team Membership. 4 operations. Lead operation: List Team Users. Self-contained Naftiko
+    capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - Team Membership
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-team-membership
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — Team Membership business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-teams-teamId-users
+      path: /v3/teams/{teamId}/users
+      operations:
+      - name: listteamusers
+        method: GET
+        description: List Team Users
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: filter
+          in: query
+          type: object
+          description: Filter users returned in the response.
+      - name: addusertoteam
+        method: POST
+        description: Add User
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: false
+    - name: v3-teams-teamId-users-userId
+      path: /v3/teams/{teamId}/users/{userId}
+      operations:
+      - name: removeuserfromteam
+        method: DELETE
+        description: Remove User
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+    - name: v3-users-userId-teams
+      path: /v3/users/{userId}/teams
+      operations:
+      - name: listuserteams
+        method: GET
+        description: List User Teams
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: filter
+          in: query
+          type: object
+          description: Filter teams returned in the response.
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-team-membership-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — Team Membership. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/teams/{teamid}/users
+      name: v3-teams-teamid-users
+      description: REST surface for v3-teams-teamId-users.
+      operations:
+      - method: GET
+        name: listteamusers
+        description: List Team Users
+        call: konnect-platform-team-membership.listteamusers
+        with:
+          filter: rest.filter
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: addusertoteam
+        description: Add User
+        call: konnect-platform-team-membership.addusertoteam
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/teams/{teamid}/users/{userid}
+      name: v3-teams-teamid-users-userid
+      description: REST surface for v3-teams-teamId-users-userId.
+      operations:
+      - method: DELETE
+        name: removeuserfromteam
+        description: Remove User
+        call: konnect-platform-team-membership.removeuserfromteam
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/users/{userid}/teams
+      name: v3-users-userid-teams
+      description: REST surface for v3-users-userId-teams.
+      operations:
+      - method: GET
+        name: listuserteams
+        description: List User Teams
+        call: konnect-platform-team-membership.listuserteams
+        with:
+          filter: rest.filter
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-team-membership-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — Team Membership. One tool per consumed operation, routed inline through
+      this capability's consumes block.
+    tools:
+    - name: list-team-users
+      description: List Team Users
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-team-membership.listteamusers
+      with:
+        filter: tools.filter
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: add-user
+      description: Add User
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-team-membership.addusertoteam
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: remove-user
+      description: Remove User
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-team-membership.removeuserfromteam
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: list-user-teams
+      description: List User Teams
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-team-membership.listuserteams
+      with:
+        filter: tools.filter
+      outputParameters:
+      - type: object
+        mapping: $.

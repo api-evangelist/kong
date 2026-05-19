@@ -1,0 +1,221 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Konnect API - Go SDK — OpenMeter Billing
+  description: 'Konnect API - Go SDK — OpenMeter Billing. 5 operations. Lead operation: List billing profiles. Self-contained
+    Naftiko capability covering one Kong business surface.'
+  tags:
+  - Kong
+  - OpenMeter Billing
+  created: '2026-05-19'
+  modified: '2026-05-19'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: konnect-platform-openmeter-billing
+    baseUri: https://global.api.konghq.com
+    description: Konnect API - Go SDK — OpenMeter Billing business capability. Self-contained, no shared references.
+    resources:
+    - name: v3-openmeter-profiles
+      path: /v3/openmeter/profiles
+      operations:
+      - name: listbillingprofiles
+        method: GET
+        description: List billing profiles
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+      - name: createbillingprofile
+        method: POST
+        description: Create a new billing profile
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v3-openmeter-profiles-id
+      path: /v3/openmeter/profiles/{id}
+      operations:
+      - name: getbillingprofile
+        method: GET
+        description: Get a billing profile
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+      - name: updatebillingprofile
+        method: PUT
+        description: Update a billing profile
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+      - name: deletebillingprofile
+        method: DELETE
+        description: Delete a billing profile
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+    authentication:
+      type: bearer
+      token: '{{env.KONG_API_KEY}}'
+  exposes:
+  - type: rest
+    namespace: konnect-platform-openmeter-billing-rest
+    port: 8080
+    description: REST adapter for Konnect API - Go SDK — OpenMeter Billing. One Spectral-compliant resource per consumed operation,
+      prefixed with /v1.
+    resources:
+    - path: /v1/v3/openmeter/profiles
+      name: v3-openmeter-profiles
+      description: REST surface for v3-openmeter-profiles.
+      operations:
+      - method: GET
+        name: listbillingprofiles
+        description: List billing profiles
+        call: konnect-platform-openmeter-billing.listbillingprofiles
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: POST
+        name: createbillingprofile
+        description: Create a new billing profile
+        call: konnect-platform-openmeter-billing.createbillingprofile
+        with:
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+    - path: /v1/v3/openmeter/profiles/{id}
+      name: v3-openmeter-profiles-id
+      description: REST surface for v3-openmeter-profiles-id.
+      operations:
+      - method: GET
+        name: getbillingprofile
+        description: Get a billing profile
+        call: konnect-platform-openmeter-billing.getbillingprofile
+        with:
+          id: rest.id
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: PUT
+        name: updatebillingprofile
+        description: Update a billing profile
+        call: konnect-platform-openmeter-billing.updatebillingprofile
+        with:
+          id: rest.id
+          body: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
+      - method: DELETE
+        name: deletebillingprofile
+        description: Delete a billing profile
+        call: konnect-platform-openmeter-billing.deletebillingprofile
+        with:
+          id: rest.id
+        outputParameters:
+        - type: object
+          mapping: $.
+  - type: mcp
+    namespace: konnect-platform-openmeter-billing-mcp
+    port: 9090
+    transport: http
+    description: MCP adapter for Konnect API - Go SDK — OpenMeter Billing. One tool per consumed operation, routed inline
+      through this capability's consumes block.
+    tools:
+    - name: list-billing-profiles
+      description: List billing profiles
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-openmeter-billing.listbillingprofiles
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: create-new-billing-profile
+      description: Create a new billing profile
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: false
+      call: konnect-platform-openmeter-billing.createbillingprofile
+      with:
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: get-billing-profile
+      description: Get a billing profile
+      hints:
+        readOnly: true
+        destructive: false
+        idempotent: true
+      call: konnect-platform-openmeter-billing.getbillingprofile
+      with:
+        id: tools.id
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: update-billing-profile
+      description: Update a billing profile
+      hints:
+        readOnly: false
+        destructive: false
+        idempotent: true
+      call: konnect-platform-openmeter-billing.updatebillingprofile
+      with:
+        id: tools.id
+        body: tools.body
+      outputParameters:
+      - type: object
+        mapping: $.
+    - name: delete-billing-profile
+      description: Delete a billing profile
+      hints:
+        readOnly: false
+        destructive: true
+        idempotent: true
+      call: konnect-platform-openmeter-billing.deletebillingprofile
+      with:
+        id: tools.id
+      outputParameters:
+      - type: object
+        mapping: $.
