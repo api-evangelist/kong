@@ -1,0 +1,166 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Validate Kong-issued JWTs against Keycloak realms
+  description: Configure the Kong JWT plugin so tokens issued by a Keycloak realm are validated at the gateway. The integration also reads the realm's JWKS and registers the public key as a Kong JWT credential per consumer.
+  tags:
+  - Kong
+  - Integration
+  - Identity
+  - keycloak
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    KEYCLOAK_API_KEY: KEYCLOAK_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-jwt-plugin
+        method: POST
+        description: Enable the JWT plugin on a Kong service or route so inbound JWTs are validated.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-consumers
+      path: /{workspace}/consumers
+      operations:
+      - name: create-consumer
+        method: POST
+        description: Create a Kong consumer that maps a Keycloak subject to a JWT credential.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-consumers-consumerusernameorid-jwt
+      path: /{workspace}/consumers/{consumerUsernameOrId}/jwt
+      operations:
+      - name: create-jwt-with-consumer
+        method: POST
+        description: Register a Keycloak-issued public key as a JWT credential for a Kong consumer.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: consumerUsernameOrId
+          in: path
+          type: string
+          description: Path parameter consumerUsernameOrId.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  - type: http
+    namespace: keycloak
+    baseUri: https://keycloak.example.com
+    description: Keycloak Admin REST API operations consumed by this integration.
+    resources:
+    - name: realms-realm-well-known-openid-configuration
+      path: /realms/{realm}/.well-known/openid-configuration
+      operations:
+      - name: getopenidconfiguration
+        method: GET
+        description: 'Keycloak Admin REST API: getOpenIdConfiguration'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: realm
+          in: path
+          type: string
+          description: Path parameter realm.
+          required: true
+    - name: realms-realm-protocol-openid-connect-certs
+      path: /realms/{realm}/protocol/openid-connect/certs
+      operations:
+      - name: getrealmjwks
+        method: GET
+        description: 'Keycloak Admin REST API: getRealmJwks'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: realm
+          in: path
+          type: string
+          description: Path parameter realm.
+          required: true
+  exposes:
+  - type: mcp
+    namespace: kong-keycloak-mcp
+    description: MCP adapter for the kong-keycloak integration.
+    tools:
+    - name: kong_keycloak
+      description: Execute the kong keycloak integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-keycloak-rest
+    port: 8080
+    description: REST adapter for the kong-keycloak integration.
+    resources:
+    - path: /kong-keycloak
+      name: kong-keycloak
+      description: REST surface for the kong-keycloak integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-keycloak integration.
+        call: kong_keycloak
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

@@ -1,0 +1,129 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Scrape Kong metrics into Prometheus
+  description: Enable the Kong Prometheus plugin on a workspace so a Prometheus server can scrape the standardized /metrics endpoint. The integration registers the scrape target via Prometheus' admin API.
+  tags:
+  - Kong
+  - Integration
+  - Observability
+  - prometheus
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    PROMETHEUS_API_KEY: PROMETHEUS_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-prometheus-plugin
+        method: POST
+        description: Enable the Prometheus plugin on a Kong workspace so a /metrics endpoint is exposed for scraping.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: list-plugin
+        method: GET
+        description: Check whether the Prometheus plugin is already enabled.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+  - type: http
+    namespace: prometheus
+    baseUri: http://prometheus:9090
+    description: Prometheus HTTP API operations consumed by this integration.
+    resources:
+    - name: reload
+      path: /-/reload
+      operations:
+      - name: reloadconfig
+        method: POST
+        description: 'Prometheus HTTP API: reloadConfig'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: api-v1-targets
+      path: /api/v1/targets
+      operations:
+      - name: listtargets
+        method: GET
+        description: 'Prometheus HTTP API: listTargets'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+  exposes:
+  - type: mcp
+    namespace: kong-prometheus-mcp
+    description: MCP adapter for the kong-prometheus integration.
+    tools:
+    - name: kong_prometheus
+      description: Execute the kong prometheus integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-prometheus-rest
+    port: 8080
+    description: REST adapter for the kong-prometheus integration.
+    resources:
+    - path: /kong-prometheus
+      name: kong-prometheus
+      description: REST surface for the kong-prometheus integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-prometheus integration.
+        call: kong_prometheus
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

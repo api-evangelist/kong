@@ -1,0 +1,163 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Migrate AWS API Gateway into Kong Konnect control planes
+  description: For each AWS API Gateway REST API in an account, register a corresponding Konnect control plane (or workspace) and create Kong services/routes mirroring the AWS resources and methods. Plugin equivalents (usage plans → rate-limiting, Cognito authorizers → JWT) are wired in by the integration.
+  tags:
+  - Kong
+  - Integration
+  - Migration
+  - aws-apigateway
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    AWS_APIGATEWAY_API_KEY: AWS_APIGATEWAY_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: v2-control-planes
+      path: /v2/control-planes
+      operations:
+      - name: create-control-plane
+        method: POST
+        description: Create a Konnect control plane to host the migrated AWS API Gateway surface.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v2-control-planes
+      path: /v2/control-planes
+      operations:
+      - name: list-control-planes
+        method: GET
+        description: List existing Konnect control planes to dedupe before provisioning.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+    - name: workspace-services
+      path: /{workspace}/services
+      operations:
+      - name: create-service
+        method: POST
+        description: Create a Kong service for each AWS API Gateway integration target.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-routes
+      path: /{workspace}/routes
+      operations:
+      - name: create-route
+        method: POST
+        description: Create Kong routes mirroring AWS API Gateway resources and methods.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  - type: http
+    namespace: aws-apigateway
+    baseUri: https://apigateway.us-east-1.amazonaws.com
+    description: AWS API Gateway Control Plane operations consumed by this integration.
+    resources:
+    - name: restapis
+      path: /restapis
+      operations:
+      - name: listrestapis
+        method: GET
+        description: 'AWS API Gateway Control Plane: listRestApis'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+    - name: restapis-restapiid-resources
+      path: /restapis/{restApiId}/resources
+      operations:
+      - name: listresources
+        method: GET
+        description: 'AWS API Gateway Control Plane: listResources'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: restApiId
+          in: path
+          type: string
+          description: Path parameter restApiId.
+          required: true
+  exposes:
+  - type: mcp
+    namespace: kong-aws-apigateway-mcp
+    description: MCP adapter for the kong-aws-apigateway integration.
+    tools:
+    - name: kong_aws_apigateway
+      description: Execute the kong aws apigateway integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-aws-apigateway-rest
+    port: 8080
+    description: REST adapter for the kong-aws-apigateway integration.
+    resources:
+    - path: /kong-aws-apigateway
+      name: kong-aws-apigateway
+      description: REST surface for the kong-aws-apigateway integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-aws-apigateway integration.
+        call: kong_aws_apigateway
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

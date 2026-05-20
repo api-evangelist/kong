@@ -1,0 +1,129 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Forward Kong gateway logs into Splunk HEC
+  description: Enable the Kong HTTP Log plugin pointed at a Splunk HTTP Event Collector endpoint so every gateway request becomes a structured Splunk event with route/service/consumer tags.
+  tags:
+  - Kong
+  - Integration
+  - Observability
+  - splunk
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    SPLUNK_API_KEY: SPLUNK_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-httplog-plugin
+        method: POST
+        description: Enable the Kong HTTP Log plugin so request logs POST to an external collector.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-services
+      path: /{workspace}/services
+      operations:
+      - name: list-service
+        method: GET
+        description: List services so log forwarding can be scoped per route or service.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+  - type: http
+    namespace: splunk
+    baseUri: https://splunk.example.com:8088
+    description: Splunk HTTP Event Collector operations consumed by this integration.
+    resources:
+    - name: services-collector-event
+      path: /services/collector/event
+      operations:
+      - name: postevent
+        method: POST
+        description: 'Splunk HTTP Event Collector: postEvent'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: services-collector-health
+      path: /services/collector/health
+      operations:
+      - name: checkhealth
+        method: GET
+        description: 'Splunk HTTP Event Collector: checkHealth'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+  exposes:
+  - type: mcp
+    namespace: kong-splunk-mcp
+    description: MCP adapter for the kong-splunk integration.
+    tools:
+    - name: kong_splunk
+      description: Execute the kong splunk integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-splunk-rest
+    port: 8080
+    description: REST adapter for the kong-splunk integration.
+    resources:
+    - path: /kong-splunk
+      name: kong-splunk
+      description: REST surface for the kong-splunk integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-splunk integration.
+        call: kong_splunk
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

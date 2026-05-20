@@ -1,0 +1,144 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Post Kong gateway alerts and deploy events to Slack
+  description: When new Kong services or routes are created (or plugins enabled), post a change summary to a Slack channel via Incoming Webhook so platform teams have a real-time audit feed.
+  tags:
+  - Kong
+  - Integration
+  - Alerting
+  - slack
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    SLACK_API_KEY: SLACK_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-services
+      path: /{workspace}/services
+      operations:
+      - name: list-service
+        method: GET
+        description: List Kong services to detect new or changed entries for alerting.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+    - name: workspace-routes
+      path: /{workspace}/routes
+      operations:
+      - name: list-route
+        method: GET
+        description: List Kong routes for change detection.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: list-plugin
+        method: GET
+        description: List active plugins to alert on configuration changes.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+  - type: http
+    namespace: slack
+    baseUri: https://hooks.slack.com
+    description: Slack Incoming Webhooks operations consumed by this integration.
+    resources:
+    - name: services-t-b-x
+      path: /services/{T}/{B}/{X}
+      operations:
+      - name: postmessage
+        method: POST
+        description: 'Slack Incoming Webhooks: postMessage'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: T
+          in: path
+          type: string
+          description: Path parameter T.
+          required: true
+        - name: B
+          in: path
+          type: string
+          description: Path parameter B.
+          required: true
+        - name: X
+          in: path
+          type: string
+          description: Path parameter X.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  exposes:
+  - type: mcp
+    namespace: kong-slack-mcp
+    description: MCP adapter for the kong-slack integration.
+    tools:
+    - name: kong_slack
+      description: Execute the kong slack integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-slack-rest
+    port: 8080
+    description: REST adapter for the kong-slack integration.
+    resources:
+    - path: /kong-slack
+      name: kong-slack
+      description: REST surface for the kong-slack integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-slack integration.
+        call: kong_slack
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

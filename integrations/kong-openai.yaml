@@ -1,0 +1,156 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Front OpenAI through the Kong AI Gateway
+  description: Configure Kong's AI Proxy plugin to broker OpenAI traffic, applying per-consumer rate-limiting, prompt guard policies, and OpenTelemetry tracing. The integration creates the upstream service and wires the plugin chain.
+  tags:
+  - Kong
+  - Integration
+  - AI Gateway
+  - openai
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    OPENAI_API_KEY: OPENAI_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-aiproxy-plugin
+        method: POST
+        description: Enable Kong's AI Proxy plugin so OpenAI traffic flows through the gateway.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-opentelemetry-plugin
+        method: POST
+        description: Enable OpenTelemetry so OpenAI calls emit spans into the observability backend.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-services
+      path: /{workspace}/services
+      operations:
+      - name: create-service
+        method: POST
+        description: Create the upstream service that fronts OpenAI.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  - type: http
+    namespace: openai
+    baseUri: https://api.openai.com
+    description: OpenAI REST API operations consumed by this integration.
+    resources:
+    - name: v1-chat-completions
+      path: /v1/chat/completions
+      operations:
+      - name: createchatcompletion
+        method: POST
+        description: 'OpenAI REST API: createChatCompletion'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-models
+      path: /v1/models
+      operations:
+      - name: listmodels
+        method: GET
+        description: 'OpenAI REST API: listModels'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+  exposes:
+  - type: mcp
+    namespace: kong-openai-mcp
+    description: MCP adapter for the kong-openai integration.
+    tools:
+    - name: kong_openai
+      description: Execute the kong openai integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-openai-rest
+    port: 8080
+    description: REST adapter for the kong-openai integration.
+    resources:
+    - path: /kong-openai
+      name: kong-openai
+      description: REST surface for the kong-openai integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-openai integration.
+        call: kong_openai
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

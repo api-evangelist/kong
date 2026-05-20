@@ -1,0 +1,324 @@
+# Curated Kong service-partner integrations. Each entry becomes one
+# Naftiko 1.0.0-alpha2 capability YAML in temp/kong/integrations/.
+# Categories reflect Kong's actual deployment surface: gateway plugins,
+# Konnect control planes, AI Gateway, and the dev portal.
+
+# Observability (3)
+- partner: datadog
+  name: Stream Kong gateway metrics into Datadog
+  category: Observability
+  use_case: Enable the Kong Datadog plugin against a service/route so request, latency, and upstream metrics are pushed into Datadog with per-route tags. Optionally enrich with Datadog monitor lookups for alerting context.
+  partner_baseUri: https://api.datadoghq.com
+  partner_api: Datadog API
+  provider_ops:
+    - method: GET
+      path: /{workspace}/services
+      name: list-service
+      description: List Kong services for the workspace so the integration can target metric collection.
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-datadog-plugin
+      description: Enable the Datadog plugin on a Kong service or route so request metrics ship to Datadog.
+    - method: GET
+      path: /{workspace}/plugins
+      name: list-plugin
+      description: List active Kong plugins so the integration can detect existing Datadog wiring before re-creating.
+  partner_ops:
+    - method: GET
+      path: /api/v1/monitor
+      name: listMonitors
+    - method: POST
+      path: /api/v1/series
+      name: postMetrics
+
+- partner: prometheus
+  name: Scrape Kong metrics into Prometheus
+  category: Observability
+  use_case: Enable the Kong Prometheus plugin on a workspace so a Prometheus server can scrape the standardized /metrics endpoint. The integration registers the scrape target via Prometheus' admin API.
+  partner_baseUri: http://prometheus:9090
+  partner_api: Prometheus HTTP API
+  provider_ops:
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-prometheus-plugin
+      description: Enable the Prometheus plugin on a Kong workspace so a /metrics endpoint is exposed for scraping.
+    - method: GET
+      path: /{workspace}/plugins
+      name: list-plugin
+      description: Check whether the Prometheus plugin is already enabled.
+  partner_ops:
+    - method: POST
+      path: /-/reload
+      name: reloadConfig
+    - method: GET
+      path: /api/v1/targets
+      name: listTargets
+
+- partner: splunk
+  name: Forward Kong gateway logs into Splunk HEC
+  category: Observability
+  use_case: Enable the Kong HTTP Log plugin pointed at a Splunk HTTP Event Collector endpoint so every gateway request becomes a structured Splunk event with route/service/consumer tags.
+  partner_baseUri: https://splunk.example.com:8088
+  partner_api: Splunk HTTP Event Collector
+  provider_ops:
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-httplog-plugin
+      description: Enable the Kong HTTP Log plugin so request logs POST to an external collector.
+    - method: GET
+      path: /{workspace}/services
+      name: list-service
+      description: List services so log forwarding can be scoped per route or service.
+  partner_ops:
+    - method: POST
+      path: /services/collector/event
+      name: postEvent
+    - method: GET
+      path: /services/collector/health
+      name: checkHealth
+
+# Alerting / chatops (1)
+- partner: slack
+  name: Post Kong gateway alerts and deploy events to Slack
+  category: Alerting
+  use_case: When new Kong services or routes are created (or plugins enabled), post a change summary to a Slack channel via Incoming Webhook so platform teams have a real-time audit feed.
+  partner_baseUri: https://hooks.slack.com
+  partner_api: Slack Incoming Webhooks
+  provider_ops:
+    - method: GET
+      path: /{workspace}/services
+      name: list-service
+      description: List Kong services to detect new or changed entries for alerting.
+    - method: GET
+      path: /{workspace}/routes
+      name: list-route
+      description: List Kong routes for change detection.
+    - method: GET
+      path: /{workspace}/plugins
+      name: list-plugin
+      description: List active plugins to alert on configuration changes.
+  partner_ops:
+    - method: POST
+      path: /services/{T}/{B}/{X}
+      name: postMessage
+
+# Spec sync / CI (1)
+- partner: github
+  name: Sync OpenAPI specs from GitHub into Konnect API packages
+  category: Spec sync
+  use_case: On a push to a designated GitHub repository, fetch the updated OpenAPI document and upload it as the current specification on a Konnect API package, then publish it to the configured dev portal.
+  partner_baseUri: https://api.github.com
+  partner_api: GitHub REST API
+  provider_ops:
+    - method: PUT
+      path: /v3/api-packages/{apiPackageId}/specifications/current
+      name: update-api-package-current-specification
+      description: Upload the latest OpenAPI document as the current spec for a Konnect API package.
+    - method: PUT
+      path: /v3/api-packages/{apiPackageId}/portals/{portalId}
+      name: publish-api-package-to-portal
+      description: Publish the updated API package to the dev portal so consumers see the new spec.
+    - method: GET
+      path: /v3/api-packages
+      name: list-api-packages
+      description: Discover available API packages so the integration can target the correct one.
+  partner_ops:
+    - method: GET
+      path: /repos/{owner}/{repo}/contents/{path}
+      name: getRepoContent
+    - method: POST
+      path: /repos/{owner}/{repo}/statuses/{sha}
+      name: createCommitStatus
+
+# Policy (1)
+- partner: opa
+  name: Externalize Kong authz decisions to Open Policy Agent
+  category: Policy
+  use_case: Enable the Kong OPA plugin against a service or route so every request is evaluated by an external Open Policy Agent decision endpoint. The integration also publishes the policy bundle to OPA.
+  partner_baseUri: http://opa:8181
+  partner_api: Open Policy Agent REST API
+  provider_ops:
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-opa-plugin
+      description: Enable the OPA plugin on a Kong service or route so requests are authorized externally.
+    - method: GET
+      path: /{workspace}/services
+      name: list-service
+      description: List services to scope OPA enforcement.
+  partner_ops:
+    - method: POST
+      path: /v1/data/{path}
+      name: postDataDecision
+    - method: PUT
+      path: /v1/policies/{id}
+      name: putPolicy
+
+# Identity (2)
+- partner: keycloak
+  name: Validate Kong-issued JWTs against Keycloak realms
+  category: Identity
+  use_case: Configure the Kong JWT plugin so tokens issued by a Keycloak realm are validated at the gateway. The integration also reads the realm's JWKS and registers the public key as a Kong JWT credential per consumer.
+  partner_baseUri: https://keycloak.example.com
+  partner_api: Keycloak Admin REST API
+  provider_ops:
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-jwt-plugin
+      description: Enable the JWT plugin on a Kong service or route so inbound JWTs are validated.
+    - method: POST
+      path: /{workspace}/consumers
+      name: create-consumer
+      description: Create a Kong consumer that maps a Keycloak subject to a JWT credential.
+    - method: POST
+      path: /{workspace}/consumers/{consumerUsernameOrId}/jwt
+      name: create-jwt-with-consumer
+      description: Register a Keycloak-issued public key as a JWT credential for a Kong consumer.
+  partner_ops:
+    - method: GET
+      path: /realms/{realm}/.well-known/openid-configuration
+      name: getOpenIdConfiguration
+    - method: GET
+      path: /realms/{realm}/protocol/openid-connect/certs
+      name: getRealmJwks
+
+- partner: auth0
+  name: Front Auth0-protected APIs with the Kong gateway
+  category: Identity
+  use_case: Configure Kong's JWT plugin to validate Auth0-issued access tokens against the tenant's JWKS, and bind matching Kong consumers to Auth0 users so per-user rate-limiting and ACL plugins can be layered on top.
+  partner_baseUri: https://yourtenant.auth0.com
+  partner_api: Auth0 Management API
+  provider_ops:
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-jwt-plugin
+      description: Enable the JWT plugin so Kong validates Auth0-signed access tokens.
+    - method: POST
+      path: /{workspace}/consumers
+      name: create-consumer
+      description: Create a Kong consumer mapped to an Auth0 user.
+    - method: GET
+      path: /{workspace}/consumers
+      name: list-consumer
+      description: List existing Kong consumers to dedupe before provisioning a new one for an Auth0 user.
+  partner_ops:
+    - method: GET
+      path: /.well-known/jwks.json
+      name: getTenantJwks
+    - method: GET
+      path: /api/v2/users
+      name: listAuth0Users
+
+# AI gateway (2)
+- partner: anthropic
+  name: Front Anthropic Claude through the Kong AI Gateway
+  category: AI Gateway
+  use_case: Configure Kong's AI Proxy and AI Prompt Guard plugins so Anthropic Claude requests are routed, rate-limited, and policy-checked at the gateway. The integration also exercises the Anthropic API to verify model availability.
+  partner_baseUri: https://api.anthropic.com
+  partner_api: Anthropic Messages API
+  provider_ops:
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-aiproxy-plugin
+      description: Enable the Kong AI Proxy plugin so LLM requests are routed through Kong to the upstream Anthropic API.
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-aipromptguard-plugin
+      description: Enable the AI Prompt Guard plugin so prompt patterns are filtered before they reach Anthropic.
+    - method: POST
+      path: /{workspace}/services
+      name: create-service
+      description: Create the upstream Kong service that fronts Anthropic for routing and observability.
+  partner_ops:
+    - method: POST
+      path: /v1/messages
+      name: createMessage
+    - method: GET
+      path: /v1/models
+      name: listModels
+
+- partner: openai
+  name: Front OpenAI through the Kong AI Gateway
+  category: AI Gateway
+  use_case: Configure Kong's AI Proxy plugin to broker OpenAI traffic, applying per-consumer rate-limiting, prompt guard policies, and OpenTelemetry tracing. The integration creates the upstream service and wires the plugin chain.
+  partner_baseUri: https://api.openai.com
+  partner_api: OpenAI REST API
+  provider_ops:
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-aiproxy-plugin
+      description: Enable Kong's AI Proxy plugin so OpenAI traffic flows through the gateway.
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-opentelemetry-plugin
+      description: Enable OpenTelemetry so OpenAI calls emit spans into the observability backend.
+    - method: POST
+      path: /{workspace}/services
+      name: create-service
+      description: Create the upstream service that fronts OpenAI.
+  partner_ops:
+    - method: POST
+      path: /v1/chat/completions
+      name: createChatCompletion
+    - method: GET
+      path: /v1/models
+      name: listModels
+
+# Migration (2)
+- partner: apigee
+  name: Migrate Apigee proxies into Kong services and routes
+  category: Migration
+  use_case: Walk an Apigee organization's API proxies and materialize an equivalent Kong service plus routes for each, preserving virtual host bindings and basic auth/JWT policy hints as Kong plugin configurations.
+  partner_baseUri: https://apigee.googleapis.com
+  partner_api: Apigee Management API
+  provider_ops:
+    - method: POST
+      path: /{workspace}/services
+      name: create-service
+      description: Create a Kong service mirroring an Apigee API proxy target endpoint.
+    - method: POST
+      path: /{workspace}/routes
+      name: create-route
+      description: Create Kong routes mirroring Apigee proxy base paths and virtual hosts.
+    - method: POST
+      path: /{workspace}/plugins
+      name: create-plugin
+      description: Enable Kong plugins that approximate the Apigee policies attached to the original proxy.
+  partner_ops:
+    - method: GET
+      path: /v1/organizations/{org}/apis
+      name: listApiProxies
+    - method: GET
+      path: /v1/organizations/{org}/apis/{api}/revisions/{rev}/deployments
+      name: listProxyDeployments
+
+- partner: aws-apigateway
+  name: Migrate AWS API Gateway into Kong Konnect control planes
+  category: Migration
+  use_case: For each AWS API Gateway REST API in an account, register a corresponding Konnect control plane (or workspace) and create Kong services/routes mirroring the AWS resources and methods. Plugin equivalents (usage plans → rate-limiting, Cognito authorizers → JWT) are wired in by the integration.
+  partner_baseUri: https://apigateway.us-east-1.amazonaws.com
+  partner_api: AWS API Gateway Control Plane
+  provider_ops:
+    - method: POST
+      path: /v2/control-planes
+      name: create-control-plane
+      description: Create a Konnect control plane to host the migrated AWS API Gateway surface.
+    - method: GET
+      path: /v2/control-planes
+      name: list-control-planes
+      description: List existing Konnect control planes to dedupe before provisioning.
+    - method: POST
+      path: /{workspace}/services
+      name: create-service
+      description: Create a Kong service for each AWS API Gateway integration target.
+    - method: POST
+      path: /{workspace}/routes
+      name: create-route
+      description: Create Kong routes mirroring AWS API Gateway resources and methods.
+  partner_ops:
+    - method: GET
+      path: /restapis
+      name: listRestApis
+    - method: GET
+      path: /restapis/{restApiId}/resources
+      name: listResources

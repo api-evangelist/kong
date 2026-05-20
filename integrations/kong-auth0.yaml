@@ -1,0 +1,146 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Front Auth0-protected APIs with the Kong gateway
+  description: Configure Kong's JWT plugin to validate Auth0-issued access tokens against the tenant's JWKS, and bind matching Kong consumers to Auth0 users so per-user rate-limiting and ACL plugins can be layered on top.
+  tags:
+  - Kong
+  - Integration
+  - Identity
+  - auth0
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    AUTH0_API_KEY: AUTH0_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-jwt-plugin
+        method: POST
+        description: Enable the JWT plugin so Kong validates Auth0-signed access tokens.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-consumers
+      path: /{workspace}/consumers
+      operations:
+      - name: create-consumer
+        method: POST
+        description: Create a Kong consumer mapped to an Auth0 user.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-consumers
+      path: /{workspace}/consumers
+      operations:
+      - name: list-consumer
+        method: GET
+        description: List existing Kong consumers to dedupe before provisioning a new one for an Auth0 user.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+  - type: http
+    namespace: auth0
+    baseUri: https://yourtenant.auth0.com
+    description: Auth0 Management API operations consumed by this integration.
+    resources:
+    - name: well-known-jwks-json
+      path: /.well-known/jwks.json
+      operations:
+      - name: gettenantjwks
+        method: GET
+        description: 'Auth0 Management API: getTenantJwks'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+    - name: api-v2-users
+      path: /api/v2/users
+      operations:
+      - name: listauth0users
+        method: GET
+        description: 'Auth0 Management API: listAuth0Users'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+  exposes:
+  - type: mcp
+    namespace: kong-auth0-mcp
+    description: MCP adapter for the kong-auth0 integration.
+    tools:
+    - name: kong_auth0
+      description: Execute the kong auth0 integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-auth0-rest
+    port: 8080
+    description: REST adapter for the kong-auth0 integration.
+    resources:
+    - path: /kong-auth0
+      name: kong-auth0
+      description: REST surface for the kong-auth0 integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-auth0 integration.
+        call: kong_auth0
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

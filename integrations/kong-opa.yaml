@@ -1,0 +1,144 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Externalize Kong authz decisions to Open Policy Agent
+  description: Enable the Kong OPA plugin against a service or route so every request is evaluated by an external Open Policy Agent decision endpoint. The integration also publishes the policy bundle to OPA.
+  tags:
+  - Kong
+  - Integration
+  - Policy
+  - opa
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    OPA_API_KEY: OPA_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-opa-plugin
+        method: POST
+        description: Enable the OPA plugin on a Kong service or route so requests are authorized externally.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-services
+      path: /{workspace}/services
+      operations:
+      - name: list-service
+        method: GET
+        description: List services to scope OPA enforcement.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+  - type: http
+    namespace: opa
+    baseUri: http://opa:8181
+    description: Open Policy Agent REST API operations consumed by this integration.
+    resources:
+    - name: v1-data-path
+      path: /v1/data/{path}
+      operations:
+      - name: postdatadecision
+        method: POST
+        description: 'Open Policy Agent REST API: postDataDecision'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: path
+          in: path
+          type: string
+          description: Path parameter path.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-policies-id
+      path: /v1/policies/{id}
+      operations:
+      - name: putpolicy
+        method: PUT
+        description: 'Open Policy Agent REST API: putPolicy'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: id
+          in: path
+          type: string
+          description: Path parameter id.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  exposes:
+  - type: mcp
+    namespace: kong-opa-mcp
+    description: MCP adapter for the kong-opa integration.
+    tools:
+    - name: kong_opa
+      description: Execute the kong opa integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-opa-rest
+    port: 8080
+    description: REST adapter for the kong-opa integration.
+    resources:
+    - path: /kong-opa
+      name: kong-opa
+      description: REST surface for the kong-opa integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-opa integration.
+        call: kong_opa
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

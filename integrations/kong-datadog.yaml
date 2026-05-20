@@ -1,0 +1,146 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Stream Kong gateway metrics into Datadog
+  description: Enable the Kong Datadog plugin against a service/route so request, latency, and upstream metrics are pushed into Datadog with per-route tags. Optionally enrich with Datadog monitor lookups for alerting context.
+  tags:
+  - Kong
+  - Integration
+  - Observability
+  - datadog
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    DATADOG_API_KEY: DATADOG_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-services
+      path: /{workspace}/services
+      operations:
+      - name: list-service
+        method: GET
+        description: List Kong services for the workspace so the integration can target metric collection.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-datadog-plugin
+        method: POST
+        description: Enable the Datadog plugin on a Kong service or route so request metrics ship to Datadog.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: list-plugin
+        method: GET
+        description: List active Kong plugins so the integration can detect existing Datadog wiring before re-creating.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+  - type: http
+    namespace: datadog
+    baseUri: https://api.datadoghq.com
+    description: Datadog API operations consumed by this integration.
+    resources:
+    - name: api-v1-monitor
+      path: /api/v1/monitor
+      operations:
+      - name: listmonitors
+        method: GET
+        description: 'Datadog API: listMonitors'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+    - name: api-v1-series
+      path: /api/v1/series
+      operations:
+      - name: postmetrics
+        method: POST
+        description: 'Datadog API: postMetrics'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  exposes:
+  - type: mcp
+    namespace: kong-datadog-mcp
+    description: MCP adapter for the kong-datadog integration.
+    tools:
+    - name: kong_datadog
+      description: Execute the kong datadog integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-datadog-rest
+    port: 8080
+    description: REST adapter for the kong-datadog integration.
+    resources:
+    - path: /kong-datadog
+      name: kong-datadog
+      description: REST surface for the kong-datadog integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-datadog integration.
+        call: kong_datadog
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

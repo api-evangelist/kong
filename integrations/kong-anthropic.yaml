@@ -1,0 +1,156 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Front Anthropic Claude through the Kong AI Gateway
+  description: Configure Kong's AI Proxy and AI Prompt Guard plugins so Anthropic Claude requests are routed, rate-limited, and policy-checked at the gateway. The integration also exercises the Anthropic API to verify model availability.
+  tags:
+  - Kong
+  - Integration
+  - AI Gateway
+  - anthropic
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    ANTHROPIC_API_KEY: ANTHROPIC_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-aiproxy-plugin
+        method: POST
+        description: Enable the Kong AI Proxy plugin so LLM requests are routed through Kong to the upstream Anthropic API.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-plugins
+      path: /{workspace}/plugins
+      operations:
+      - name: create-aipromptguard-plugin
+        method: POST
+        description: Enable the AI Prompt Guard plugin so prompt patterns are filtered before they reach Anthropic.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: workspace-services
+      path: /{workspace}/services
+      operations:
+      - name: create-service
+        method: POST
+        description: Create the upstream Kong service that fronts Anthropic for routing and observability.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: workspace
+          in: path
+          type: string
+          description: Path parameter workspace.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  - type: http
+    namespace: anthropic
+    baseUri: https://api.anthropic.com
+    description: Anthropic Messages API operations consumed by this integration.
+    resources:
+    - name: v1-messages
+      path: /v1/messages
+      operations:
+      - name: createmessage
+        method: POST
+        description: 'Anthropic Messages API: createMessage'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v1-models
+      path: /v1/models
+      operations:
+      - name: listmodels
+        method: GET
+        description: 'Anthropic Messages API: listModels'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+  exposes:
+  - type: mcp
+    namespace: kong-anthropic-mcp
+    description: MCP adapter for the kong-anthropic integration.
+    tools:
+    - name: kong_anthropic
+      description: Execute the kong anthropic integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-anthropic-rest
+    port: 8080
+    description: REST adapter for the kong-anthropic integration.
+    resources:
+    - path: /kong-anthropic
+      name: kong-anthropic
+      description: REST surface for the kong-anthropic integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-anthropic integration.
+        call: kong_anthropic
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.

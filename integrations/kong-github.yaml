@@ -1,0 +1,181 @@
+naftiko: 1.0.0-alpha2
+info:
+  label: Sync OpenAPI specs from GitHub into Konnect API packages
+  description: On a push to a designated GitHub repository, fetch the updated OpenAPI document and upload it as the current specification on a Konnect API package, then publish it to the configured dev portal.
+  tags:
+  - Kong
+  - Integration
+  - Spec sync
+  - github
+  created: '2026-05-20'
+  modified: '2026-05-20'
+binds:
+- namespace: env
+  keys:
+    KONG_API_KEY: KONG_API_KEY
+    GITHUB_API_KEY: GITHUB_API_KEY
+capability:
+  consumes:
+  - type: http
+    namespace: kong
+    baseUri: https://global.api.konghq.com
+    description: Kong API operations consumed by this integration.
+    resources:
+    - name: v3-api-packages-apipackageid-specifications-current
+      path: /v3/api-packages/{apiPackageId}/specifications/current
+      operations:
+      - name: update-api-package-current-specification
+        method: PUT
+        description: Upload the latest OpenAPI document as the current spec for a Konnect API package.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: apiPackageId
+          in: path
+          type: string
+          description: Path parameter apiPackageId.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v3-api-packages-apipackageid-portals-portalid
+      path: /v3/api-packages/{apiPackageId}/portals/{portalId}
+      operations:
+      - name: publish-api-package-to-portal
+        method: PUT
+        description: Publish the updated API package to the dev portal so consumers see the new spec.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: apiPackageId
+          in: path
+          type: string
+          description: Path parameter apiPackageId.
+          required: true
+        - name: portalId
+          in: path
+          type: string
+          description: Path parameter portalId.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+    - name: v3-api-packages
+      path: /v3/api-packages
+      operations:
+      - name: list-api-packages
+        method: GET
+        description: Discover available API packages so the integration can target the correct one.
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters: []
+  - type: http
+    namespace: github
+    baseUri: https://api.github.com
+    description: GitHub REST API operations consumed by this integration.
+    resources:
+    - name: repos-owner-repo-contents-path
+      path: /repos/{owner}/{repo}/contents/{path}
+      operations:
+      - name: getrepocontent
+        method: GET
+        description: 'GitHub REST API: getRepoContent'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: owner
+          in: path
+          type: string
+          description: Path parameter owner.
+          required: true
+        - name: repo
+          in: path
+          type: string
+          description: Path parameter repo.
+          required: true
+        - name: path
+          in: path
+          type: string
+          description: Path parameter path.
+          required: true
+    - name: repos-owner-repo-statuses-sha
+      path: /repos/{owner}/{repo}/statuses/{sha}
+      operations:
+      - name: createcommitstatus
+        method: POST
+        description: 'GitHub REST API: createCommitStatus'
+        outputRawFormat: json
+        outputParameters:
+        - name: result
+          type: object
+          value: $.
+        inputParameters:
+        - name: owner
+          in: path
+          type: string
+          description: Path parameter owner.
+          required: true
+        - name: repo
+          in: path
+          type: string
+          description: Path parameter repo.
+          required: true
+        - name: sha
+          in: path
+          type: string
+          description: Path parameter sha.
+          required: true
+        - name: body
+          in: body
+          type: object
+          description: Request body (JSON).
+          required: true
+  exposes:
+  - type: mcp
+    namespace: kong-github-mcp
+    description: MCP adapter for the kong-github integration.
+    tools:
+    - name: kong_github
+      description: Execute the kong github integration end-to-end.
+      inputSchema:
+        type: object
+        properties:
+          trigger_event:
+            type: object
+            description: Triggering event payload.
+        required:
+        - trigger_event
+  - type: rest
+    namespace: kong-github-rest
+    port: 8080
+    description: REST adapter for the kong-github integration.
+    resources:
+    - path: /kong-github
+      name: kong-github
+      description: REST surface for the kong-github integration.
+      operations:
+      - method: POST
+        name: trigger
+        description: Trigger the kong-github integration.
+        call: kong_github
+        with:
+          trigger_event: rest.body
+        outputParameters:
+        - type: object
+          mapping: $.
