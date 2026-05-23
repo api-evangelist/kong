@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/BillingSubscriptionChange",
+  "title": "BillingSubscriptionChange",
+  "description": "Request for changing a subscription.",
+  "type": "object",
+  "properties": {
+    "labels": {
+      "$ref": "#/components/schemas/Labels"
+    },
+    "customer": {
+      "description": "The customer to create the subscription for.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The ID of the customer to create the subscription for.\n\nEither customer ID or customer key must be provided.\nIf both are provided, the ID will be used.",
+          "type": "string",
+          "example": "01G65Z755AFWAKHE12NY0CQ9FH",
+          "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+          "title": "Customer ID"
+        },
+        "key": {
+          "description": "The key of the customer to create the subscription for.\n\nEither customer ID or customer key must be provided.\nIf both are provided, the ID will be used.",
+          "type": "string",
+          "example": "019ae40f-4258-7f15-9491-842f42a7d6ac",
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "Customer Key"
+        }
+      }
+    },
+    "plan": {
+      "description": "The plan reference of the subscription.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "The plan ID of the subscription.\nSet if subscription is created from a plan.\n\nID or Key of the plan is required if creating a subscription from a plan.\nIf both are provided, the ID will be used.",
+          "type": "string",
+          "example": "01G65Z755AFWAKHE12NY0CQ9FH",
+          "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+          "title": "Plan ID"
+        },
+        "key": {
+          "description": "The plan Key of the subscription, if any.\nSet if subscription is created from a plan.\n\nID or Key of the plan is required if creating a subscription from a plan.\nIf both are provided, the ID will be used.",
+          "type": "string",
+          "example": "resource_key",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$",
+          "title": "Plan Key"
+        },
+        "version": {
+          "description": "The plan version of the subscription, if any.\nIf not provided, the latest version of the plan will be used.",
+          "type": "integer",
+          "title": "Plan Version"
+        }
+      }
+    },
+    "billing_anchor": {
+      "description": "A billing anchor is the fixed point in time that determines the subscription's recurring billing cycle.\nIt affects when charges occur and how prorations are calculated.\nCommon anchors:\n- Calendar month (1st of each month): `2025-01-01T00:00:00Z`\n- Subscription anniversary (day customer signed up)\n- Custom date (customer-specified day)\n\nIf not provided, the subscription will be created with the subscription's creation time as the billing anchor.",
+      "type": "string",
+      "format": "date-time",
+      "example": "2023-01-01T01:01:01.001Z",
+      "title": "Billing anchor"
+    },
+    "timing": {
+      "description": "Timing configuration for the change, when the change should take effect.\nFor changing a subscription, the accepted values depend on the subscription configuration.",
+      "example": "immediate",
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/BillingSubscriptionEditTimingEnum"
+        },
+        {
+          "$ref": "#/components/schemas/DateTime"
+        }
+      ]
+    }
+  },
+  "required": [
+    "customer",
+    "plan",
+    "timing"
+  ]
+}

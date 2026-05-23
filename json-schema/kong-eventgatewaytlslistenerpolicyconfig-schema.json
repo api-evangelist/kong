@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/EventGatewayTLSListenerPolicyConfig",
+  "title": "EventGatewayTLSListenerPolicyConfig",
+  "type": "object",
+  "properties": {
+    "certificates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/TLSCertificate"
+      },
+      "maxItems": 1,
+      "minItems": 1
+    },
+    "versions": {
+      "$ref": "#/components/schemas/TLSVersionRange"
+    },
+    "allow_plaintext": {
+      "description": "If false, only TLS connections are allowed. If true, both TLS and plaintext connections are allowed.\n",
+      "type": "boolean",
+      "default": false
+    },
+    "client_authentication": {
+      "description": "Configures mutual TLS (mTLS) client certificate verification. When set, the gateway\nrequests or requires clients to present a certificate during the TLS handshake.\n\n**Requires a minimum runtime version of `1.1`**.",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "description": "* required - Reject TLS connections without a valid client certificate.\n* requested - Request a client certificate during the TLS handshake, but allow connections without one (falls back to other configured authentication methods). If a certificate is presented but cannot be verified, the connection is closed.\n",
+          "type": "string",
+          "enum": [
+            "required",
+            "requested"
+          ],
+          "x-speakeasy-unknown-values": "allow"
+        },
+        "tls_trust_bundles": {
+          "description": "TLS trust bundles contain CA certificate bundles used to verify client certificates.\nAll bundles are merged into a single trust store; a client certificate is accepted if it\nchains to any trusted CA across all bundles.\n",
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/TLSTrustBundleReference"
+          },
+          "minItems": 1
+        },
+        "principal_mapping": {
+          "description": "An expression that extracts a principal identifier from a verified client certificate.\nThis expression must evaluate to a string.\n\n**Requires a minimum runtime version of `1.1`**.",
+          "type": "string",
+          "example": "${context.certificate.subject['CN'] ? context.certificate.subject['CN'] : context.certificate.sans.uri[0]}",
+          "x-expression": {
+            "type": "string",
+            "fields": [
+              {
+                "name": "context.certificate.serialNumber",
+                "type": "string",
+                "description": "The string serial number of the certificate"
+              },
+              {
+                "name": "context.certificate.subject",
+                "type": "object",
+                "description": "A map of the subject distinguished name.\n\nA distinguished name as described by RFC 4514 is represented as a map with each key being\nthe attribute type and the value being the attribute value.\nFor example:\n* `certificate.subject['CN']` is the common name\n* `certificate.subject['O']` is the organization\n"
+              },
+              {
+                "name": "context.certificate.issuer",
+                "type": "object",
+                "description": "A map of the issuer distinguished name.\n\nA distinguished name as described by RFC 4514 is represented as a map with each key being\nthe attribute type and the value being the attribute value.\nFor example:\n* `certificate.issuer['CN']` is the common name\n* `certificate.issuer['O']` is the organization\n"
+              },
+              {
+                "name": "context.certificate.sans.dns",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "An array of the DNS Subject Alternative Names from the certificate."
+              },
+              {
+                "name": "context.certificate.sans.uri",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "An array of the URI Subject Alternative Names from the certificate."
+              }
+            ]
+          },
+          "x-min-runtime-version": "1.1"
+        }
+      },
+      "required": [
+        "mode",
+        "tls_trust_bundles"
+      ],
+      "x-min-runtime-version": "1.1"
+    }
+  },
+  "required": [
+    "certificates"
+  ]
+}

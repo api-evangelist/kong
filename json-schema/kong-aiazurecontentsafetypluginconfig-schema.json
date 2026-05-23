@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/AiAzureContentSafetyPluginConfig",
+  "title": "AiAzureContentSafetyPluginConfig",
+  "x-speakeasy-entity": "PluginAiAzureContentSafety",
+  "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "azure_api_version": {
+          "description": "Sets the ?api-version URL parameter, used for defining the Azure Content Services interchange format.",
+          "type": "string",
+          "default": "2023-10-01",
+          "minLength": 1
+        },
+        "azure_client_id": {
+          "description": "If `azure_use_managed_identity` is true, set the client ID if required.",
+          "type": "string"
+        },
+        "azure_client_secret": {
+          "description": "If `azure_use_managed_identity` is true, set the client secret if required.",
+          "type": "string",
+          "x-encrypted": true
+        },
+        "azure_tenant_id": {
+          "description": "If `azure_use_managed_identity` is true, set the tenant ID if required.",
+          "type": "string"
+        },
+        "azure_use_managed_identity": {
+          "description": "If checked, uses (if set) `azure_client_id`, `azure_client_secret`, and/or `azure_tenant_id` for Azure authentication, via Managed or User-assigned identity",
+          "type": "boolean",
+          "default": false
+        },
+        "blocklist_names": {
+          "description": "Use these configured blocklists (in Azure Content Services) when inspecting content.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "categories": {
+          "description": "Array of categories, and their thresholds, to measure on.",
+          "type": "array",
+          "items": {
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "rejection_level": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "name",
+              "rejection_level"
+            ],
+            "type": "object"
+          }
+        },
+        "content_safety_key": {
+          "description": "If `azure_use_managed_identity` is true, set the API key to call Content Safety.",
+          "type": "string",
+          "x-encrypted": true,
+          "x-referenceable": true
+        },
+        "content_safety_url": {
+          "description": "Full URL, inc protocol, of the Azure Content Safety instance.",
+          "type": "string",
+          "x-referenceable": true
+        },
+        "guarding_mode": {
+          "description": "The guard mode to use for the request",
+          "type": "string",
+          "default": "INPUT",
+          "enum": [
+            "BOTH",
+            "INPUT",
+            "OUTPUT"
+          ]
+        },
+        "halt_on_blocklist_hit": {
+          "description": "Tells Azure to reject the request if any blocklist filter is hit.",
+          "type": "boolean",
+          "default": true
+        },
+        "log_blocked_content": {
+          "description": "Whether to log prompts and responses that are blocked by the guardrail.",
+          "type": "boolean",
+          "default": false
+        },
+        "output_type": {
+          "description": "See https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/content-filter#content-filtering-categories",
+          "type": "string",
+          "default": "FourSeverityLevels",
+          "enum": [
+            "EightSeverityLevels",
+            "FourSeverityLevels"
+          ]
+        },
+        "response_buffer_size": {
+          "description": "The amount of bytes receiving from upstream to be buffered before sending to the guardrails service. This only applies to the response content guard.",
+          "type": "number",
+          "default": 100
+        },
+        "reveal_failure_reason": {
+          "description": "Set true to tell the caller why their request was rejected, if so.",
+          "type": "boolean",
+          "default": true
+        },
+        "ssl_verify": {
+          "description": "Whether to verify the certificate presented by the Azure Content Safety service when using HTTPS.",
+          "type": "boolean",
+          "default": true
+        },
+        "stop_on_error": {
+          "description": "Stop processing if an error occurs",
+          "type": "boolean",
+          "default": true
+        },
+        "text_source": {
+          "description": "Select where to pick the 'text' for the Azure Content Services request.",
+          "type": "string",
+          "default": "concatenate_all_content",
+          "enum": [
+            "concatenate_all_content",
+            "concatenate_user_content"
+          ]
+        }
+      },
+      "required": [
+        "content_safety_url"
+      ]
+    },
+    "name": {
+      "const": "ai-azure-content-safety"
+    },
+    "protocols": {
+      "description": "A set of strings representing HTTP protocols.",
+      "type": "array",
+      "items": {
+        "enum": [
+          "grpc",
+          "grpcs",
+          "http",
+          "https"
+        ],
+        "type": "string"
+      },
+      "format": "set",
+      "default": [
+        "grpc",
+        "grpcs",
+        "http",
+        "https"
+      ]
+    },
+    "route": {
+      "description": "If set, the plugin will only activate when receiving requests via the specified route. Leave unset for the plugin to activate regardless of the route being used.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "service": {
+      "description": "If set, the plugin will only activate when receiving requests via one of the routes belonging to the specified Service. Leave unset for the plugin to activate regardless of the Service being matched.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "config"
+  ]
+}

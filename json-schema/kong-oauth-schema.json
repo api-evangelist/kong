@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/OAuth",
+  "title": "OAuth",
+  "description": "Defines the OAuth 2.0 authorization strategy used by an integration.\nThis schema provides all necessary information for the platform to initiate\nand manage OAuth-based authorization flows on behalf of customers.\n",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "oauth"
+    },
+    "overridable_config": {
+      "description": "A list of field names from the `config` object (e.g., `client_id`, `authorization_endpoint`, etc)\nthat can be overridden on a per-customer basis. When a field is listed here, the catalog allows\ncustomer-defined values to take precedence over the default configuration provided by the integration.\nThis supports flexible deployment models, including both SaaS-based and self-hosted OAuth authorization flows.\n",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "client_id",
+          "client_secret",
+          "authorization_endpoint",
+          "token_endpoint"
+        ],
+        "x-speakeasy-unknown-values": "allow"
+      }
+    },
+    "config": {
+      "type": "object",
+      "properties": {
+        "grant_type": {
+          "description": "The OAuth 2.0 grant type used for authorization (e.g., `authorization_code`).\nDetermines the flow the integration uses to request access tokens.\n",
+          "type": "string",
+          "enum": [
+            "authorization_code"
+          ]
+        },
+        "client_id": {
+          "description": "The OAuth client identifier registered with the integration provider.",
+          "type": "string",
+          "example": "d745213a-b7e8-4998-abe3-41f164001970"
+        },
+        "authorization_endpoint": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "description": "The URL where users are redirected to authorize access.",
+              "type": "string",
+              "format": "uri",
+              "example": "https://identity.service.com/oauth/authorize"
+            }
+          },
+          "required": [
+            "url"
+          ]
+        },
+        "token_endpoint": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "description": "The URL used to retrieve access tokens.",
+              "type": "string",
+              "format": "uri",
+              "example": "https://identity.service.com/oauth/token"
+            }
+          },
+          "required": [
+            "url"
+          ]
+        },
+        "scope": {
+          "description": "A list of permission scopes requested by the integration.\nDefines what level of access the token will grant.\n",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "read",
+            "write"
+          ]
+        },
+        "scope_delimiter": {
+          "description": "A string used to separate multiple scopes in the `scope` parameter.\n",
+          "type": "string",
+          "default": " "
+        },
+        "rolling_refresh_exp_seconds": {
+          "description": "Number of seconds before the refresh token grant can no longer be used to mint\na new access token. Once expired clients must re-authenticate to restart the\nwindow interval.\n",
+          "type": "number",
+          "example": 15780000,
+          "nullable": true
+        }
+      },
+      "required": [
+        "grant_type",
+        "client_id",
+        "authorization_endpoint",
+        "token_endpoint",
+        "scope",
+        "rolling_refresh_exp_seconds"
+      ]
+    }
+  },
+  "required": [
+    "type",
+    "config"
+  ]
+}

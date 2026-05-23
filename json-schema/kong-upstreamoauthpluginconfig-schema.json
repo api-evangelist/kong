@@ -1,0 +1,547 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/UpstreamOauthPluginConfig",
+  "title": "UpstreamOauthPluginConfig",
+  "x-speakeasy-entity": "PluginUpstreamOauth",
+  "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "object",
+          "properties": {
+            "idp_error_response_body_template": {
+              "description": "The template to use to create the body of the response to return to the consumer if Kong fails to obtain a token from the IdP.",
+              "type": "string",
+              "default": "{ \"code\": \"{{status}}\", \"message\": \"{{message}}\" }"
+            },
+            "idp_error_response_content_type": {
+              "description": "The Content-Type of the response to return to the consumer if Kong fails to obtain a token from the IdP.",
+              "type": "string",
+              "default": "application/json; charset=utf-8"
+            },
+            "idp_error_response_message": {
+              "description": "The message to embed in the body of the response to return to the consumer if Kong fails to obtain a token from the IdP.",
+              "type": "string",
+              "default": "Failed to authenticate request to upstream"
+            },
+            "idp_error_response_status_code": {
+              "description": "The response code to return to the consumer if Kong fails to obtain a token from the IdP.",
+              "type": "integer",
+              "default": 502,
+              "maximum": 599,
+              "minimum": 500
+            },
+            "purge_token_on_upstream_status_codes": {
+              "description": "An array of status codes which will force an access token to be purged when returned by the upstream. An empty array will disable this functionality.",
+              "type": "array",
+              "items": {
+                "maximum": 599,
+                "minimum": 100,
+                "type": "integer"
+              },
+              "default": [
+                401
+              ]
+            },
+            "upstream_access_token_header_name": {
+              "description": "The name of the header used to send the access token (obtained from the IdP) to the upstream service.",
+              "type": "string",
+              "default": "Authorization"
+            }
+          }
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "default_ttl": {
+              "description": "The lifetime of a token without an explicit `expires_in` value.",
+              "type": "number",
+              "default": 3600
+            },
+            "eagerly_expire": {
+              "description": "The number of seconds to eagerly expire a cached token. By default, a cached token expires 5 seconds before its lifetime as defined in `expires_in`.",
+              "type": "integer",
+              "default": 5
+            },
+            "memory": {
+              "type": "object",
+              "properties": {
+                "dictionary_name": {
+                  "description": "The shared dictionary used by the plugin to cache tokens if `config.cache.strategy` is set to `memory`.",
+                  "type": "string",
+                  "default": "kong_db_cache"
+                }
+              }
+            },
+            "redis": {
+              "type": "object",
+              "properties": {
+                "cloud_authentication": {
+                  "description": "Cloud auth related configs for connecting to a Cloud Provider's Redis instance.",
+                  "type": "object",
+                  "properties": {
+                    "auth_provider": {
+                      "description": "Auth providers to be used to authenticate to a Cloud Provider's Redis instance.",
+                      "type": "string",
+                      "enum": [
+                        "aws",
+                        "azure",
+                        "gcp"
+                      ],
+                      "x-referenceable": true
+                    },
+                    "aws_access_key_id": {
+                      "description": "AWS Access Key ID to be used for authentication when `auth_provider` is set to `aws`.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    },
+                    "aws_assume_role_arn": {
+                      "description": "The ARN of the IAM role to assume for generating ElastiCache IAM authentication tokens.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    },
+                    "aws_cache_name": {
+                      "description": "The name of the AWS Elasticache cluster when `auth_provider` is set to `aws`.",
+                      "type": "string",
+                      "x-referenceable": true
+                    },
+                    "aws_is_serverless": {
+                      "description": "This flag specifies whether the cluster is serverless when auth_provider is set to `aws`.",
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "aws_region": {
+                      "description": "The region of the AWS ElastiCache cluster when `auth_provider` is set to `aws`.",
+                      "type": "string",
+                      "x-referenceable": true
+                    },
+                    "aws_role_session_name": {
+                      "description": "The session name for the temporary credentials when assuming the IAM role.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    },
+                    "aws_secret_access_key": {
+                      "description": "AWS Secret Access Key to be used for authentication when `auth_provider` is set to `aws`.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    },
+                    "azure_client_id": {
+                      "description": "Azure Client ID to be used for authentication when `auth_provider` is set to `azure`.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    },
+                    "azure_client_secret": {
+                      "description": "Azure Client Secret to be used for authentication when `auth_provider` is set to `azure`.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    },
+                    "azure_tenant_id": {
+                      "description": "Azure Tenant ID to be used for authentication when `auth_provider` is set to `azure`.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    },
+                    "gcp_service_account_json": {
+                      "description": "GCP Service Account JSON to be used for authentication when `auth_provider` is set to `gcp`.",
+                      "type": "string",
+                      "x-encrypted": true,
+                      "x-referenceable": true
+                    }
+                  }
+                },
+                "cluster_max_redirections": {
+                  "description": "Maximum retry attempts for redirection.",
+                  "type": "integer",
+                  "default": 5
+                },
+                "cluster_nodes": {
+                  "description": "Cluster addresses to use for Redis connections when the `redis` strategy is defined. Defining this field implies using a Redis Cluster. The minimum length of the array is 1 element.",
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "ip": {
+                        "description": "A string representing a host name, such as example.com.",
+                        "type": "string",
+                        "default": "127.0.0.1"
+                      },
+                      "port": {
+                        "description": "An integer representing a port number between 0 and 65535, inclusive.",
+                        "type": "integer",
+                        "default": 6379,
+                        "maximum": 65535,
+                        "minimum": 0
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "minLength": 1
+                },
+                "connect_timeout": {
+                  "description": "An integer representing a timeout in milliseconds. Must be between 0 and 2^31-2.",
+                  "type": "integer",
+                  "default": 2000,
+                  "maximum": 2147483646,
+                  "minimum": 0
+                },
+                "connection_is_proxied": {
+                  "description": "If the connection to Redis is proxied (e.g. Envoy), set it `true`. Set the `host` and `port` to point to the proxy address.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "database": {
+                  "description": "Database to use for the Redis connection when using the `redis` strategy",
+                  "type": "integer",
+                  "default": 0
+                },
+                "host": {
+                  "description": "A string representing a host name, such as example.com.",
+                  "type": "string",
+                  "default": "127.0.0.1",
+                  "x-referenceable": true
+                },
+                "keepalive_backlog": {
+                  "description": "Limits the total number of opened connections for a pool. If the connection pool is full, connection queues above the limit go into the backlog queue. If the backlog queue is full, subsequent connect operations fail and return `nil`. Queued operations (subject to set timeouts) resume once the number of connections in the pool is less than `keepalive_pool_size`. If latency is high or throughput is low, try increasing this value. Empirically, this value is larger than `keepalive_pool_size`.",
+                  "type": "integer",
+                  "maximum": 2147483646,
+                  "minimum": 0
+                },
+                "keepalive_pool_size": {
+                  "description": "The size limit for every cosocket connection pool associated with every remote server, per worker process. If neither `keepalive_pool_size` nor `keepalive_backlog` is specified, no pool is created. If `keepalive_pool_size` isn't specified but `keepalive_backlog` is specified, then the pool uses the default value. Try to increase (e.g. 512) this value if latency is high or throughput is low.",
+                  "type": "integer",
+                  "default": 256,
+                  "maximum": 2147483646,
+                  "minimum": 1
+                },
+                "password": {
+                  "description": "Password to use for Redis connections. If undefined, no AUTH commands are sent to Redis.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "port": {
+                  "description": "An integer representing a port number between 0 and 65535, inclusive.",
+                  "type": "integer",
+                  "default": 6379,
+                  "maximum": 65535,
+                  "minimum": 0,
+                  "x-referenceable": true
+                },
+                "read_timeout": {
+                  "description": "An integer representing a timeout in milliseconds. Must be between 0 and 2^31-2.",
+                  "type": "integer",
+                  "default": 2000,
+                  "maximum": 2147483646,
+                  "minimum": 0
+                },
+                "send_timeout": {
+                  "description": "An integer representing a timeout in milliseconds. Must be between 0 and 2^31-2.",
+                  "type": "integer",
+                  "default": 2000,
+                  "maximum": 2147483646,
+                  "minimum": 0
+                },
+                "sentinel_master": {
+                  "description": "Sentinel master to use for Redis connections. Defining this value implies using Redis Sentinel.",
+                  "type": "string"
+                },
+                "sentinel_nodes": {
+                  "description": "Sentinel node addresses to use for Redis connections when the `redis` strategy is defined. Defining this field implies using a Redis Sentinel. The minimum length of the array is 1 element.",
+                  "type": "array",
+                  "items": {
+                    "properties": {
+                      "host": {
+                        "description": "A string representing a host name, such as example.com.",
+                        "type": "string",
+                        "default": "127.0.0.1"
+                      },
+                      "port": {
+                        "description": "An integer representing a port number between 0 and 65535, inclusive.",
+                        "type": "integer",
+                        "default": 6379,
+                        "maximum": 65535,
+                        "minimum": 0
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "minLength": 1
+                },
+                "sentinel_password": {
+                  "description": "Sentinel password to authenticate with a Redis Sentinel instance. If undefined, no AUTH commands are sent to Redis Sentinels.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "sentinel_role": {
+                  "description": "Sentinel role to use for Redis connections when the `redis` strategy is defined. Defining this value implies using Redis Sentinel.",
+                  "type": "string",
+                  "enum": [
+                    "any",
+                    "master",
+                    "slave"
+                  ]
+                },
+                "sentinel_username": {
+                  "description": "Sentinel username to authenticate with a Redis Sentinel instance. If undefined, ACL authentication won't be performed. This requires Redis v6.2.0+.",
+                  "type": "string",
+                  "x-referenceable": true
+                },
+                "server_name": {
+                  "description": "A string representing an SNI (server name indication) value for TLS.",
+                  "type": "string",
+                  "x-referenceable": true
+                },
+                "ssl": {
+                  "description": "If set to true, uses SSL to connect to Redis.",
+                  "type": "boolean",
+                  "default": false
+                },
+                "ssl_verify": {
+                  "description": "If set to true, verifies the validity of the server SSL certificate. If setting this parameter, also configure `lua_ssl_trusted_certificate` in `kong.conf` to specify the CA (or server) certificate used by your Redis server. You may also need to configure `lua_ssl_verify_depth` accordingly.",
+                  "type": "boolean",
+                  "default": true
+                },
+                "username": {
+                  "description": "Username to use for Redis connections. If undefined, ACL authentication won't be performed. This requires Redis v6.0.0+. To be compatible with Redis v5.x.y, you can set it to `default`.",
+                  "type": "string",
+                  "x-referenceable": true
+                }
+              }
+            },
+            "strategy": {
+              "description": "The method Kong should use to cache tokens issued by the IdP.",
+              "type": "string",
+              "default": "memory",
+              "enum": [
+                "memory",
+                "redis"
+              ]
+            }
+          }
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "auth_method": {
+              "description": "The authentication method used in client requests to the IdP. Supported values are: `client_secret_basic` to send `client_id` and `client_secret` in the `Authorization: Basic` header, `client_secret_post` to send `client_id` and `client_secret` as part of the request body, or `client_secret_jwt` to send a JWT signed with the `client_secret` using the client assertion as part of the body.",
+              "type": "string",
+              "default": "client_secret_post",
+              "enum": [
+                "client_secret_basic",
+                "client_secret_jwt",
+                "client_secret_post",
+                "none"
+              ]
+            },
+            "client_secret_jwt_alg": {
+              "description": "The algorithm to use with JWT when using `client_secret_jwt` authentication.",
+              "type": "string",
+              "default": "HS512",
+              "enum": [
+                "HS256",
+                "HS512"
+              ]
+            },
+            "http_proxy": {
+              "description": "The proxy to use when making HTTP requests to the IdP.",
+              "type": "string"
+            },
+            "http_proxy_authorization": {
+              "description": "The `Proxy-Authorization` header value to be used with `http_proxy`.",
+              "type": "string"
+            },
+            "http_version": {
+              "description": "The HTTP version used for requests made by this plugin. Supported values: `1.1` for HTTP 1.1 and `1.0` for HTTP 1.0.",
+              "type": "number",
+              "default": 1.1
+            },
+            "https_proxy": {
+              "description": "The proxy to use when making HTTPS requests to the IdP.",
+              "type": "string"
+            },
+            "https_proxy_authorization": {
+              "description": "The `Proxy-Authorization` header value to be used with `https_proxy`.",
+              "type": "string"
+            },
+            "keep_alive": {
+              "description": "Whether to use keepalive connections to the IdP.",
+              "type": "boolean",
+              "default": true
+            },
+            "no_proxy": {
+              "description": "A comma-separated list of hosts that should not be proxied.",
+              "type": "string"
+            },
+            "ssl_verify": {
+              "description": "Whether to verify the certificate presented by the IdP when using HTTPS.",
+              "type": "boolean",
+              "default": true
+            },
+            "timeout": {
+              "description": "Network I/O timeout for requests to the IdP in milliseconds.",
+              "type": "integer",
+              "default": 10000,
+              "maximum": 2147483646,
+              "minimum": 0
+            }
+          }
+        },
+        "oauth": {
+          "type": "object",
+          "properties": {
+            "audience": {
+              "description": "List of audiences passed to the IdP when obtaining a new token.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": []
+            },
+            "client_id": {
+              "description": "The client ID for the application registration in the IdP.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "client_secret": {
+              "description": "The client secret for the application registration in the IdP.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "grant_type": {
+              "description": "The OAuth grant type to be used.",
+              "type": "string",
+              "default": "client_credentials",
+              "enum": [
+                "client_credentials",
+                "password"
+              ]
+            },
+            "password": {
+              "description": "The password to use if `config.oauth.grant_type` is set to `password`.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "scopes": {
+              "description": "List of scopes to request from the IdP when obtaining a new token.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "openid"
+              ]
+            },
+            "token_endpoint": {
+              "description": "The token endpoint URI.",
+              "type": "string"
+            },
+            "token_headers": {
+              "description": "Extra headers to be passed in the token endpoint request.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "x-referenceable": true
+              }
+            },
+            "token_post_args": {
+              "description": "Extra post arguments to be passed in the token endpoint request.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "x-referenceable": true
+              }
+            },
+            "username": {
+              "description": "The username to use if `config.oauth.grant_type` is set to `password`.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            }
+          },
+          "required": [
+            "token_endpoint"
+          ]
+        }
+      },
+      "required": [
+        "oauth"
+      ]
+    },
+    "consumer": {
+      "description": "If set, the plugin will activate only for requests where the specified has been authenticated. (Note that some plugins can not be restricted to consumers this way.). Leave unset for the plugin to activate regardless of the authenticated Consumer.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "consumer_group": {
+      "description": "If set, the plugin will activate only for requests where the specified consumer group has been authenticated. (Note that some plugins can not be restricted to consumers groups this way.). Leave unset for the plugin to activate regardless of the authenticated Consumer Groups",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "name": {
+      "const": "upstream-oauth"
+    },
+    "protocols": {
+      "description": "A set of strings representing HTTP protocols.",
+      "type": "array",
+      "items": {
+        "enum": [
+          "grpc",
+          "grpcs",
+          "http",
+          "https"
+        ],
+        "type": "string"
+      },
+      "format": "set",
+      "default": [
+        "grpc",
+        "grpcs",
+        "http",
+        "https"
+      ]
+    },
+    "route": {
+      "description": "If set, the plugin will only activate when receiving requests via the specified route. Leave unset for the plugin to activate regardless of the route being used.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "service": {
+      "description": "If set, the plugin will only activate when receiving requests via one of the routes belonging to the specified Service. Leave unset for the plugin to activate regardless of the Service being matched.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "config"
+  ]
+}

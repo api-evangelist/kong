@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/RBACUserRole",
+  "title": "RBACUserRole",
+  "x-speakeasy-entity": "RbacUserRole",
+  "type": "object",
+  "properties": {
+    "role": {
+      "description": "The RBAC role assigned to the user.",
+      "type": "string",
+      "nullable": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "x-foreign": true
+    },
+    "role_source": {
+      "description": "The origin of the RBAC user role.",
+      "type": "string",
+      "default": "local",
+      "enum": [
+        "idp",
+        "local"
+      ],
+      "nullable": true,
+      "x-speakeasy-terraform-ignore": true
+    },
+    "user": {
+      "description": "The RBAC user associated with the role.",
+      "type": "object",
+      "nullable": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "x-foreign": true,
+      "x-speakeasy-terraform-ignore": true
+    },
+    "user_id": {
+      "description": "The RBAC user ID associated with the role.",
+      "type": "string",
+      "nullable": true
+    }
+  },
+  "additionalProperties": false,
+  "x-speakeasy-transform-from-api": {
+    "jq": ".\n| if .roles != null then .role = .roles[0].name else . end\n| if .user != null and .user.id != null then . + { user_id: .user.id } else . end\n| del(.user, .role_source)\n"
+  },
+  "x-speakeasy-transform-to-api": {
+    "jq": ".\n| if .role != null then .roles = .role else . end\n| if .user_id != null then .user = { id: .user_id } else . end\n| del(.user_id, .role)\n"
+  }
+}

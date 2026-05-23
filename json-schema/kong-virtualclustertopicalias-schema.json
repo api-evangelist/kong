@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/VirtualClusterTopicAlias",
+  "title": "VirtualClusterTopicAlias",
+  "description": "**Pre-release Feature**\nThis feature is currently in beta and is subject to change.\n\nA topic alias maps an alias name to a namespace-visible topic name.\nClients can produce to, consume from, and discover the topic under the alias name.\nThe original topic name remains accessible.\n\n**Requires a minimum runtime version of `1.2`**.",
+  "type": "object",
+  "properties": {
+    "alias": {
+      "description": "The client-visible topic name.",
+      "type": "string",
+      "minLength": 1
+    },
+    "topic": {
+      "description": "The namespace-visible topic name this alias resolves to.",
+      "type": "string",
+      "minLength": 1
+    },
+    "match": {
+      "description": "CEL expression evaluated against the connection's auth context.\nIf omitted or empty, the alias is active for all connections.\n",
+      "type": "string",
+      "default": "",
+      "x-expression": {
+        "type": "boolean",
+        "fields": [
+          {
+            "name": "context.auth.principal.name",
+            "type": "string",
+            "description": "Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER."
+          },
+          {
+            "name": "context.auth.type",
+            "type": "string",
+            "description": "The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.\n"
+          },
+          {
+            "name": "context.auth.token.claims",
+            "type": "object",
+            "description": "All claims from the JWT token. Only populated for sasl_oauth_bearer authentication. Claims can be strings, numbers, booleans, arrays or nested JSON objects."
+          }
+        ]
+      }
+    },
+    "conflict": {
+      "$ref": "#/components/schemas/VirtualClusterTopicAliasConflict"
+    }
+  },
+  "required": [
+    "alias",
+    "topic"
+  ],
+  "x-min-runtime-version": "1.2"
+}

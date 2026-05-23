@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/EventGatewayProduceSchemaValidationPolicy",
+  "title": "Schema Validation",
+  "description": "A policy that validates produce messages against a schema registry.",
+  "type": "object",
+  "properties": {
+    "type": {
+      "description": "The type name of the policy.",
+      "type": "string",
+      "const": "schema_validation",
+      "maxLength": 255,
+      "minLength": 1
+    },
+    "name": {
+      "description": "A unique user-defined name of the policy.",
+      "type": "string",
+      "maxLength": 255,
+      "x-unicode-pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N} _\\-\\.:/+']*[\\p{L}\\p{N}]$"
+    },
+    "description": {
+      "description": "A human-readable description of the policy.",
+      "type": "string",
+      "default": "",
+      "maxLength": 512
+    },
+    "enabled": {
+      "description": "Whether the policy is enabled.",
+      "type": "boolean",
+      "default": true
+    },
+    "labels": {
+      "$ref": "#/components/schemas/Labels"
+    },
+    "config": {
+      "description": "The configuration of the policy.",
+      "type": "object",
+      "$ref": "#/components/schemas/EventGatewayProduceSchemaValidationPolicyConfig"
+    },
+    "condition": {
+      "description": "A string containing the boolean expression that determines whether the policy is applied.",
+      "type": "string",
+      "example": "context.topic.name.endsWith(\"my_suffix\") && record.headers[\"x-flag\"] == \"a-value\"",
+      "default": "",
+      "maxLength": 1000,
+      "x-expression": {
+        "type": "boolean",
+        "fields": [
+          {
+            "name": "context.auth.principal.name",
+            "type": "string",
+            "description": "Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER."
+          },
+          {
+            "name": "context.auth.type",
+            "type": "string",
+            "description": "The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.\n"
+          },
+          {
+            "name": "context.topic.name",
+            "type": "string",
+            "description": "The name of the topic."
+          },
+          {
+            "name": "record.headers",
+            "type": "object",
+            "description": "An associative array of header key value pairs."
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "type",
+    "config"
+  ]
+}

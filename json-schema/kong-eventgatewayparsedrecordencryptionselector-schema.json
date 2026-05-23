@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/EventGatewayParsedRecordEncryptionSelector",
+  "title": "EventGatewayParsedRecordEncryptionSelector",
+  "description": "Selects fields of a parsed record for encryption and defines what key to encrypt them with.",
+  "type": "object",
+  "properties": {
+    "paths": {
+      "description": "Selects which fields of the parsed record to encrypt. A maximum of 50 path entries are allowed.",
+      "oneOf": [
+        {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "required": [
+              "match"
+            ],
+            "properties": {
+              "match": {
+                "description": "A field selector. It can select nested fields and array entries.\n\nCurrently supported are exact matches.\n",
+                "type": "string",
+                "example": "someObject.someArray[1].fieldName"
+              }
+            }
+          }
+        },
+        {
+          "type": "string",
+          "x-expression": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "fields": [
+              {
+                "name": "context.auth.principal.name",
+                "type": "string",
+                "description": "Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER."
+              },
+              {
+                "name": "context.auth.type",
+                "type": "string",
+                "description": "The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.\n"
+              },
+              {
+                "name": "context.auth.token.claims",
+                "type": "object",
+                "description": "All claims from the JWT token. Only populated for sasl_oauth_bearer authentication. Claims can be strings, numbers, booleans, arrays or nested JSON objects."
+              },
+              {
+                "name": "record.headers",
+                "type": "object",
+                "description": "An associative array of header key value pairs."
+              },
+              {
+                "name": "record.value.content",
+                "type": "object",
+                "description": "The content of the record value."
+              }
+            ]
+          },
+          "description": "This expression should evaluate to an array of exact field paths,\nequivalent to the `match` values in the array variant.\n",
+          "example": "${context.auth.type == 'sasl_oauth_bearer' ? ['credentials.accessToken', 'credentials.refreshToken'] : ['credentials.password']}\n"
+        }
+      ]
+    },
+    "encryption_key": {
+      "$ref": "#/components/schemas/EncryptionKey"
+    }
+  },
+  "required": [
+    "paths",
+    "encryption_key"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/ForwardToVirtualClusterPolicy",
+  "title": "Forward to Virtual Cluster",
+  "description": "Forwards requests to virtual clusters configured with port routing or SNI routing.\nWhile there can be multiple of these policies configured on a listener, there can only be one instance of\n`port_mapping`.\nWhen multiple policies are configured, the first one that matches the connection is used.\nIf no policy matches, the connection is rejected.\n\nWhen using `port_mapping`, there must be a mapping port for each broker on the backend cluster see\n`ForwardToClusterBySNIConfig` for more details.\n",
+  "type": "object",
+  "properties": {
+    "type": {
+      "description": "The type name of the policy.",
+      "type": "string",
+      "const": "forward_to_virtual_cluster",
+      "maxLength": 255,
+      "minLength": 1
+    },
+    "name": {
+      "description": "A unique user-defined name of the policy.",
+      "type": "string",
+      "maxLength": 255,
+      "x-unicode-pattern": "^[\\p{L}\\p{N}][\\p{L}\\p{N} _\\-\\.:/+']*[\\p{L}\\p{N}]$"
+    },
+    "description": {
+      "description": "A human-readable description of the policy.",
+      "type": "string",
+      "default": "",
+      "maxLength": 512
+    },
+    "enabled": {
+      "description": "Whether the policy is enabled.",
+      "type": "boolean",
+      "default": true
+    },
+    "labels": {
+      "$ref": "#/components/schemas/Labels"
+    },
+    "config": {
+      "description": "The configuration of the policy.",
+      "type": "object",
+      "discriminator": {
+        "propertyName": "type",
+        "mapping": {
+          "port_mapping": "#/components/schemas/ForwardToClusterByPortMappingConfig",
+          "sni": "#/components/schemas/ForwardToClusterBySNIConfig"
+        }
+      },
+      "oneOf": [
+        {
+          "$ref": "#/components/schemas/ForwardToClusterBySNIConfig"
+        },
+        {
+          "$ref": "#/components/schemas/ForwardToClusterByPortMappingConfig"
+        }
+      ]
+    }
+  },
+  "required": [
+    "type",
+    "config"
+  ]
+}

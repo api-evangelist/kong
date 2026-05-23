@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/ForwardToClusterByPortMappingConfig",
+  "title": "ForwardToClusterByPortMappingConfig",
+  "description": "The configuration to forward request to `destination` and rewrite ports accordingly.\nAll broker ids must fit in the range of ports defined in the listener, if it doesn't the metadata request will\nreturn an error.\n\nFor example with ports: [9000, \"9092-9094\", \"9100\"] and `bootstrap_port: at_start` and brokers with ids\n1, 2, 3, 4 we will map: bootstrap to 9000 broker 1 to 9001, broker 2 to 9002, broker 3 to 9003, and broker 4\nto 9004 and fail the metadata request as these ports are not open.\n\nHowever, with the same configuration but with brokers with ids: 92,93,94,100 we will map: bootstrap to 9000,\nbroker 92 to 9092, broker 93 to 9093, broker 94 to 9094, and broker 100 to 9100.\n\nIn most cases users should use a single range `[\"9090-9094\"] ` and `bootstrap_port: at_start` and connect with\n`<host>:9090` as bootstrap server. Being able to use multiple ranges is only useful when when dealing with\ngaps in broker ids.\n\nIt is strongly discouraged to use port mapping in production.\n",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "port_mapping"
+    },
+    "destination": {
+      "$ref": "#/components/schemas/VirtualClusterReference"
+    },
+    "advertised_host": {
+      "description": "Virtual brokers are advertised to clients using this host. Any kind of host supported by kafka can be used. If not defined, it's listen_address. If listen_address is `0.0.0.0` it's the destination IP of the TCP connection.",
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9\\-]{0,61}[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9\\-]{0,61}[a-z0-9])?)*$"
+    },
+    "bootstrap_port": {
+      "description": "If set to `at_start`, the first port will be used as a bootstrap port.\nIt provides a stable endpoint to use as the bootstrap server for clients, regardless of broker\nIDs in the cluster.\n\nAdditionally, it offsets all ports by one, so for example, if there are 3 brokers (id=1, id=2, id=3)\nthen we will use 4 ports: 9092 (bootstrap), 9093 (id=1), 9094 (id=2), 9095 (id=3)\nWith `none` we will use 3 ports: 9092 (id=1), 9093 (id=2), 9094 (id=3).\n",
+      "type": "string",
+      "default": "at_start",
+      "enum": [
+        "none",
+        "at_start"
+      ],
+      "x-speakeasy-unknown-values": "allow"
+    },
+    "min_broker_id": {
+      "description": "The lowest broker node ID in the cluster.",
+      "type": "integer",
+      "default": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "destination",
+    "advertised_host"
+  ]
+}

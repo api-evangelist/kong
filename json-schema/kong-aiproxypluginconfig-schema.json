@@ -1,0 +1,499 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/AiProxyPluginConfig",
+  "title": "AiProxyPluginConfig",
+  "x-speakeasy-entity": "PluginAiProxy",
+  "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "auth": {
+          "type": "object",
+          "properties": {
+            "allow_override": {
+              "description": "If enabled, the authorization header or parameter can be overridden in the request by the value configured in the plugin.",
+              "type": "boolean",
+              "default": false
+            },
+            "aws_access_key_id": {
+              "description": "Set this if you are using an AWS provider (Bedrock) and you are authenticating using static IAM User credentials. Setting this will override the AWS_ACCESS_KEY_ID environment variable for this plugin instance.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "aws_secret_access_key": {
+              "description": "Set this if you are using an AWS provider (Bedrock) and you are authenticating using static IAM User credentials. Setting this will override the AWS_SECRET_ACCESS_KEY environment variable for this plugin instance.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "azure_client_id": {
+              "description": "If azure_use_managed_identity is set to true, and you need to use a different user-assigned identity for this LLM instance, set the client ID.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "azure_client_secret": {
+              "description": "If azure_use_managed_identity is set to true, and you need to use a different user-assigned identity for this LLM instance, set the client secret.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "azure_tenant_id": {
+              "description": "If azure_use_managed_identity is set to true, and you need to use a different user-assigned identity for this LLM instance, set the tenant ID.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "azure_use_managed_identity": {
+              "description": "Set true to use the Azure Cloud Managed Identity (or user-assigned identity) to authenticate with Azure-provider models.",
+              "type": "boolean",
+              "default": false
+            },
+            "gcp_metadata_url": {
+              "description": "Custom metadata URL for GCP authentication. Useful for restricted network environments or custom GCP endpoints. If null, Kong will use the default Google metadata endpoint.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "gcp_oauth_token_url": {
+              "description": "Custom OAuth token URL for GCP authentication. Useful for restricted network environments or custom GCP endpoints. If null, Kong will use the default Google OAuth token endpoint.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "gcp_service_account_json": {
+              "description": "Set this field to the full JSON of the GCP service account to authenticate, if required. If null (and gcp_use_service_account is true), Kong will attempt to read from environment variable `GCP_SERVICE_ACCOUNT`.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "gcp_use_service_account": {
+              "description": "Use service account auth for GCP-based providers and models.",
+              "type": "boolean",
+              "default": false
+            },
+            "header_name": {
+              "description": "If AI model requires authentication via Authorization or API key header, specify its name here.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "header_value": {
+              "description": "Specify the full auth header value for 'header_name', for example 'Bearer key' or just 'key'.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "param_location": {
+              "description": "Specify whether the 'param_name' and 'param_value' options go in a query string, or the POST form/JSON body.",
+              "type": "string",
+              "enum": [
+                "body",
+                "query"
+              ]
+            },
+            "param_name": {
+              "description": "If AI model requires authentication via query parameter, specify its name here.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "param_value": {
+              "description": "Specify the full parameter value for 'param_name'.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            }
+          }
+        },
+        "genai_category": {
+          "description": "Generative AI category of the request",
+          "type": "string",
+          "default": "text/generation",
+          "enum": [
+            "audio/speech",
+            "audio/transcription",
+            "image/generation",
+            "text/embeddings",
+            "text/generation",
+            "video/generation"
+          ]
+        },
+        "llm_format": {
+          "description": "LLM input and output format and schema to use",
+          "type": "string",
+          "default": "openai",
+          "enum": [
+            "anthropic",
+            "bedrock",
+            "cohere",
+            "gemini",
+            "huggingface",
+            "openai"
+          ]
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "log_payloads": {
+              "description": "If enabled, will log the request and response body into the Kong log plugin(s) output.Furthermore if Opentelemetry instrumentation is enabled the traces will contain this data as well.",
+              "type": "boolean",
+              "default": false
+            },
+            "log_statistics": {
+              "description": "If enabled and supported by the driver, will add model usage and token metrics into the Kong log plugin(s) output.",
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        "max_request_body_size": {
+          "description": "max allowed body size allowed to be introspected. 0 means unlimited, but the size of this body will still be limited by Nginx's client_max_body_size.",
+          "type": "integer",
+          "default": 1048576
+        },
+        "model": {
+          "type": "object",
+          "properties": {
+            "model_alias": {
+              "description": "The model name parameter from the request that this model should map to.",
+              "type": "string"
+            },
+            "name": {
+              "description": "Model name to execute.",
+              "type": "string"
+            },
+            "options": {
+              "description": "Key/value settings for the model",
+              "type": "object",
+              "properties": {
+                "anthropic_version": {
+                  "description": "Defines the schema/API version, if using Anthropic provider.",
+                  "type": "string"
+                },
+                "azure_api_version": {
+                  "description": "'api-version' for Azure OpenAI instances.",
+                  "type": "string",
+                  "default": "2023-05-15"
+                },
+                "azure_deployment_id": {
+                  "description": "Deployment ID for Azure OpenAI instances.",
+                  "type": "string"
+                },
+                "azure_instance": {
+                  "description": "Instance name for Azure OpenAI hosted models.",
+                  "type": "string"
+                },
+                "bedrock": {
+                  "type": "object",
+                  "properties": {
+                    "aws_assume_role_arn": {
+                      "description": "If using AWS providers (Bedrock) you can assume a different role after authentication with the current IAM context is successful.",
+                      "type": "string"
+                    },
+                    "aws_region": {
+                      "description": "If using AWS providers (Bedrock) you can override the `AWS_REGION` environment variable by setting this option.",
+                      "type": "string"
+                    },
+                    "aws_role_session_name": {
+                      "description": "If using AWS providers (Bedrock), set the identifier of the assumed role session.",
+                      "type": "string"
+                    },
+                    "aws_sts_endpoint_url": {
+                      "description": "If using AWS providers (Bedrock), override the STS endpoint URL when assuming a different role.",
+                      "type": "string"
+                    },
+                    "batch_bucket_prefix": {
+                      "description": "S3 URI prefix (s3://bucket/prefix/) where Bedrock will get input files from and store results to for native batch API.",
+                      "type": "string"
+                    },
+                    "batch_role_arn": {
+                      "description": "AWS role arn used for calling batch API. Try to get the value from request if ommited.",
+                      "type": "string"
+                    },
+                    "embeddings_normalize": {
+                      "description": "If using AWS providers (Bedrock), set to true to normalize the embeddings.",
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "performance_config_latency": {
+                      "description": "Force the client's performance configuration 'latency' for all requests. Leave empty to let the consumer select the performance configuration.",
+                      "type": "string"
+                    },
+                    "video_output_s3_uri": {
+                      "description": "S3 URI (s3://bucket/prefix) where Bedrock will store generated video files. Required for video generation.",
+                      "type": "string"
+                    }
+                  }
+                },
+                "cohere": {
+                  "type": "object",
+                  "properties": {
+                    "embedding_input_type": {
+                      "description": "The purpose of the input text to calculate embedding vectors.",
+                      "type": "string",
+                      "default": "classification",
+                      "enum": [
+                        "classification",
+                        "clustering",
+                        "image",
+                        "search_document",
+                        "search_query"
+                      ]
+                    },
+                    "wait_for_model": {
+                      "description": "Wait for the model if it is not ready",
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "dashscope": {
+                  "type": "object",
+                  "properties": {
+                    "international": {
+                      "description": "Two Dashscope endpoints are available, and the international endpoint will be used when this is set to `true`.\nIt is recommended to set this to `true` when using international version of dashscope.\n",
+                      "type": "boolean",
+                      "default": true
+                    }
+                  }
+                },
+                "databricks": {
+                  "type": "object",
+                  "properties": {
+                    "workspace_instance_id": {
+                      "description": "Workspace Instance ID ('dbc-xxx-yyy') for Databricks model serving.",
+                      "type": "string"
+                    }
+                  }
+                },
+                "embeddings_dimensions": {
+                  "description": "If using embeddings models, set the number of dimensions to generate.",
+                  "type": "integer"
+                },
+                "gemini": {
+                  "type": "object",
+                  "properties": {
+                    "api_endpoint": {
+                      "description": "If running Gemini on Vertex, specify the regional API endpoint (hostname only).",
+                      "type": "string"
+                    },
+                    "endpoint_id": {
+                      "description": "If running Gemini on Vertex Model Garden, specify the endpoint ID.",
+                      "type": "string"
+                    },
+                    "location_id": {
+                      "description": "If running Gemini on Vertex, specify the location ID.",
+                      "type": "string"
+                    },
+                    "project_id": {
+                      "description": "If running Gemini on Vertex, specify the project ID.",
+                      "type": "string"
+                    }
+                  }
+                },
+                "huggingface": {
+                  "type": "object",
+                  "properties": {
+                    "use_cache": {
+                      "description": "Use the cache layer on the inference API",
+                      "type": "boolean"
+                    },
+                    "wait_for_model": {
+                      "description": "Wait for the model if it is not ready",
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "input_cost": {
+                  "description": "Defines the cost per 1M tokens in your prompt.",
+                  "type": "number"
+                },
+                "llama2_format": {
+                  "description": "If using llama2 provider, select the upstream message format.",
+                  "type": "string",
+                  "enum": [
+                    "ollama",
+                    "openai",
+                    "raw"
+                  ]
+                },
+                "max_tokens": {
+                  "description": "Defines the max_tokens, if using chat or completion models.",
+                  "type": "integer"
+                },
+                "mistral_format": {
+                  "description": "If using mistral provider, select the upstream message format.",
+                  "type": "string",
+                  "enum": [
+                    "ollama",
+                    "openai"
+                  ]
+                },
+                "output_cost": {
+                  "description": "Defines the cost per 1M tokens in the output of the AI.",
+                  "type": "number"
+                },
+                "temperature": {
+                  "description": "Defines the matching temperature, if using chat or completion models.",
+                  "type": "number",
+                  "maximum": 5,
+                  "minimum": 0
+                },
+                "top_k": {
+                  "description": "Defines the top-k most likely tokens, if supported.",
+                  "type": "integer",
+                  "maximum": 500,
+                  "minimum": 0
+                },
+                "top_p": {
+                  "description": "Defines the top-p probability mass, if supported.",
+                  "type": "number",
+                  "maximum": 1,
+                  "minimum": 0
+                },
+                "upstream_path": {
+                  "description": "Manually specify or override the AI operation path, used when e.g. using the 'preserve' route_type.",
+                  "type": "string"
+                },
+                "upstream_url": {
+                  "description": "Manually specify or override the full URL to the AI operation endpoints, when calling (self-)hosted models, or for running via a private endpoint.",
+                  "type": "string"
+                }
+              }
+            },
+            "provider": {
+              "description": "AI provider request format - Kong translates requests to and from the specified backend compatible formats.",
+              "type": "string",
+              "enum": [
+                "anthropic",
+                "azure",
+                "bedrock",
+                "cerebras",
+                "cohere",
+                "dashscope",
+                "databricks",
+                "deepseek",
+                "gemini",
+                "huggingface",
+                "llama2",
+                "mistral",
+                "ollama",
+                "openai",
+                "vllm",
+                "xai"
+              ]
+            }
+          },
+          "required": [
+            "provider"
+          ]
+        },
+        "model_name_header": {
+          "description": "Display the model name selected in the X-Kong-LLM-Model response header",
+          "type": "boolean",
+          "default": true
+        },
+        "response_streaming": {
+          "description": "Whether to 'optionally allow', 'deny', or 'always' (force) the streaming of answers via server sent events.",
+          "type": "string",
+          "default": "allow",
+          "enum": [
+            "allow",
+            "always",
+            "deny"
+          ]
+        },
+        "route_type": {
+          "description": "The model's operation implementation, for this provider. ",
+          "type": "string",
+          "enum": [
+            "audio/v1/audio/speech",
+            "audio/v1/audio/transcriptions",
+            "audio/v1/audio/translations",
+            "image/v1/images/edits",
+            "image/v1/images/generations",
+            "llm/v1/assistants",
+            "llm/v1/batches",
+            "llm/v1/chat",
+            "llm/v1/completions",
+            "llm/v1/embeddings",
+            "llm/v1/files",
+            "llm/v1/responses",
+            "preserve",
+            "realtime/v1/realtime",
+            "video/v1/videos/generations"
+          ]
+        }
+      },
+      "required": [
+        "model",
+        "route_type"
+      ]
+    },
+    "consumer": {
+      "description": "If set, the plugin will activate only for requests where the specified has been authenticated. (Note that some plugins can not be restricted to consumers this way.). Leave unset for the plugin to activate regardless of the authenticated Consumer.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "consumer_group": {
+      "description": "If set, the plugin will activate only for requests where the specified consumer group has been authenticated. (Note that some plugins can not be restricted to consumers groups this way.). Leave unset for the plugin to activate regardless of the authenticated Consumer Groups",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "name": {
+      "const": "ai-proxy"
+    },
+    "protocols": {
+      "description": "A list of the request protocols that will trigger this plugin. The default value, as well as the possible values allowed on this field, may change depending on the plugin type. For example, plugins that only work in stream mode will only support tcp and tls.",
+      "type": "array",
+      "items": {
+        "enum": [
+          "grpc",
+          "grpcs",
+          "http",
+          "https",
+          "ws",
+          "wss"
+        ],
+        "type": "string"
+      },
+      "format": "set",
+      "default": [
+        "grpc",
+        "grpcs",
+        "http",
+        "https",
+        "ws",
+        "wss"
+      ]
+    },
+    "route": {
+      "description": "If set, the plugin will only activate when receiving requests via the specified route. Leave unset for the plugin to activate regardless of the route being used.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "service": {
+      "description": "If set, the plugin will only activate when receiving requests via one of the routes belonging to the specified Service. Leave unset for the plugin to activate regardless of the Service being matched.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "config"
+  ]
+}

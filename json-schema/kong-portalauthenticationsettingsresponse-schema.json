@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/PortalAuthenticationSettingsResponse",
+  "title": "PortalAuthenticationSettingsResponse",
+  "x-speakeasy-entity": "PortalAuth",
+  "description": "The developer authentication settings for a portal.",
+  "type": "object",
+  "properties": {
+    "basic_auth_enabled": {
+      "description": "The portal has basic auth enabled or disabled.",
+      "type": "boolean",
+      "example": true
+    },
+    "oidc_auth_enabled": {
+      "$ref": "#/components/schemas/OIDCAuthEnabled"
+    },
+    "saml_auth_enabled": {
+      "$ref": "#/components/schemas/SAMLAuthEnabled"
+    },
+    "oidc_team_mapping_enabled": {
+      "$ref": "#/components/schemas/OIDCIdpMappingEnabled"
+    },
+    "idp_mapping_enabled": {
+      "$ref": "#/components/schemas/IDPMappingEnabled"
+    },
+    "konnect_mapping_enabled": {
+      "description": "A Konnect Identity Admin assigns teams to a developer.",
+      "type": "boolean",
+      "example": false
+    },
+    "oidc_config": {
+      "description": "Configuration properties for an OpenID Connect Identity Provider.",
+      "type": "object",
+      "example": {
+        "issuer": "https://identity.example.com/v2",
+        "client_id": "x7id0o42lklas0blidl2",
+        "scopes": [
+          "email",
+          "openid",
+          "profile"
+        ],
+        "claim_mappings": {
+          "name": "name",
+          "email": "email",
+          "groups": "custom-group-claim"
+        }
+      },
+      "deprecated": true,
+      "properties": {
+        "issuer": {
+          "type": "string",
+          "example": "https://identity.example.com/v2"
+        },
+        "client_id": {
+          "type": "string",
+          "example": "x7id0o42lklas0blidl2"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "default": "openid"
+          },
+          "example": [
+            "email",
+            "openid",
+            "profile"
+          ],
+          "default": [
+            "email",
+            "openid",
+            "profile"
+          ]
+        },
+        "claim_mappings": {
+          "$ref": "#/components/schemas/PortalClaimMappings"
+        }
+      },
+      "readOnly": true,
+      "required": [
+        "issuer",
+        "client_id"
+      ],
+      "title": "PortalOIDCConfig"
+    }
+  },
+  "example": {
+    "basic_auth_enabled": true,
+    "oidc_auth_enabled": true,
+    "oidc_team_mapping_enabled": true,
+    "konnect_mapping_enabled": false,
+    "oidc_config": {
+      "issuer": "https://identity.example.com/v2",
+      "client_id": "x7id0o42lklas0blidl2",
+      "scopes": [
+        "email",
+        "openid",
+        "profile"
+      ],
+      "claim_mappings": {
+        "name": "name",
+        "email": "email",
+        "groups": "custom-group-claim"
+      }
+    }
+  },
+  "required": [
+    "basic_auth_enabled",
+    "konnect_mapping_enabled",
+    "oidc_auth_enabled",
+    "oidc_team_mapping_enabled"
+  ],
+  "x-speakeasy-transform-from-api": {
+    "jq": ". + {\n  oidc_issuer: .oidc_config.issuer,\n  oidc_client_id: .oidc_config.client_id,\n  oidc_claim_mappings: .oidc_config.claim_mappings,\n  oidc_scopes: .oidc_config.scopes\n}\n| del(.oidc_config)\n"
+  }
+}

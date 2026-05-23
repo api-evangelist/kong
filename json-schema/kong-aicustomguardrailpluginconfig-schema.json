@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/AiCustomGuardrailPluginConfig",
+  "title": "AiCustomGuardrailPluginConfig",
+  "x-speakeasy-entity": "PluginAiCustomGuardrail",
+  "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "allow_masking": {
+          "description": "Allow to masking the request/response instead of blocking it. Streaming will be disabled if this is enabled.",
+          "type": "boolean",
+          "default": false
+        },
+        "custom_metrics": {
+          "description": "A list of custom metrics to be recorded.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "functions": {
+          "description": "Custom functions to be used in expression templates.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "x-lua-required": true
+          }
+        },
+        "guarding_mode": {
+          "description": "The guardrail mode to use for the request",
+          "type": "string",
+          "default": "INPUT",
+          "enum": [
+            "BOTH",
+            "INPUT",
+            "OUTPUT"
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "block_detail": {
+              "description": "Metric to indicate the detail for blocking the input.",
+              "type": "string"
+            },
+            "block_reason": {
+              "description": "Metric to indicate the reason for blocking the input.",
+              "type": "string"
+            },
+            "masked": {
+              "description": "Metric to indicate whether the input was masked.",
+              "type": "string"
+            }
+          }
+        },
+        "params": {
+          "description": "Parameters to be used in the guardrail service request. Keys are the parameter name and values can be either Lua expressions in the form `$(some_lua_expression)`or string. For expression, it will be evaluated as the value for the corresponding key. For string, it will be attempted to be parsed as string in JSON format, otherwise it will be used as is.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "x-lua-required": true,
+            "x-referenceable": true
+          }
+        },
+        "request": {
+          "description": "Configuration specific to guardrail request.",
+          "type": "object",
+          "properties": {
+            "auth": {
+              "description": "Authentication configuration for HTTP request.",
+              "type": "object",
+              "properties": {
+                "location": {
+                  "description": "Specify whether the 'param_name' and 'param_value' options go in a query string, or the POST form/JSON body.",
+                  "type": "string",
+                  "default": "header",
+                  "enum": [
+                    "body",
+                    "header",
+                    "query"
+                  ]
+                },
+                "name": {
+                  "description": "Specify name here.",
+                  "type": "string",
+                  "x-referenceable": true
+                },
+                "value": {
+                  "description": "Specify the full token value for 'name'.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                }
+              }
+            },
+            "body": {
+              "description": "A map used to evaluate a JSON object. Keys are the field names in the new object, and values can be either Lua expressions in the form `$(some_lua_expression)`or string. For expression, it will be evaluated as the value for the corresponding key. For string, it will be decoded as string in JSON format or be used as is.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "x-referenceable": true
+              }
+            },
+            "headers": {
+              "description": "A map used to evaluate a JSON object. Keys are the field names in the new object, and values can be either Lua expressions in the form `$(some_lua_expression)`or string. For expression, it will be evaluated as the value for the corresponding key. For string, it will be decoded as string in JSON format or be used as is.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "x-referenceable": true
+              }
+            },
+            "queries": {
+              "description": "A map used to evaluate a JSON object. Keys are the field names in the new object, and values can be either Lua expressions in the form `$(some_lua_expression)`or string. For expression, it will be evaluated as the value for the corresponding key. For string, it will be decoded as string in JSON format or be used as is.",
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "x-referenceable": true
+              }
+            },
+            "url": {
+              "description": "the url string or a template to generate one",
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ]
+        },
+        "response": {
+          "description": "Configuration specific to parse guardrail response.",
+          "type": "object",
+          "properties": {
+            "block": {
+              "description": "template or string to evaluate block field",
+              "type": "string"
+            },
+            "block_message": {
+              "description": "template or string to evaluate block_message field",
+              "type": "string"
+            }
+          },
+          "required": [
+            "block",
+            "block_message"
+          ]
+        },
+        "response_buffer_size": {
+          "description": "The amount of bytes receiving from upstream to be buffered before sending to the guardrail service. This only applies to the response content guard.",
+          "type": "number",
+          "default": 100
+        },
+        "ssl_verify": {
+          "description": "Whether to verify SSL certificate when Kong makes request to guardrail service.",
+          "type": "boolean",
+          "default": true
+        },
+        "stop_on_error": {
+          "description": "Stop processing if an error occurs.",
+          "type": "boolean",
+          "default": true
+        },
+        "text_source": {
+          "description": "Select where to pick the 'text' for the guardrail service request.",
+          "type": "string",
+          "default": "last_message",
+          "enum": [
+            "concatenate_all_content",
+            "concatenate_user_content",
+            "last_message"
+          ]
+        },
+        "timeout": {
+          "description": "Connection timeout with the guardrail service",
+          "type": "number",
+          "default": 10000
+        }
+      },
+      "required": [
+        "request",
+        "response"
+      ]
+    },
+    "consumer": {
+      "description": "If set, the plugin will activate only for requests where the specified has been authenticated. (Note that some plugins can not be restricted to consumers this way.). Leave unset for the plugin to activate regardless of the authenticated Consumer.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "consumer_group": {
+      "description": "If set, the plugin will activate only for requests where the specified consumer group has been authenticated. (Note that some plugins can not be restricted to consumers groups this way.). Leave unset for the plugin to activate regardless of the authenticated Consumer Groups",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "name": {
+      "const": "ai-custom-guardrail"
+    },
+    "protocols": {
+      "description": "A set of strings representing HTTP protocols.",
+      "type": "array",
+      "items": {
+        "enum": [
+          "grpc",
+          "grpcs",
+          "http",
+          "https"
+        ],
+        "type": "string"
+      },
+      "format": "set",
+      "default": [
+        "grpc",
+        "grpcs",
+        "http",
+        "https"
+      ]
+    },
+    "route": {
+      "description": "If set, the plugin will only activate when receiving requests via the specified route. Leave unset for the plugin to activate regardless of the route being used.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "service": {
+      "description": "If set, the plugin will only activate when receiving requests via one of the routes belonging to the specified Service. Leave unset for the plugin to activate regardless of the Service being matched.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": [
+    "config"
+  ]
+}

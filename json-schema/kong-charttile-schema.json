@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/ChartTile",
+  "title": "ChartTile",
+  "description": "A tile that queries data and renders a chart.",
+  "type": "object",
+  "properties": {
+    "layout": {
+      "description": "Information about how the tile is placed on the dashboard.\n\nExamples:\n- a tile occupying the first half of the top row: `{ \"position\": { \"col\": 0, \"row\": 0 }, size: { \"cols\": 3, \"rows\": 1 } }`\n- a tile occupying the second half of the top row: `{ \"position\": { \"col\": 3, \"row\": 0 }, size: { \"cols\": 3, \"rows\": 1 } }`\n",
+      "type": "object",
+      "example": {
+        "position": {
+          "col": 3,
+          "row": 0
+        },
+        "size": {
+          "cols": 3,
+          "rows": 1
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "position": {
+          "description": "Position of the tile in the dashboard's grid.  Numbering starts at 0, so a tile in the upper left of the dashboard will be at column 0, row 0.\n",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "col": {
+              "type": "integer",
+              "maximum": 5,
+              "minimum": 0
+            },
+            "row": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "col",
+            "row"
+          ]
+        },
+        "size": {
+          "description": "Number of columns and rows the tile occupies.  A dashboard always has 6 columns, but has as many rows as needed to accommodate the given tiles.\n",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cols": {
+              "type": "integer",
+              "maximum": 6,
+              "minimum": 1
+            },
+            "rows": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "cols",
+            "rows"
+          ]
+        }
+      },
+      "required": [
+        "position",
+        "size"
+      ]
+    },
+    "type": {
+      "description": "The type of tile.  Chart tiles must have type 'chart'.",
+      "type": "string",
+      "enum": [
+        "chart"
+      ]
+    },
+    "definition": {
+      "description": "The tile's definition, which consists of a query to fetch data and a chart to render the data.\nNote that some charts expect certain types of queries to render properly.  The documentation for the individual chart types has more information.\n",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "discriminator": {
+            "propertyName": "datasource",
+            "mapping": {
+              "api_usage": "#/components/schemas/AdvancedQuery",
+              "llm_usage": "#/components/schemas/LLMQuery",
+              "agentic_usage": "#/components/schemas/AgenticQuery"
+            }
+          },
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/AdvancedQuery"
+            },
+            {
+              "$ref": "#/components/schemas/LLMQuery"
+            },
+            {
+              "$ref": "#/components/schemas/AgenticQuery"
+            }
+          ]
+        },
+        "chart": {
+          "$ref": "#/components/schemas/Chart"
+        }
+      },
+      "required": [
+        "query",
+        "chart"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "layout",
+    "type",
+    "definition"
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/BillingCustomerStripeCreateCheckoutSessionRequest",
+  "title": "BillingCustomerStripeCreateCheckoutSessionRequest",
+  "description": "Request to create a Stripe Checkout Session for the customer.\n\nCheckout Sessions are used to collect payment method information from customers\nin a secure, Stripe-hosted interface. This integration uses setup mode to collect\npayment methods that can be charged later for subscription billing.",
+  "type": "object",
+  "properties": {
+    "stripe_options": {
+      "description": "Options for configuring the Stripe Checkout Session.\n\nThese options are passed directly to Stripe's [checkout session creation API](https://docs.stripe.com/api/checkout/sessions/create).",
+      "type": "object",
+      "properties": {
+        "billing_address_collection": {
+          "description": "Whether to collect the customer's billing address.\n\nDefaults to auto, which only collects the address when necessary for tax calculation.",
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "required"
+          ],
+          "x-speakeasy-unknown-values": "allow"
+        },
+        "cancel_url": {
+          "description": "URL to redirect customers who cancel the checkout session.\n\nNot allowed when ui_mode is \"embedded\".",
+          "type": "string"
+        },
+        "client_reference_id": {
+          "description": "Unique reference string for reconciling sessions with internal systems.\n\nCan be a customer ID, cart ID, or any other identifier.",
+          "type": "string"
+        },
+        "customer_update": {
+          "description": "Controls which customer fields can be updated by the checkout session.",
+          "type": "object",
+          "properties": {
+            "address": {
+              "description": "Whether to save the billing address to customer.address.\n\nDefaults to \"never\".",
+              "type": "string",
+              "default": "never",
+              "enum": [
+                "auto",
+                "never"
+              ],
+              "x-speakeasy-unknown-values": "allow"
+            },
+            "name": {
+              "description": "Whether to save the customer name to customer.name.\n\nDefaults to \"never\".",
+              "type": "string",
+              "default": "never",
+              "enum": [
+                "auto",
+                "never"
+              ],
+              "x-speakeasy-unknown-values": "allow"
+            },
+            "shipping": {
+              "description": "Whether to save shipping information to customer.shipping.\n\nDefaults to \"never\".",
+              "type": "string",
+              "default": "never",
+              "enum": [
+                "auto",
+                "never"
+              ],
+              "x-speakeasy-unknown-values": "allow"
+            }
+          }
+        },
+        "consent_collection": {
+          "description": "Configuration for collecting customer consent during checkout.",
+          "type": "object",
+          "properties": {
+            "payment_method_reuse_agreement": {
+              "description": "Controls the visibility of payment method reuse agreement.",
+              "type": "object",
+              "properties": {
+                "position": {
+                  "description": "Position and visibility of the payment method reuse agreement.",
+                  "type": "string",
+                  "enum": [
+                    "auto",
+                    "hidden"
+                  ],
+                  "x-speakeasy-unknown-values": "allow"
+                }
+              }
+            },
+            "promotions": {
+              "description": "Enables collection of promotional communication consent.\n\nOnly available to US merchants. When set to \"auto\", Checkout determines\nwhether to show the option based on the customer's locale.",
+              "type": "string",
+              "enum": [
+                "auto",
+                "none"
+              ],
+              "x-speakeasy-unknown-values": "allow"
+            },
+            "terms_of_service": {
+              "description": "Requires customers to accept terms of service before payment.\n\nRequires a valid terms of service URL in your Stripe Dashboard settings.",
+              "type": "string",
+              "enum": [
+                "none",
+                "required"
+              ],
+              "x-speakeasy-unknown-values": "allow"
+            }
+          }
+        },
+        "currency": {
+          "description": "Three-letter ISO 4217 currency code in uppercase.\n\nRequired for payment mode sessions. Optional for setup mode sessions.",
+          "type": "string",
+          "example": "USD",
+          "maxLength": 3,
+          "minLength": 3,
+          "pattern": "^[A-Z]{3}$"
+        },
+        "custom_text": {
+          "description": "Custom text to display during checkout at various stages.",
+          "type": "object",
+          "properties": {
+            "after_submit": {
+              "description": "Text displayed after the payment confirmation button.",
+              "type": "object",
+              "properties": {
+                "message": {
+                  "description": "The custom message text (max 1200 characters).",
+                  "type": "string",
+                  "maxLength": 1200
+                }
+              }
+            },
+            "shipping_address": {
+              "description": "Text displayed alongside shipping address collection.",
+              "type": "object",
+              "properties": {
+                "message": {
+                  "description": "The custom message text (max 1200 characters).",
+                  "type": "string",
+                  "maxLength": 1200
+                }
+              }
+            },
+            "submit": {
+              "description": "Text displayed alongside the payment confirmation button.",
+              "type": "object",
+              "properties": {
+                "message": {
+                  "description": "The custom message text (max 1200 characters).",
+                  "type": "string",
+                  "maxLength": 1200
+                }
+              }
+            },
+            "terms_of_service_acceptance": {
+              "description": "Text replacing the default terms of service agreement text.",
+              "type": "object",
+              "properties": {
+                "message": {
+                  "description": "The custom message text (max 1200 characters).",
+                  "type": "string",
+                  "maxLength": 1200
+                }
+              }
+            }
+          }
+        },
+        "expires_at": {
+          "description": "Unix timestamp when the checkout session expires.\n\nCan be 30 minutes to 24 hours from creation. Defaults to 24 hours.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "locale": {
+          "description": "IETF language tag for the checkout UI locale.\n\nIf blank or \"auto\", uses the browser's locale. Example: \"en\", \"fr\", \"de\".",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Set of key-value pairs to attach to the checkout session.\n\nUseful for storing additional structured information.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "return_url": {
+          "description": "Return URL for embedded checkout sessions after payment authentication.\n\nRequired if ui_mode is \"embedded\" and redirect-based payment methods are enabled.",
+          "type": "string"
+        },
+        "success_url": {
+          "description": "Success URL to redirect customers after completing payment or setup.\n\nNot allowed when ui_mode is \"embedded\".\nSee: https://docs.stripe.com/payments/checkout/custom-success-page",
+          "type": "string"
+        },
+        "ui_mode": {
+          "description": "The UI mode for the checkout session.\n\n\"hosted\" displays a Stripe-hosted page. \"embedded\" integrates directly into your app.\nDefaults to \"hosted\".",
+          "type": "string",
+          "default": "hosted",
+          "enum": [
+            "embedded",
+            "hosted"
+          ],
+          "x-speakeasy-unknown-values": "allow"
+        },
+        "payment_method_types": {
+          "description": "List of payment method types to enable (e.g., \"card\", \"us_bank_account\").\n\nIf not specified, Stripe enables all relevant payment methods.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "redirect_on_completion": {
+          "description": "Redirect behavior for embedded checkout sessions.\n\nControls when to redirect users after completion.\nSee: https://docs.stripe.com/payments/checkout/custom-success-page?payment-ui=embedded-form",
+          "type": "string",
+          "enum": [
+            "always",
+            "if_required",
+            "never"
+          ],
+          "x-speakeasy-unknown-values": "allow"
+        },
+        "tax_id_collection": {
+          "description": "Configuration for collecting tax IDs during checkout.",
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "description": "Enable tax ID collection during checkout.\n\nDefaults to false.",
+              "type": "boolean",
+              "default": false
+            },
+            "required": {
+              "description": "Whether tax ID collection is required.\n\nDefaults to \"never\".",
+              "type": "string",
+              "default": "never",
+              "enum": [
+                "if_supported",
+                "never"
+              ],
+              "x-speakeasy-unknown-values": "allow"
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "stripe_options"
+  ]
+}

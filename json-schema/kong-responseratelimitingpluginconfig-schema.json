@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/ResponseRatelimitingPluginConfig",
+  "title": "ResponseRatelimitingPluginConfig",
+  "x-speakeasy-entity": "PluginResponseRatelimiting",
+  "properties": {
+    "config": {
+      "type": "object",
+      "properties": {
+        "block_on_first_violation": {
+          "description": "A boolean value that determines if the requests should be blocked as soon as one limit is being exceeded. This will block requests that are supposed to consume other limits too.",
+          "type": "boolean",
+          "default": false
+        },
+        "fault_tolerant": {
+          "description": "A boolean value that determines if the requests should be proxied even if Kong has troubles connecting a third-party datastore. If `true`, requests will be proxied anyway, effectively disabling the rate-limiting function until the datastore is working again. If `false`, then the clients will see `500` errors.",
+          "type": "boolean",
+          "default": true
+        },
+        "header_name": {
+          "description": "The name of the response header used to increment the counters.",
+          "type": "string",
+          "default": "x-kong-limit"
+        },
+        "hide_client_headers": {
+          "description": "Optionally hide informative response headers.",
+          "type": "boolean",
+          "default": false
+        },
+        "limit_by": {
+          "description": "The entity that will be used when aggregating the limits: `consumer`, `credential`, `ip`. If the `consumer` or the `credential` cannot be determined, the system will always fallback to `ip`.",
+          "type": "string",
+          "default": "consumer",
+          "enum": [
+            "consumer",
+            "credential",
+            "ip"
+          ]
+        },
+        "limits": {
+          "description": "A map that defines rate limits for the plugin.",
+          "type": "object",
+          "additionalProperties": {
+            "properties": {
+              "day": {
+                "type": "number"
+              },
+              "hour": {
+                "type": "number"
+              },
+              "minute": {
+                "type": "number"
+              },
+              "month": {
+                "type": "number"
+              },
+              "second": {
+                "type": "number"
+              },
+              "year": {
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "minLength": 1
+        },
+        "policy": {
+          "description": "The rate-limiting policies to use for retrieving and incrementing the limits.",
+          "type": "string",
+          "default": "local",
+          "enum": [
+            "cluster",
+            "local",
+            "redis"
+          ]
+        },
+        "redis": {
+          "description": "Redis configuration",
+          "type": "object",
+          "properties": {
+            "cloud_authentication": {
+              "description": "Cloud auth related configs for connecting to a Cloud Provider's Redis instance.",
+              "type": "object",
+              "properties": {
+                "auth_provider": {
+                  "description": "Auth providers to be used to authenticate to a Cloud Provider's Redis instance.",
+                  "type": "string",
+                  "enum": [
+                    "aws",
+                    "azure",
+                    "gcp"
+                  ],
+                  "x-referenceable": true
+                },
+                "aws_access_key_id": {
+                  "description": "AWS Access Key ID to be used for authentication when `auth_provider` is set to `aws`.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "aws_assume_role_arn": {
+                  "description": "The ARN of the IAM role to assume for generating ElastiCache IAM authentication tokens.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "aws_cache_name": {
+                  "description": "The name of the AWS Elasticache cluster when `auth_provider` is set to `aws`.",
+                  "type": "string",
+                  "x-referenceable": true
+                },
+                "aws_is_serverless": {
+                  "description": "This flag specifies whether the cluster is serverless when auth_provider is set to `aws`.",
+                  "type": "boolean",
+                  "default": true
+                },
+                "aws_region": {
+                  "description": "The region of the AWS ElastiCache cluster when `auth_provider` is set to `aws`.",
+                  "type": "string",
+                  "x-referenceable": true
+                },
+                "aws_role_session_name": {
+                  "description": "The session name for the temporary credentials when assuming the IAM role.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "aws_secret_access_key": {
+                  "description": "AWS Secret Access Key to be used for authentication when `auth_provider` is set to `aws`.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "azure_client_id": {
+                  "description": "Azure Client ID to be used for authentication when `auth_provider` is set to `azure`.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "azure_client_secret": {
+                  "description": "Azure Client Secret to be used for authentication when `auth_provider` is set to `azure`.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "azure_tenant_id": {
+                  "description": "Azure Tenant ID to be used for authentication when `auth_provider` is set to `azure`.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                },
+                "gcp_service_account_json": {
+                  "description": "GCP Service Account JSON to be used for authentication when `auth_provider` is set to `gcp`.",
+                  "type": "string",
+                  "x-encrypted": true,
+                  "x-referenceable": true
+                }
+              }
+            },
+            "database": {
+              "description": "Database to use for the Redis connection when using the `redis` strategy",
+              "type": "integer",
+              "default": 0
+            },
+            "host": {
+              "description": "A string representing a host name, such as example.com.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "password": {
+              "description": "Password to use for Redis connections. If undefined, no AUTH commands are sent to Redis.",
+              "type": "string",
+              "x-encrypted": true,
+              "x-referenceable": true
+            },
+            "port": {
+              "description": "An integer representing a port number between 0 and 65535, inclusive.",
+              "type": "integer",
+              "default": 6379,
+              "maximum": 65535,
+              "minimum": 0,
+              "x-referenceable": true
+            },
+            "server_name": {
+              "description": "A string representing an SNI (server name indication) value for TLS.",
+              "type": "string",
+              "x-referenceable": true
+            },
+            "ssl": {
+              "description": "If set to true, uses SSL to connect to Redis.",
+              "type": "boolean",
+              "default": false
+            },
+            "ssl_verify": {
+              "description": "If set to true, verifies the validity of the server SSL certificate. If setting this parameter, also configure `lua_ssl_trusted_certificate` in `kong.conf` to specify the CA (or server) certificate used by your Redis server. You may also need to configure `lua_ssl_verify_depth` accordingly.",
+              "type": "boolean",
+              "default": true
+            },
+            "timeout": {
+              "description": "An integer representing a timeout in milliseconds. Must be between 0 and 2^31-2.",
+              "type": "integer",
+              "default": 2000,
+              "maximum": 2147483646,
+              "minimum": 0
+            },
+            "username": {
+              "description": "Username to use for Redis connections. If undefined, ACL authentication won't be performed. This requires Redis v6.0.0+. To be compatible with Redis v5.x.y, you can set it to `default`.",
+              "type": "string",
+              "x-referenceable": true
+            }
+          }
+        }
+      }
+    },
+    "consumer": {
+      "description": "If set, the plugin will activate only for requests where the specified has been authenticated. (Note that some plugins can not be restricted to consumers this way.). Leave unset for the plugin to activate regardless of the authenticated Consumer.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "name": {
+      "const": "response-ratelimiting"
+    },
+    "protocols": {
+      "description": "A set of strings representing HTTP protocols.",
+      "type": "array",
+      "items": {
+        "enum": [
+          "grpc",
+          "grpcs",
+          "http",
+          "https"
+        ],
+        "type": "string"
+      },
+      "format": "set",
+      "default": [
+        "grpc",
+        "grpcs",
+        "http",
+        "https"
+      ]
+    },
+    "route": {
+      "description": "If set, the plugin will only activate when receiving requests via the specified route. Leave unset for the plugin to activate regardless of the route being used.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "service": {
+      "description": "If set, the plugin will only activate when receiving requests via one of the routes belonging to the specified Service. Leave unset for the plugin to activate regardless of the Service being matched.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

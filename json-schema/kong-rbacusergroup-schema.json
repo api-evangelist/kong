@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/RBACUserGroup",
+  "title": "RBACUserGroup",
+  "x-speakeasy-entity": "RbacUserGroup",
+  "type": "object",
+  "properties": {
+    "group": {
+      "description": "The group assigned to the user.",
+      "type": "object",
+      "nullable": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "x-foreign": true,
+      "x-speakeasy-terraform-ignore": true
+    },
+    "user": {
+      "description": "The RBAC user associated with the group.",
+      "type": "object",
+      "nullable": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "x-foreign": true,
+      "x-speakeasy-terraform-ignore": true
+    },
+    "group_id": {
+      "type": "string",
+      "nullable": true
+    },
+    "user_id": {
+      "type": "string",
+      "nullable": true
+    }
+  },
+  "additionalProperties": false,
+  "x-speakeasy-transform-from-api": {
+    "jq": ".\n| if .group != null and .group.id != null then . + { group_id: .group.id } else . end\n| if .user != null and .user.id != null then . + { user_id: .user.id } else . end\n| del(.group, .user)\n"
+  },
+  "x-speakeasy-transform-to-api": {
+    "jq": ".\n| if .group_id != null then .group = { id: .group_id } else . end\n| if .user_id != null then .user = { id: .user_id } else . end\n| del(.group_id, .user_id)\n"
+  }
+}

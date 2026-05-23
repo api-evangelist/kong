@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/RBACRoleEndpoint",
+  "title": "RBACRoleEndpoint",
+  "x-speakeasy-entity": "RbacRoleEndpoint",
+  "type": "object",
+  "properties": {
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "format": "set"
+    },
+    "comment": {
+      "description": "Additional comment or description for the RBAC role endpoint.",
+      "type": "string",
+      "nullable": true
+    },
+    "created_at": {
+      "description": "Unix epoch when the resource was created.",
+      "type": "integer",
+      "nullable": true
+    },
+    "endpoint": {
+      "description": "The endpoint associated with the RBAC role.",
+      "type": "string",
+      "nullable": true
+    },
+    "negative": {
+      "description": "Indicates whether the RBAC role has negative permissions for the endpoint.",
+      "type": "boolean",
+      "default": false,
+      "nullable": true
+    },
+    "role": {
+      "description": "The RBAC role associated with the endpoint.",
+      "type": "object",
+      "nullable": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "x-foreign": true,
+      "x-speakeasy-terraform-ignore": true
+    },
+    "updated_at": {
+      "description": "Unix epoch when the resource was last updated.",
+      "type": "integer",
+      "nullable": true
+    },
+    "workspace": {
+      "description": "The workspace associated with the endpoint.",
+      "type": "string",
+      "default": "default",
+      "nullable": true
+    },
+    "role_id": {
+      "type": "string",
+      "nullable": true
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "actions",
+    "endpoint"
+  ],
+  "x-speakeasy-transform-from-api": {
+    "jq": ".\n| if .role != null and .role.id != null then . + { role_id: .role.id } else . end\n| del(.role)\n"
+  },
+  "x-speakeasy-transform-to-api": {
+    "jq": ".\n| if .role_id != null then .role = { id: .role_id } else . end\n| del(.role_id)\n"
+  }
+}

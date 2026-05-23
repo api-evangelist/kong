@@ -1,0 +1,356 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "#/components/schemas/CreateBillingProfileRequest",
+  "title": "CreateBillingProfileRequest",
+  "description": "BillingProfile create request.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Display name of the resource.\n\nBetween 1 and 256 characters.",
+      "type": "string",
+      "maxLength": 256,
+      "minLength": 1
+    },
+    "description": {
+      "description": "Optional description of the resource.\n\nMaximum 1024 characters.",
+      "type": "string",
+      "maxLength": 1024
+    },
+    "labels": {
+      "$ref": "#/components/schemas/Labels"
+    },
+    "supplier": {
+      "description": "The name and contact information for the supplier this billing profile represents",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Unique identifier for the party.",
+          "type": "string",
+          "readOnly": true
+        },
+        "key": {
+          "description": "An optional unique key of the party.",
+          "type": "string",
+          "example": "019ae40f-4258-7f15-9491-842f42a7d6ac",
+          "maxLength": 256,
+          "minLength": 1,
+          "title": "External Resource Key"
+        },
+        "name": {
+          "description": "Legal name or representation of the party.",
+          "type": "string"
+        },
+        "tax_id": {
+          "description": "The entity's legal identification used for tax purposes. They may have\nother numbers, but we're only interested in those valid for tax purposes.",
+          "type": "object",
+          "properties": {
+            "code": {
+              "description": "Normalized tax identification code shown on the original identity document.",
+              "type": "string",
+              "maxLength": 32,
+              "minLength": 1
+            }
+          }
+        },
+        "addresses": {
+          "description": "Address for where information should be sent if needed.",
+          "type": "object",
+          "properties": {
+            "billing_address": {
+              "description": "Billing address.",
+              "type": "object",
+              "properties": {
+                "country": {
+                  "description": "Country code in [ISO 3166-1](https://www.iso.org/iso-3166-country-codes.html) alpha-2 format.",
+                  "type": "string",
+                  "example": "US",
+                  "maxLength": 2,
+                  "minLength": 2,
+                  "pattern": "^[A-Z]{2}$",
+                  "title": "Country"
+                },
+                "postal_code": {
+                  "description": "Postal code.",
+                  "type": "string",
+                  "title": "Postal Code"
+                },
+                "state": {
+                  "description": "State or province.",
+                  "type": "string",
+                  "title": "State"
+                },
+                "city": {
+                  "description": "City.",
+                  "type": "string",
+                  "title": "City"
+                },
+                "line1": {
+                  "description": "First line of the address.",
+                  "type": "string",
+                  "title": "Line 1"
+                },
+                "line2": {
+                  "description": "Second line of the address.",
+                  "type": "string",
+                  "title": "Line 2"
+                },
+                "phone_number": {
+                  "description": "Phone number.",
+                  "type": "string",
+                  "title": "Phone Number"
+                }
+              }
+            }
+          },
+          "required": [
+            "billing_address"
+          ]
+        }
+      }
+    },
+    "workflow": {
+      "description": "The billing workflow settings for this profile",
+      "type": "object",
+      "properties": {
+        "collection": {
+          "description": "The collection settings for this workflow",
+          "type": "object",
+          "properties": {
+            "alignment": {
+              "description": "The alignment for collecting the pending line items into an invoice.",
+              "type": "object",
+              "default": {
+                "type": "subscription"
+              },
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "subscription": "#/components/schemas/BillingWorkflowCollectionAlignmentSubscription",
+                  "anchored": "#/components/schemas/BillingWorkflowCollectionAlignmentAnchored"
+                }
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BillingWorkflowCollectionAlignmentSubscription"
+                },
+                {
+                  "$ref": "#/components/schemas/BillingWorkflowCollectionAlignmentAnchored"
+                }
+              ]
+            },
+            "interval": {
+              "description": "This grace period can be used to delay the collection of the pending line items specified in\nalignment.\n\nThis is useful, in case of multiple subscriptions having slightly different billing periods.",
+              "type": "string",
+              "format": "ISO8601",
+              "example": "P1D",
+              "default": "PT1H"
+            }
+          },
+          "title": "Workflow collection settings"
+        },
+        "invoicing": {
+          "description": "The invoicing settings for this workflow",
+          "type": "object",
+          "properties": {
+            "auto_advance": {
+              "description": "Whether to automatically issue the invoice after the draftPeriod has passed.",
+              "type": "boolean",
+              "default": true
+            },
+            "draft_period": {
+              "description": "The period for the invoice to be kept in draft status for manual reviews.",
+              "type": "string",
+              "format": "ISO8601",
+              "example": "P1D",
+              "default": "P0D"
+            },
+            "progressive_billing": {
+              "description": "Should progressive billing be allowed for this workflow?",
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "title": "Workflow invoice settings"
+        },
+        "payment": {
+          "description": "The payment settings for this workflow",
+          "type": "object",
+          "discriminator": {
+            "propertyName": "collection_method",
+            "mapping": {
+              "charge_automatically": "#/components/schemas/BillingWorkflowPaymentChargeAutomaticallySettings",
+              "send_invoice": "#/components/schemas/BillingWorkflowPaymentSendInvoiceSettings"
+            }
+          },
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/BillingWorkflowPaymentChargeAutomaticallySettings"
+            },
+            {
+              "$ref": "#/components/schemas/BillingWorkflowPaymentSendInvoiceSettings"
+            }
+          ]
+        },
+        "tax": {
+          "description": "The tax settings for this workflow",
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "description": "Enable automatic tax calculation when tax is supported by the app.\nFor example, with Stripe Invoicing when enabled, tax is calculated via Stripe Tax.",
+              "type": "boolean",
+              "default": true
+            },
+            "enforced": {
+              "description": "Enforce tax calculation when tax is supported by the app.\nWhen enabled, the billing system will not allow to create an invoice without tax calculation.\nEnforcement is different per apps, for example, Stripe app requires customer\nto have a tax location when starting a paid subscription.",
+              "type": "boolean",
+              "default": false
+            },
+            "default_tax_config": {
+              "description": "Default tax configuration to apply to the invoices for line items.",
+              "type": "object",
+              "properties": {
+                "behavior": {
+                  "description": "Tax behavior.\n\nIf not specified the billing profile is used to determine the tax behavior.\nIf not specified in the billing profile, the provider's default behavior is used.",
+                  "type": "string",
+                  "enum": [
+                    "inclusive",
+                    "exclusive"
+                  ],
+                  "title": "Tax behavior",
+                  "x-speakeasy-unknown-values": "allow"
+                },
+                "stripe": {
+                  "description": "Stripe tax config.",
+                  "type": "object",
+                  "deprecated": true,
+                  "properties": {
+                    "code": {
+                      "description": "Product [tax code](https://docs.stripe.com/tax/tax-codes).",
+                      "type": "string",
+                      "example": "txcd_10000000",
+                      "pattern": "^txcd_\\d{8}$",
+                      "title": "Tax code"
+                    }
+                  },
+                  "required": [
+                    "code"
+                  ],
+                  "title": "Stripe tax config"
+                },
+                "external_invoicing": {
+                  "description": "External invoicing tax config.",
+                  "type": "object",
+                  "deprecated": true,
+                  "properties": {
+                    "code": {
+                      "description": "The tax code should be interpreted by the external invoicing provider.",
+                      "type": "string",
+                      "maxLength": 64,
+                      "title": "Tax code"
+                    }
+                  },
+                  "required": [
+                    "code"
+                  ],
+                  "title": "External invoicing tax config"
+                },
+                "tax_code_id": {
+                  "description": "Tax code ID.",
+                  "type": "string",
+                  "example": "01G65Z755AFWAKHE12NY0CQ9FH",
+                  "deprecated": true,
+                  "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+                  "title": "Tax code ID"
+                },
+                "tax_code": {
+                  "description": "Tax code reference.\n\nWhen both `tax_code` and `tax_code_id` are provided, `tax_code` takes precedence.\nWhen `stripe.code` is also provided, `tax_code` still wins and `stripe.code` is ignored.",
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "$ref": "#/components/schemas/ULID"
+                    }
+                  },
+                  "required": [
+                    "id"
+                  ],
+                  "title": "Tax code"
+                }
+              }
+            }
+          },
+          "title": "Workflow tax settings"
+        }
+      }
+    },
+    "apps": {
+      "description": "The applications used by this billing profile.",
+      "type": "object",
+      "properties": {
+        "tax": {
+          "description": "The tax app used for this workflow.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "The ID of the app.",
+              "type": "string",
+              "example": "01G65Z755AFWAKHE12NY0CQ9FH",
+              "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+              "title": "ULID"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "invoicing": {
+          "description": "The invoicing app used for this workflow.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "The ID of the app.",
+              "type": "string",
+              "example": "01G65Z755AFWAKHE12NY0CQ9FH",
+              "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+              "title": "ULID"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        },
+        "payment": {
+          "description": "The payment app used for this workflow.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "description": "The ID of the app.",
+              "type": "string",
+              "example": "01G65Z755AFWAKHE12NY0CQ9FH",
+              "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$",
+              "title": "ULID"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      },
+      "required": [
+        "tax",
+        "invoicing",
+        "payment"
+      ]
+    },
+    "default": {
+      "description": "Whether this is the default profile.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "name",
+    "supplier",
+    "workflow",
+    "apps",
+    "default"
+  ]
+}
