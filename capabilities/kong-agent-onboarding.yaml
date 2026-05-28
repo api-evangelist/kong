@@ -5,7 +5,7 @@ info:
     Verifies Web Bot Auth signatures (RFC 9421) against a trusted-issuer policy, composes Kong consumer +
     consumer_group + key-auth operations into a single scoped-credential issuance, and emits an audit
     event recording the agent identity, consent acknowledgement, and resulting credential. Companion to
-    the API Evangelist agent-onboarding pattern.'
+    the API Evangelist agent-onboarding pattern. Runtime policy enforcement (signature verify, consent check, scope classify, audit emit) lives in the orchestration.steps below — each step that gates issuance carries on_failure: deny. Lint-time validation of this capability shape lives in the companion Polychro ruleset at https://github.com/api-evangelist/posts/blob/main/polychro/agent-onboarding-rules.yaml — Polychro is Naftiko''s governance layer, separate from the capability spec, and is the correct home for cross-object consistency rules that apply across every agent-onboarding capability.'
   tags:
   - Kong
   - Agent Onboarding
@@ -443,31 +443,3 @@ capability:
       name: onboard-agent
       description: Register this agent with the API provider and obtain a scoped credential.
       file: skills/onboard-agent.md
-
-  # ============================================================================
-  # GOVERNANCE — policies enforced at validation, CI, and runtime.
-  # ============================================================================
-  governance:
-  - id: require-web-bot-auth
-    severity: blocking
-    description: All onboard calls must carry a valid RFC 9421 Web Bot Auth signature.
-    enforce_at: [runtime]
-  - id: require-consent-hash-match
-    severity: blocking
-    description: The submitted consent_hash must match the provider's currently-published
-      AGENT_CONSENT_HASH env binding. Mismatch returns 422.
-    enforce_at: [runtime]
-  - id: forbidden-scopes-deny
-    severity: blocking
-    description: Any requested scope on the policy's forbidden list returns 403 immediately.
-    enforce_at: [runtime]
-  - id: approval-required-defer
-    severity: advisory
-    description: Requested scopes in the approval-required list route to the configured
-      webhook and return 202 Accepted with a status URL the agent polls.
-    enforce_at: [runtime]
-  - id: ttl-enforced
-    severity: advisory
-    description: Default credential TTL is 30 days. Provider policy MAY shorten;
-      MUST NOT extend beyond the TTL declared in the provider policy file.
-    enforce_at: [runtime]
