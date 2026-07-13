@@ -1,36 +1,150 @@
+# kong — Spectral ruleset (strengthened)
+# Plain Spectral. Existing hand-authored rules preserved; measured rules added
+# from this provider's own OpenAPI conventions by strengthen_ruleset.py,
+# then self-validated against the spec.
+#
+# Provenance:
+#   - servers-https-only: 80% of servers already https (warn)
+#   - servers-expected-domain: 4/4 servers on konghq.com
+#   - path-params-casing: camel @ 39% (n=1992)
+#   - query-params-casing: snake @ 59% (n=482)
+#   - operationid-casing: kebab @ 95% (n=1242)
+#   - schema-names-casing: pascal @ 99% (n=1302)
+#   - schema-properties-casing: snake @ 99% (n=3967)
+#   - security: global (root) — NOT emitting operation-security-required
+#   - error-schema-defined: GatewayUnauthorizedError
+#   - operation-documents-401: 89% adherence
+#   - pagination params observed: ['offset', 'page', 'size']
+#   - merge: kept 7 existing, added 10 measured, upgraded 0
+#   - added: servers-https-only, servers-expected-domain, path-params-casing, query-params-casing, operationid-casing, schema-names-casing, schema-properties-casing, security-schemes-defined, error-schema-defined, operation-documents-401
+extends:
+  - spectral:oas
 rules:
   info-title-required:
     description: Info title must be present
     severity: error
     given: $.info
-    then: {field: title, function: truthy}
+    then:
+      field: title
+      function: truthy
   info-description-required:
     description: Info description must be present
     severity: error
     given: $.info
-    then: {field: description, function: truthy}
+    then:
+      field: description
+      function: truthy
   operation-operationid-required:
     description: Every operation must have an operationId
     severity: error
     given: $.paths[*][get,post,put,patch,delete]
-    then: {field: operationId, function: truthy}
+    then:
+      field: operationId
+      function: truthy
   operation-summary-required:
     description: Every operation must have a summary
     severity: error
     given: $.paths[*][get,post,put,patch,delete]
-    then: {field: summary, function: truthy}
+    then:
+      field: summary
+      function: truthy
   operation-tags-required:
     description: Every operation must have tags
     severity: error
     given: $.paths[*][get,post,put,patch,delete]
-    then: {field: tags, function: truthy}
+    then:
+      field: tags
+      function: truthy
   response-description-required:
     description: Every response must have a description
     severity: error
     given: $.paths[*][get,post,put,patch,delete].responses[*]
-    then: {field: description, function: truthy}
+    then:
+      field: description
+      function: truthy
   no-empty-descriptions:
     description: Descriptions must not be empty
     severity: error
     given: $..description
-    then: {function: truthy}
+    then:
+      function: truthy
+  servers-https-only:
+    description: Server URLs must use HTTPS.
+    severity: warn
+    given: $.servers[*].url
+    then:
+      function: pattern
+      functionOptions:
+        match: ^https://
+  servers-expected-domain:
+    description: Server URLs should be on the konghq.com domain.
+    severity: warn
+    given: $.servers[*].url
+    then:
+      function: pattern
+      functionOptions:
+        match: konghq\.com
+  path-params-casing:
+    description: Path parameters should be camelCase (the dominant convention in this API).
+    severity: info
+    given: $.paths[*].parameters[?(@.in=='path')].name
+    then:
+      function: pattern
+      functionOptions:
+        match: ^[a-z][A-Za-z0-9]*$
+  query-params-casing:
+    description: Query parameters should be snake_case (the dominant convention in this API).
+    severity: info
+    given: $.paths[*][get,post,put,patch,delete].parameters[?(@.in=='query')]
+    then:
+      field: name
+      function: casing
+      functionOptions:
+        type: snake
+  operationid-casing:
+    description: Operation IDs should be kebab-case (the dominant convention in this API).
+    severity: warn
+    given: $.paths[*][get,post,put,patch,delete].operationId
+    then:
+      function: casing
+      functionOptions:
+        type: kebab
+  schema-names-casing:
+    description: Component schema names should be PascalCase (the dominant convention in this API).
+    severity: warn
+    given: $.components.schemas
+    then:
+      field: '@key'
+      function: pattern
+      functionOptions:
+        match: ^[A-Z][A-Za-z0-9]*$
+  schema-properties-casing:
+    description: Schema properties should be snake_case (the dominant convention in this API).
+    severity: warn
+    given: $.components.schemas[*].properties
+    then:
+      field: '@key'
+      function: casing
+      functionOptions:
+        type: snake
+  security-schemes-defined:
+    description: Security schemes should be defined in components.
+    severity: warn
+    given: $.components
+    then:
+      field: securitySchemes
+      function: truthy
+  error-schema-defined:
+    description: A shared error schema (GatewayUnauthorizedError) should be defined for error payloads.
+    severity: warn
+    given: $.components.schemas
+    then:
+      field: GatewayUnauthorizedError
+      function: truthy
+  operation-documents-401:
+    description: Operations should document a 401 response (documented on 89% of this API's operations).
+    severity: warn
+    given: $.paths[*][get,post,put,patch,delete].responses
+    then:
+      field: '401'
+      function: truthy
