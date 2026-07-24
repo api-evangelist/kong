@@ -1,0 +1,275 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Me API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: Me
+paths:
+  /v3/organizations/me:
+    get:
+      operationId: get-organizations-me
+      summary: Get My Organization
+      description: Returns the organization of the user identified in the token of the request.
+      responses:
+        '200':
+          $ref: '#/components/responses/MeOrganization'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Me
+  /v3/users/me:
+    get:
+      operationId: get-users-me
+      summary: Get My User Account
+      description: Returns the user account for the user identified in the token of the request.
+      responses:
+        '200':
+          $ref: '#/components/responses/UserSingle'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+      security:
+      - personalAccessToken: []
+      - konnectAccessToken: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Me
+components:
+  responses:
+    UserSingle:
+      description: A get action response of a single user.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+    MeOrganization:
+      description: Me Organization
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                description: UUID of the organization.
+                type: string
+                format: uuid
+                readOnly: true
+              name:
+                description: Name of the organization.
+                type: string
+              owner_id:
+                description: Owner ID of the organization.
+                type: string
+              login_path:
+                description: Path to organization-specific login when single sign on (SSO) is enabled. Blank otherwise.
+                type: string
+              created_at:
+                description: Date the organization was created.
+                type: string
+                format: date-time
+                readOnly: true
+              updated_at:
+                description: Date the organization was last updated.
+                type: string
+                format: date-time
+                readOnly: true
+              state:
+                description: State of the organization
+                type: string
+                enum:
+                - active
+                - inactive
+                - deleting
+                - deleted
+                x-speakeasy-unknown-values: allow
+              retention_period_days:
+                description: The number of days an organization spends inactive before being deleted.
+                type: integer
+            example:
+              id: d99c041a-c7cf-46a2-bf3a-44bb5f75400e
+              name: string
+              owner_id: 1c9c3848-5897-4f2c-beed-df6f3e3adb37
+              created_at: '2023-01-23T17:22:52.150Z'
+              updated_at: '2023-01-23T17:22:52.150Z'
+              state: active
+              retention_period_days: 90
+            title: Me Organization Response
+    IdentityUnauthenticated:
+      description: Unauthenticated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+  schemas:
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    User:
+      description: The user object contains information about an individual user who can use the Konnect application and API.
+      type: object
+      properties:
+        id:
+          description: The User ID.
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: true
+        email:
+          description: The email registered to the user.
+          type: string
+          format: email
+          example: user@email.com
+          maxLength: 250
+        full_name:
+          description: The User's full name.
+          type: string
+          example: Jane Doe
+          maxLength: 250
+          pattern: ^[\w \W]+$
+        preferred_name:
+          description: The User's preferred name.
+          type: string
+          example: Jane
+          maxLength: 250
+        active:
+          description: Returns True if a user has verified their email address.
+          type: boolean
+          default: true
+          readOnly: true
+        inferred_region:
+          description: The Konnect region closest to the user's IP address. This property might only be set for users on signup through Konnect’s build-in native authentication.
+          type: string
+          example: us
+          readOnly: true
+        created_at:
+          description: The time stamp for the date the account was registered.
+          type: string
+          format: date-time
+          example: '2022-02-07T17:46:57.52Z'
+          readOnly: true
+        updated_at:
+          description: A Unix timestamp representation of the most recent change to the User account.
+          type: string
+          format: date-time
+          example: '2022-10-08T17:00:00.52Z'
+          readOnly: true
+      example:
+        id: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+        email: user@email.com
+        full_name: Test User
+        preferred_name: test
+        active: true
+        inferred_region: us
+        created_at: '2022-02-07T17:46:57.52Z'
+        updated_at: '2022-10-08T17:00:00.52Z'
+      title: User
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

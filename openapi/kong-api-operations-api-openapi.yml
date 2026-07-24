@@ -1,0 +1,433 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs API Operations API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: API Operations
+paths:
+  /v3/apis/{apiId}/operations:
+    parameters:
+    - $ref: '#/components/parameters/ApiId'
+    get:
+      operationId: list-api-operations
+      summary: List API Operations
+      description: 'Returns a list of operations for an API.
+
+        Returns 404 if the API is not configured for access control enforcement.
+
+        '
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/PageNumber'
+      - $ref: '#/components/parameters/ApiOperationFilters'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListApiOperationResponse'
+        '401':
+          $ref: '#/components/responses/ApiUnauthorized'
+        '403':
+          $ref: '#/components/responses/ApiForbidden'
+        '404':
+          $ref: '#/components/responses/ApiNotFound'
+      tags:
+      - API Operations
+  /v3/apis/{apiId}/operations/{operationId}:
+    parameters:
+    - $ref: '#/components/parameters/ApiId'
+    - $ref: '#/components/parameters/OperationId'
+    get:
+      operationId: fetch-api-operation
+      summary: Get an API Operation
+      description: 'Returns a specific operation for an API.
+
+        Returns 404 if the API is not configured for access control enforcement.
+
+        '
+      responses:
+        '200':
+          $ref: '#/components/responses/ApiOperationResponse'
+        '401':
+          $ref: '#/components/responses/ApiUnauthorized'
+        '403':
+          $ref: '#/components/responses/ApiForbidden'
+        '404':
+          $ref: '#/components/responses/ApiNotFound'
+      tags:
+      - API Operations
+components:
+  responses:
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ListApiOperationResponse:
+      description: Paginated list of API operations
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiOperation'
+            additionalProperties: false
+            required:
+            - data
+            - meta
+            title: ListApiOperations
+    ApiOperationResponse:
+      description: An API operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiOperation'
+  parameters:
+    ApiId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiId
+      in: path
+      required: true
+      description: The UUID API identifier
+    ApiOperationFilters:
+      name: filter
+      description: Filters API Operations in the response.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApiOperationFilterParameters'
+      style: deepObject
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    OperationId:
+      schema:
+        type: string
+        format: uuid
+        example: b42d905a-ed33-46a3-a093-d8f536af9a8a
+      name: operationId
+      in: path
+      required: true
+      description: The API operation identifier
+      x-speakeasy-match: id
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+  schemas:
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    ApiOperationFilterParameters:
+      type: object
+      properties:
+        method:
+          $ref: '#/components/schemas/StringFieldFilter'
+        path:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: API Operation Filter Parameters
+    Method:
+      description: The HTTP method of an API Operation.
+      type: string
+      enum:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+      - HEAD
+      - CONNECT
+      - TRACE
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    ApiOperation:
+      description: An operation linked to an API
+      type: object
+      properties:
+        id:
+          description: The API operation identifier.
+          type: string
+          format: uuid
+          example: b42d905a-ed33-46a3-a093-d8f536af9a8a
+          readOnly: true
+        method:
+          $ref: '#/components/schemas/Method'
+        path:
+          description: The path of the operation.
+          type: string
+          example: /users/*
+        implementation_status:
+          $ref: '#/components/schemas/ApiOperationImplementationStatus'
+      additionalProperties: false
+      required:
+      - id
+      - method
+      - path
+      title: API Operation
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    ApiOperationImplementationStatus:
+      description: The implementation status of the operation.
+      type: object
+      properties:
+        matched:
+          description: Whether the operation is matched by a Kong route in the control plane
+          type: boolean
+          readOnly: true
+        route:
+          type: object
+          additionalProperties: false
+          nullable: true
+          properties:
+            id:
+              description: The route identifier
+              type: string
+              format: uuid
+            name:
+              description: The name of the route
+              type: string
+          readOnly: true
+          required:
+          - id
+          - name
+        service:
+          type: object
+          additionalProperties: false
+          nullable: true
+          properties:
+            id:
+              description: The service identifier
+              type: string
+              format: uuid
+            name:
+              description: The name of the service
+              type: string
+          readOnly: true
+          required:
+          - id
+          - name
+      additionalProperties: false
+      required:
+      - matched
+      - route
+      - service
+      title: API Operation Implementation Status
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

@@ -1,0 +1,1684 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Transit Gateways API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: Transit Gateways
+paths:
+  /v2/cloud-gateways/networks/{networkId}/transit-gateways:
+    get:
+      operationId: list-transit-gateways
+      summary: List Transit Gateways
+      description: Returns a paginated collection of transit gateways for a given network.
+      parameters:
+      - $ref: '#/components/parameters/NetworkId'
+      - $ref: '#/components/parameters/TransitGatewaysFilter'
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/PageNumber'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListTransitGatewaysResponse'
+        '400':
+          $ref: '#/components/responses/CloudGatewaysBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Transit Gateways
+      x-speakeasy-group: CloudGateways
+    post:
+      x-speakeasy-entity-operation:
+        terraform-resource: CloudGatewayTransitGateway#create
+        terraform-datasource: null
+      operationId: create-transit-gateway
+      summary: Create Transit Gateway
+      description: Creates a new transit gateway for a given network.
+      parameters:
+      - $ref: '#/components/parameters/NetworkId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransitGatewayRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreateTransitGatewayResponse'
+        '400':
+          $ref: '#/components/responses/CloudGatewaysBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Transit Gateways
+      x-speakeasy-group: CloudGateways
+      x-speakeasy-retries:
+        strategy: backoff
+        backoff:
+          initialInterval: 30000
+          maxInterval: 60000
+          maxElapsedTime: 3600000
+          exponent: 1.5
+        statusCodes:
+        - 400
+        retryConnectionErrors: false
+  /v2/cloud-gateways/networks/{networkId}/transit-gateways/{transitGatewayId}:
+    get:
+      x-speakeasy-entity-operation:
+        terraform-resource: CloudGatewayTransitGateway#read
+        terraform-datasource: null
+      operationId: get-transit-gateway
+      summary: Get Transit Gateway
+      description: Retrieves a transit gateway by ID for a given network.
+      parameters:
+      - $ref: '#/components/parameters/NetworkId'
+      - $ref: '#/components/parameters/TransitGatewayId'
+      responses:
+        '200':
+          $ref: '#/components/responses/RetrieveTransitGatewayResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Transit Gateways
+      x-speakeasy-group: CloudGateways
+    patch:
+      x-speakeasy-entity-operation:
+        terraform-resource: CloudGatewayTransitGateway#update
+        terraform-datasource: null
+      operationId: update-transit-gateway
+      summary: Update Transit Gateway
+      description: Updates a transit gateway by ID for a given network.
+      parameters:
+      - $ref: '#/components/parameters/NetworkId'
+      - $ref: '#/components/parameters/TransitGatewayId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTransitGatewayRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/PatchTransitGatewayResponse'
+        '400':
+          $ref: '#/components/responses/CloudGatewaysBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Transit Gateways
+      x-speakeasy-group: CloudGateways
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-resource: CloudGatewayTransitGateway#delete
+        terraform-datasource: null
+      operationId: delete-transit-gateway
+      summary: Delete Transit Gateway
+      description: Deletes a transit gateway by ID for a given network.
+      parameters:
+      - $ref: '#/components/parameters/NetworkId'
+      - $ref: '#/components/parameters/TransitGatewayId'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/CloudGatewaysBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Transit Gateways
+      x-speakeasy-group: CloudGateways
+      x-speakeasy-retries:
+        strategy: backoff
+        backoff:
+          initialInterval: 10000
+          maxInterval: 60000
+          maxElapsedTime: 1800000
+          exponent: 1.5
+        statusCodes:
+        - 400
+        retryConnectionErrors: false
+components:
+  schemas:
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    CreateAzureVHubPeeringGateway:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AzureVHubPeeringAttachmentConfig'
+      required:
+      - name
+      - transit_gateway_attachment_config
+      title: Azure Virtual Hub Peering Gateway
+      x-speakeasy-name-override: AzureVhubPeeringGateway
+    CreateGCPVPCPeeringTransitGateway:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/GCPVPCPeeringAttachmentConfig'
+      required:
+      - name
+      - transit_gateway_attachment_config
+      title: GCP VPC Peering Transit Gateway
+      x-speakeasy-name-override: GcpVpcPeeringTransitGateway
+    GCPVPCPeeringAttachmentConfig:
+      type: object
+      properties:
+        kind:
+          enum:
+          - gcp-vpc-peering-attachment
+          title: GCP VPC Peering Attachment Type
+        peer_project_id:
+          description: GCP Project ID of the peer account to create attachment to.
+          type: string
+          title: GCP Project ID
+        peer_vpc_name:
+          description: GCP VPC Name of the peer account to create attachment to.
+          type: string
+          title: GCP VPC Name
+      additionalProperties: false
+      required:
+      - kind
+      - peer_project_id
+      - peer_vpc_name
+      title: GCP VPC Peering Attachment Config
+    AwsResourceEndpointAttachmentConfig:
+      type: object
+      properties:
+        kind:
+          enum:
+          - aws-resource-endpoint-attachment
+          title: AWS Resource Endpoint Attachment Type
+        ram_share_arn:
+          description: Resource Share ARN to verify request to create transit gateway attachment.
+          type: string
+          title: RAM Share ARN
+        resource_config:
+          $ref: '#/components/schemas/AwsResourceEndpointConfig'
+      additionalProperties: false
+      required:
+      - kind
+      - ram_share_arn
+      title: AWS Resource Endpoint Attachment Config
+    TransitGatewayStateFieldNotEqualsFilter:
+      description: Filter transit-gateway state by inequality match.
+      type: object
+      properties:
+        neq:
+          $ref: '#/components/schemas/TransitGatewayState'
+      required:
+      - neq
+      title: TransitGatewayStateFieldNotEqualsFilter
+    AwsResourceEndpointConfig:
+      description: 'List of unique resource config mapping for aws resource endpoint.
+
+        '
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          resource_config_id:
+            description: Resource Config ID to uniquely identify a resource configuration.
+            type: string
+            title: Resource Config ID
+          domain_name:
+            description: Domain Name to uniquely identify a resource configuration.
+            type: string
+            title: Domain Name
+        required:
+        - resource_config_id
+        - domain_name
+      title: AWS Resource Endpoint Config
+    AwsVpcPeeringGatewayResponse:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        cidr_blocks:
+          $ref: '#/components/schemas/TransitGatewayCIDRBlocks'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AwsVpcPeeringGatewayAttachmentConfigForResponse'
+        id:
+          $ref: '#/components/schemas/TransitGatewayId'
+        state:
+          $ref: '#/components/schemas/TransitGatewayState'
+        state_metadata:
+          description: 'Metadata describing the backing state of the transit gateway and why it may be in an erroneous state.
+
+            '
+          type: object
+          additionalProperties: false
+          properties:
+            reported_status:
+              description: Reported status of the transit gateway from backing infrastructure.
+              type: string
+              example: ERROR
+            reason:
+              description: 'Reason why the transit gateway may be in an erroneous state, reported from backing infrastructure.
+
+                '
+              type: string
+              example: 'Transit Gateway Attachment configuration could not find a resource with the provided ram share arn.
+
+                '
+          readOnly: true
+          title: TransitGatewayStateMetadata
+        entity_version:
+          description: 'Monotonically-increasing version count of the transit gateway, to indicate the order of updates to the
+
+            transit gateway.
+
+            '
+          type: integer
+          example: 1
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of transit gateway creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of transit gateway update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+      required:
+      - name
+      - cidr_blocks
+      - transit_gateway_attachment_config
+      - dns_config
+      - id
+      - state
+      - entity_version
+      - created_at
+      - updated_at
+      title: AWS VPC Peering Gateway
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    PatchTransitGatewayRequest:
+      description: Request schema for updating a transit gateway.
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/PatchAwsResourceEndpointGateway'
+      - $ref: '#/components/schemas/PatchAwsTransitGateway'
+      title: PatchTransitGatewayRequest
+    CreateAwsResourceEndpointGateway:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AwsResourceEndpointAttachmentConfig'
+      required:
+      - name
+      - transit_gateway_attachment_config
+      title: AWS Resource Endpoint Gateway
+      x-speakeasy-name-override: AWSResourceEndpointGateway
+    TransitGatewayStateFieldFilter:
+      oneOf:
+      - $ref: '#/components/schemas/TransitGatewayStateFieldEqualsFilter'
+      - $ref: '#/components/schemas/TransitGatewayStateFieldNotEqualsFilter'
+      - $ref: '#/components/schemas/TransitGatewayStateFieldOrEqualityFilter'
+      title: TransitGatewayStateFieldFilter
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    AzureTransitGatewayResponse:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AzureVNETPeeringAttachmentConfig'
+        id:
+          $ref: '#/components/schemas/TransitGatewayId'
+        state:
+          $ref: '#/components/schemas/TransitGatewayState'
+        state_metadata:
+          description: 'Metadata describing the backing state of the transit gateway and why it may be in an erroneous state.
+
+            '
+          type: object
+          additionalProperties: false
+          properties:
+            reported_status:
+              description: Reported status of the transit gateway from backing infrastructure.
+              type: string
+              example: ERROR
+            reason:
+              description: 'Reason why the transit gateway may be in an erroneous state, reported from backing infrastructure.
+
+                '
+              type: string
+              example: 'Transit Gateway Attachment configuration could not find a resource with the provided ram share arn.
+
+                '
+          readOnly: true
+          title: TransitGatewayStateMetadata
+        entity_version:
+          description: 'Monotonically-increasing version count of the transit gateway, to indicate the order of updates to the
+
+            transit gateway.
+
+            '
+          type: integer
+          example: 1
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of transit gateway creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of transit gateway update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+      required:
+      - name
+      - transit_gateway_attachment_config
+      - id
+      - dns_config
+      - state
+      - entity_version
+      - created_at
+      - updated_at
+      title: Azure Transit Gateway
+    CloudGatewaysStringFieldFilterOverride:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+      additionalProperties: false
+    AzureVHubPeeringGatewayResponse:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AzureVHubPeeringAttachmentConfig'
+        id:
+          $ref: '#/components/schemas/TransitGatewayId'
+        state:
+          $ref: '#/components/schemas/TransitGatewayState'
+        state_metadata:
+          description: 'Metadata describing the backing state of the transit gateway and why it may be in an erroneous state.
+
+            '
+          type: object
+          additionalProperties: false
+          properties:
+            reported_status:
+              description: Reported status of the transit gateway from backing infrastructure.
+              type: string
+              example: ERROR
+            reason:
+              description: 'Reason why the transit gateway may be in an erroneous state, reported from backing infrastructure.
+
+                '
+              type: string
+              example: 'Transit Gateway Attachment configuration could not find a resource with the provided ram share arn.
+
+                '
+          readOnly: true
+          title: TransitGatewayStateMetadata
+        entity_version:
+          description: 'Monotonically-increasing version count of the transit gateway, to indicate the order of updates to the
+
+            transit gateway.
+
+            '
+          type: integer
+          example: 1
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of transit gateway creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of transit gateway update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+      required:
+      - name
+      - transit_gateway_attachment_config
+      - id
+      - dns_config
+      - state
+      - entity_version
+      - created_at
+      - updated_at
+      title: Azure Virtual Hub Peering Gateway
+      x-speakeasy-name-override: AzureVhubPeeringGatewayResponse
+    CreateTransitGatewayRequest:
+      description: Request schema for creating a transit gateway.
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/CreateAwsTransitGateway'
+      - $ref: '#/components/schemas/CreateAwsVpcPeeringGateway'
+      - $ref: '#/components/schemas/CreateAwsResourceEndpointGateway'
+      - $ref: '#/components/schemas/CreateAzureTransitGateway'
+      - $ref: '#/components/schemas/CreateAzureVHubPeeringGateway'
+      - $ref: '#/components/schemas/CreateGCPVPCPeeringTransitGateway'
+      title: CreateTransitGatewayRequest
+    AwsResourceEndpointConfigState:
+      description: 'The current state of the resource config in AWS Resource Endpoint. Possible values:
+
+        - `initializing` - The config is in the process of being initialized and is setting up necessary resources.
+
+        - `missing` - The config is missing and is no longer accepting new traffic.
+
+        - `ready` - The config is fully operational and can route traffic as configured.
+
+        - `error` - The config is in an error state, and is not operational.
+
+        - `terminating` - The config is in the process of being deleted and is no longer accepting new traffic.
+
+        '
+      type: string
+      enum:
+      - initializing
+      - missing
+      - ready
+      - error
+      - terminating
+      readOnly: true
+      title: AWS Resource Endpoint Config State
+      x-speakeasy-unknown-values: allow
+    AwsTransitGatewayAttachmentConfig:
+      type: object
+      properties:
+        kind:
+          enum:
+          - aws-transit-gateway-attachment
+          title: AWS Transit Gateway Attachment Type
+        transit_gateway_id:
+          description: AWS Transit Gateway ID to create attachment to.
+          type: string
+          title: Transit Gateway ID
+        ram_share_arn:
+          description: Resource Share ARN to verify request to create transit gateway attachment.
+          type: string
+          title: RAM Share ARN
+      additionalProperties: false
+      required:
+      - kind
+      - transit_gateway_id
+      - ram_share_arn
+      title: AWS Transit Gateway Attachment Config
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    AwsTransitGatewayResponse:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        cidr_blocks:
+          $ref: '#/components/schemas/TransitGatewayCIDRBlocks'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AwsTransitGatewayAttachmentConfigForResponse'
+        id:
+          $ref: '#/components/schemas/TransitGatewayId'
+        state:
+          $ref: '#/components/schemas/TransitGatewayState'
+        state_metadata:
+          description: 'Metadata describing the backing state of the transit gateway and why it may be in an erroneous state.
+
+            '
+          type: object
+          additionalProperties: false
+          properties:
+            reported_status:
+              description: Reported status of the transit gateway from backing infrastructure.
+              type: string
+              example: ERROR
+            reason:
+              description: 'Reason why the transit gateway may be in an erroneous state, reported from backing infrastructure.
+
+                '
+              type: string
+              example: 'Transit Gateway Attachment configuration could not find a resource with the provided ram share arn.
+
+                '
+          readOnly: true
+          title: TransitGatewayStateMetadata
+        entity_version:
+          description: 'Monotonically-increasing version count of the transit gateway, to indicate the order of updates to the
+
+            transit gateway.
+
+            '
+          type: integer
+          example: 1
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of transit gateway creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of transit gateway update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+      required:
+      - name
+      - cidr_blocks
+      - transit_gateway_attachment_config
+      - dns_config
+      - id
+      - state
+      - entity_version
+      - created_at
+      - updated_at
+      title: AWS Transit Gateway
+    CreateAwsTransitGateway:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        cidr_blocks:
+          $ref: '#/components/schemas/TransitGatewayCIDRBlocks'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AwsTransitGatewayAttachmentConfig'
+      required:
+      - name
+      - cidr_blocks
+      - transit_gateway_attachment_config
+      title: AWS Transit Gateway
+      x-speakeasy-name-override: AWSTransitGateway
+    TransitGatewaysFilterParameters:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
+        state:
+          $ref: '#/components/schemas/TransitGatewayStateFieldFilter'
+      additionalProperties: false
+      title: TransitGatewaysFilterParameters
+    GCPVPCPeeringGatewayResponse:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/GCPVPCPeeringAttachmentConfig'
+        id:
+          $ref: '#/components/schemas/TransitGatewayId'
+        state:
+          $ref: '#/components/schemas/TransitGatewayState'
+        state_metadata:
+          description: 'Metadata describing the backing state of the transit gateway and why it may be in an erroneous state.
+
+            '
+          type: object
+          additionalProperties: false
+          properties:
+            reported_status:
+              description: Reported status of the transit gateway from backing infrastructure.
+              type: string
+              example: ERROR
+            reason:
+              description: 'Reason why the transit gateway may be in an erroneous state, reported from backing infrastructure.
+
+                '
+              type: string
+              example: 'Transit Gateway Attachment configuration could not find a resource with the provided ram share arn.
+
+                '
+          readOnly: true
+          title: TransitGatewayStateMetadata
+        entity_version:
+          description: 'Monotonically-increasing version count of the transit gateway, to indicate the order of updates to the
+
+            transit gateway.
+
+            '
+          type: integer
+          example: 1
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of transit gateway creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of transit gateway update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+      required:
+      - name
+      - transit_gateway_attachment_config
+      - id
+      - dns_config
+      - state
+      - entity_version
+      - created_at
+      - updated_at
+      title: GCP VPC Peering Transit Gateway
+    PatchAwsTransitGateway:
+      description: Request schema for updating AWS Transit Gateway
+      properties:
+        cidr_blocks:
+          $ref: '#/components/schemas/TransitGatewayCIDRBlocks'
+      required:
+      - cidr_blocks
+      x-speakeasy-name-override: AWSTransitGateway
+    TransitGatewayName:
+      description: Human-readable name of the transit gateway.
+      type: string
+      example: us-east-2 transit gateway
+      title: Transit Gateway Name
+    AzureVHubPeeringAttachmentConfig:
+      type: object
+      properties:
+        kind:
+          enum:
+          - azure-vhub-peering-attachment
+          title: Azure Virtual Hub Peering Attachment Type
+        tenant_id:
+          description: Tenant ID of the Azure Virtual Hub resource.
+          type: string
+          title: Tenant ID
+        subscription_id:
+          description: Subscription ID of the Azure Virtual Hub resource.
+          type: string
+          title: Subscription ID
+        resource_group_name:
+          description: Resource Group Name of the Azure Virtual Hub resource.
+          type: string
+          title: Resource Group Name
+        vhub_name:
+          description: Name of the Azure Virtual Hub resource.
+          type: string
+          title: Virtual Hub Name
+      additionalProperties: false
+      required:
+      - kind
+      - tenant_id
+      - subscription_id
+      - resource_group_name
+      - vhub_name
+      title: Azure Virtual Hub Peering Attachment Config
+    AwsResourceEndpointGatewayResponse:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AwsResourceEndpointAttachmentConfigResponse'
+        id:
+          $ref: '#/components/schemas/TransitGatewayId'
+        state:
+          $ref: '#/components/schemas/TransitGatewayState'
+        state_metadata:
+          description: 'Metadata describing the backing state of the transit gateway and why it may be in an erroneous state.
+
+            '
+          type: object
+          additionalProperties: false
+          properties:
+            reported_status:
+              description: Reported status of the transit gateway from backing infrastructure.
+              type: string
+              example: ERROR
+            reason:
+              description: 'Reason why the transit gateway may be in an erroneous state, reported from backing infrastructure.
+
+                '
+              type: string
+              example: 'Transit Gateway Attachment configuration could not find a resource with the provided ram share arn.
+
+                '
+          readOnly: true
+          title: TransitGatewayStateMetadata
+        entity_version:
+          description: 'Monotonically-increasing version count of the transit gateway, to indicate the order of updates to the
+
+            transit gateway.
+
+            '
+          type: integer
+          example: 1
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of transit gateway creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of transit gateway update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+      required:
+      - name
+      - transit_gateway_attachment_config
+      - id
+      - dns_config
+      - state
+      - entity_version
+      - created_at
+      - updated_at
+      title: AWS Resource Endpoint Gateway
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    AwsVpcPeeringGatewayAttachmentConfigForResponse:
+      type: object
+      properties:
+        kind:
+          enum:
+          - aws-vpc-peering-attachment
+          title: AWS VPC Peering Attachment Config
+        peer_account_id:
+          type: string
+        peer_vpc_id:
+          type: string
+        peer_vpc_region:
+          type: string
+        peering_connection_id:
+          type: string
+      additionalProperties: false
+      required:
+      - kind
+      - peer_account_id
+      - peer_vpc_id
+      - peer_vpc_region
+      title: AWS VPC Peering Attachment Config
+    TransitGatewayDnsConfig:
+      description: 'List of mappings from remote DNS server IP address sets to proxied internal domains, for a transit gateway
+
+        attachment.
+
+        '
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          remote_dns_server_ip_addresses:
+            description: Remote DNS Server IP Addresses to connect to for resolving internal DNS via a transit gateway.
+            type: array
+            items:
+              type: string
+            example:
+            - 10.0.0.2
+            title: Remote DNS Server IP Addresses
+          domain_proxy_list:
+            description: 'Internal domain names to proxy for DNS resolution from the listed remote DNS server IP addresses,
+
+              for a transit gateway.
+
+              '
+            type: array
+            items:
+              type: string
+            example:
+            - foobar.com
+            title: Domain Proxy List
+        required:
+        - remote_dns_server_ip_addresses
+        - domain_proxy_list
+      title: Transit Gateway DNS Config
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    AwsResourceEndpointAttachmentConfigResponse:
+      type: object
+      properties:
+        kind:
+          enum:
+          - aws-resource-endpoint-attachment
+          title: AWS Resource Endpoint Attachment Type
+        ram_share_arn:
+          description: Resource Share ARN to verify request to create transit gateway attachment.
+          type: string
+          title: RAM Share ARN
+        resource_config:
+          $ref: '#/components/schemas/AwsResourceEndpointConfigResponse'
+      additionalProperties: false
+      required:
+      - kind
+      - ram_share_arn
+      - resource_config
+      title: AWS Resource Endpoint Attachment Config Response
+    TransitGatewayResponse:
+      oneOf:
+      - $ref: '#/components/schemas/AwsTransitGatewayResponse'
+      - $ref: '#/components/schemas/AwsVpcPeeringGatewayResponse'
+      - $ref: '#/components/schemas/AzureTransitGatewayResponse'
+      - $ref: '#/components/schemas/AzureVHubPeeringGatewayResponse'
+      - $ref: '#/components/schemas/GCPVPCPeeringGatewayResponse'
+      - $ref: '#/components/schemas/AwsResourceEndpointGatewayResponse'
+    TransitGatewayState:
+      description: 'The current state of the Transit Gateway. Possible values:
+
+        - `created` - The attachment has been created but is not attached to transit gateway.
+
+        - `initializing` - The attachment is in the process of being initialized and is setting up necessary resources.
+
+        - `pending-acceptance` The attachment request is awaiting acceptance in customer VPC.
+
+        - `pending-user-action` The attachment request is awaiting user action in customer VPC.
+
+        - `ready` - The transit gateway attachment is fully operational and can route traffic as configured.
+
+        - `terminating` - The attachment is in the process of being deleted and is no longer accepting new traffic.
+
+        - `terminated` - The attachment has been fully deleted and is no longer available.
+
+        - `error` - The attachment is in an error state.
+
+        '
+      type: string
+      enum:
+      - created
+      - initializing
+      - pending-acceptance
+      - pending-user-action
+      - ready
+      - terminating
+      - terminated
+      - error
+      readOnly: true
+      title: Transit Gateway State
+      x-speakeasy-unknown-values: allow
+    AwsResourceEndpointConfigResponse:
+      description: 'List of unique resource config mapping for aws resource endpoint.
+
+        '
+      type: array
+      items:
+        type: object
+        additionalProperties: false
+        properties:
+          resource_config_id:
+            description: Resource Config ID to uniquely identify a resource configuration.
+            type: string
+            title: Resource Config ID
+          domain_name:
+            description: Domain Name to uniquely identify a resource configuration.
+            type: string
+            title: Domain Name
+          state:
+            $ref: '#/components/schemas/AwsResourceEndpointConfigState'
+        required:
+        - resource_config_id
+        - domain_name
+        - state
+      title: AWS Resource Endpoint Config Response
+    AwsVpcPeeringGatewayAttachmentConfig:
+      type: object
+      properties:
+        kind:
+          enum:
+          - aws-vpc-peering-attachment
+          title: AWS VPC Peering Attachment Config
+        peer_account_id:
+          type: string
+        peer_vpc_id:
+          type: string
+        peer_vpc_region:
+          type: string
+      additionalProperties: false
+      required:
+      - kind
+      - peer_account_id
+      - peer_vpc_id
+      - peer_vpc_region
+      title: AWS VPC Peering Attachment Config
+    TransitGatewayStateFieldEqualsFilter:
+      description: Filter transit-gateway state by exact match.
+      oneOf:
+      - $ref: '#/components/schemas/TransitGatewayState'
+      - type: object
+        title: TransitGatewayStateFieldEqualsComparison
+        properties:
+          eq:
+            $ref: '#/components/schemas/TransitGatewayState'
+        required:
+        - eq
+      title: TransitGatewayStateFieldEqualsFilter
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreateAwsVpcPeeringGateway:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        cidr_blocks:
+          $ref: '#/components/schemas/TransitGatewayCIDRBlocks'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AwsVpcPeeringGatewayAttachmentConfig'
+      required:
+      - name
+      - cidr_blocks
+      - transit_gateway_attachment_config
+      title: AWS VPC Peering Gateway
+      x-speakeasy-name-override: AWSVpcPeeringGateway
+    NetworkId:
+      description: The network ID to operate on. For serverless.v1 kind of cloud gateways, this field should be omitted.
+      type: string
+      format: uuid
+      example: 36ae63d3-efd1-4bec-b246-62aa5d3f5695
+      x-speakeasy-param-suppress-computed-diff: true
+    TransitGatewayId:
+      type: string
+      format: uuid
+      example: 0850820b-d153-4a2a-b9be-7d2204779139
+      readOnly: true
+    TransitGatewayStateFieldOrEqualityFilter:
+      description: 'Filter transit-gateway state by determining if the value is equal to any in a set of values, where the set is a
+
+        comma-delimited list.
+
+        '
+      type: object
+      properties:
+        oeq:
+          type: string
+      required:
+      - oeq
+      title: TransitGatewayStateFieldOrEqualityFilter
+    AwsTransitGatewayAttachmentConfigForResponse:
+      type: object
+      properties:
+        kind:
+          enum:
+          - aws-transit-gateway-attachment
+          title: AWS Transit Gateway Attachment Type
+        transit_gateway_id:
+          description: AWS Transit Gateway ID to create attachment to.
+          type: string
+          title: Transit Gateway ID
+        ram_share_arn:
+          description: Resource Share ARN to verify request to create transit gateway attachment.
+          type: string
+          title: RAM Share ARN
+        attachment_id:
+          description: ID of the AWS Transit Gateway attachment.
+          type: string
+          title: AWS Transit Gateway Attachment ID
+      additionalProperties: false
+      required:
+      - kind
+      - transit_gateway_id
+      - ram_share_arn
+      title: AWS Transit Gateway Attachment Config
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    AzureVNETPeeringAttachmentConfig:
+      type: object
+      properties:
+        kind:
+          enum:
+          - azure-vnet-peering-attachment
+          title: Azure VNET Peering Attachment Type
+        tenant_id:
+          description: Tenant ID for the Azure VNET Peering attachment.
+          type: string
+          title: Tenant ID
+        subscription_id:
+          description: Subscription ID for the Azure VNET Peering attachment.
+          type: string
+          title: Subscription ID
+        resource_group_name:
+          description: Resource Group Name for the Azure VNET Peering attachment.
+          type: string
+          title: Resource Group Name
+        vnet_name:
+          description: VNET Name for the Azure VNET Peering attachment.
+          type: string
+          title: VNET Name
+      additionalProperties: false
+      required:
+      - kind
+      - tenant_id
+      - subscription_id
+      - resource_group_name
+      - vnet_name
+      title: Azure VNET Peering Attachment Config
+    CreateAzureTransitGateway:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TransitGatewayName'
+        dns_config:
+          $ref: '#/components/schemas/TransitGatewayDnsConfig'
+        transit_gateway_attachment_config:
+          $ref: '#/components/schemas/AzureVNETPeeringAttachmentConfig'
+      required:
+      - name
+      - transit_gateway_attachment_config
+      title: Azure Transit Gateway
+      x-speakeasy-name-override: AzureTransitGateway
+    TransitGatewayCIDRBlocks:
+      description: 'CIDR blocks for constructing a route table for the transit gateway, when attaching to the owning
+
+        network.
+
+        '
+      type: array
+      items:
+        type: string
+      example:
+      - 10.0.0.0/8
+      - 100.64.0.0/10
+      - 172.16.0.0/12
+      title: Transit Gateway CIDR Blocks
+    PatchAwsResourceEndpointGateway:
+      description: Request schema for updating AWS Resource Endpoint.
+      properties:
+        transit_gateway_attachment_config:
+          type: object
+          additionalProperties: false
+          properties:
+            kind:
+              enum:
+              - aws-resource-endpoint-attachment
+              title: AWS Resource Endpoint Attachment Type
+            resource_config:
+              $ref: '#/components/schemas/AwsResourceEndpointConfig'
+          required:
+          - kind
+          - resource_config
+      required:
+      - transit_gateway_attachment_config
+      x-speakeasy-name-override: AWSResourceEndpointGateway
+  parameters:
+    TransitGatewaysFilter:
+      name: filter
+      description: Filters supported for transit gateways.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/TransitGatewaysFilterParameters'
+      style: deepObject
+    NetworkId:
+      name: networkId
+      in: path
+      description: The network to operate on.
+      required: true
+      schema:
+        $ref: '#/components/schemas/NetworkId'
+      x-speakeasy-match: id
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    TransitGatewayId:
+      name: transitGatewayId
+      in: path
+      description: The ID of the transit gateway to operate on.
+      required: true
+      schema:
+        $ref: '#/components/schemas/TransitGatewayId'
+      x-speakeasy-match: id
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+  responses:
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    CloudGatewaysBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    ListTransitGatewaysResponse:
+      description: A paginated list for a collection of transit gateways for a network.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransitGatewayResponse'
+            required:
+            - meta
+            - data
+            title: ListTransitGatewaysResponse
+    RetrieveTransitGatewayResponse:
+      description: Response format for retrieving a transit gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TransitGatewayResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    CreateTransitGatewayResponse:
+      description: Response format for creating a transit gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TransitGatewayResponse'
+    PatchTransitGatewayResponse:
+      description: Response format for updating a transit gateway.
+      content:
+        application/json:
+          schema:
+            oneOf:
+            - $ref: '#/components/schemas/AwsResourceEndpointGatewayResponse'
+            - $ref: '#/components/schemas/AwsTransitGatewayResponse'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

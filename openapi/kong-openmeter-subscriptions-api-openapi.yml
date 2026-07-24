@@ -1,0 +1,1185 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs OpenMeter Subscriptions API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: OpenMeter Subscriptions
+  description: Subscriptions are used to track usage of your product or service. Subscriptions can be individuals or organizations that can subscribe to plans and have access to features.
+paths:
+  /v3/openmeter/subscriptions:
+    post:
+      operationId: create-subscription
+      summary: Create subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingSubscriptionCreate'
+      responses:
+        '201':
+          description: Subscription created response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      tags:
+      - OpenMeter Subscriptions
+    get:
+      operationId: list-subscriptions
+      summary: List subscriptions
+      parameters:
+      - $ref: '#/components/parameters/PagePaginationQuery'
+      - name: filter
+        in: query
+        description: Filter subscriptions.
+        required: false
+        schema:
+          type: object
+          properties:
+            customer_id:
+              description: Filter subscriptions by customer ID.
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              title: ULID
+        style: deepObject
+      responses:
+        '200':
+          description: Page paginated response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionPagePaginatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - OpenMeter Subscriptions
+  /v3/openmeter/subscriptions/{subscriptionId}:
+    get:
+      operationId: get-subscription
+      summary: Get subscription
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ULID'
+      responses:
+        '200':
+          description: Subscription response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - OpenMeter Subscriptions
+  /v3/openmeter/subscriptions/{subscriptionId}/cancel:
+    post:
+      operationId: cancel-subscription
+      summary: Cancel subscription
+      description: 'Cancels the subscription.
+
+        Will result in a scheduling conflict if there are other subscriptions scheduled to start after the cancelation time.'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ULID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingSubscriptionCancel'
+      responses:
+        '200':
+          description: Subscription updated response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      tags:
+      - OpenMeter Subscriptions
+  /v3/openmeter/subscriptions/{subscriptionId}/change:
+    post:
+      operationId: change-subscription
+      summary: Change subscription
+      description: 'Closes a running subscription and starts a new one according to the specification.
+
+        Can be used for upgrades, downgrades, and plan changes.'
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ULID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingSubscriptionChange'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscriptionChangeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      tags:
+      - OpenMeter Subscriptions
+  /v3/openmeter/subscriptions/{subscriptionId}/unschedule-cancelation:
+    post:
+      operationId: unschedule-cancelation
+      summary: Unschedule subscription cancelation
+      description: Unschedules the subscription cancelation.
+      parameters:
+      - name: subscriptionId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ULID'
+      responses:
+        '200':
+          description: Subscription updated response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      tags:
+      - OpenMeter Subscriptions
+components:
+  schemas:
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    BillingSubscriptionChangeResponse:
+      description: Response for changing a subscription.
+      type: object
+      properties:
+        current:
+          description: The current subscription before the change.
+          type: object
+          properties:
+            id:
+              description: ULID (Universally Unique Lexicographically Sortable Identifier).
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              readOnly: true
+              title: ULID
+            labels:
+              $ref: '#/components/schemas/Labels'
+            created_at:
+              description: An ISO-8601 timestamp representation of entity creation date.
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: RFC3339 Date-Time
+            updated_at:
+              description: An ISO-8601 timestamp representation of entity last update date.
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: RFC3339 Date-Time
+            deleted_at:
+              description: An ISO-8601 timestamp representation of entity deletion date.
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: RFC3339 Date-Time
+            customer_id:
+              description: The customer ID of the subscription.
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              readOnly: true
+              title: Customer ID
+            plan_id:
+              description: 'The plan ID of the subscription.
+
+                Set if subscription is created from a plan.'
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              readOnly: true
+              title: Plan ID
+            billing_anchor:
+              description: 'A billing anchor is the fixed point in time that determines the subscription''s recurring billing cycle.
+
+                It affects when charges occur and how prorations are calculated.
+
+                Common anchors:
+
+                - Calendar month (1st of each month): `2025-01-01T00:00:00Z`
+
+                - Subscription anniversary (day customer signed up)
+
+                - Custom date (customer-specified day)'
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: Billing anchor
+            status:
+              description: The status of the subscription.
+              type: string
+              enum:
+              - active
+              - inactive
+              - canceled
+              - scheduled
+              readOnly: true
+              title: Status
+              x-speakeasy-unknown-values: allow
+          required:
+          - id
+          - created_at
+          - updated_at
+          - customer_id
+          - billing_anchor
+          - status
+        next:
+          description: The new state of the subscription after the change.
+          type: object
+          properties:
+            id:
+              description: ULID (Universally Unique Lexicographically Sortable Identifier).
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              readOnly: true
+              title: ULID
+            labels:
+              $ref: '#/components/schemas/Labels'
+            created_at:
+              description: An ISO-8601 timestamp representation of entity creation date.
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: RFC3339 Date-Time
+            updated_at:
+              description: An ISO-8601 timestamp representation of entity last update date.
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: RFC3339 Date-Time
+            deleted_at:
+              description: An ISO-8601 timestamp representation of entity deletion date.
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: RFC3339 Date-Time
+            customer_id:
+              description: The customer ID of the subscription.
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              readOnly: true
+              title: Customer ID
+            plan_id:
+              description: 'The plan ID of the subscription.
+
+                Set if subscription is created from a plan.'
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              readOnly: true
+              title: Plan ID
+            billing_anchor:
+              description: 'A billing anchor is the fixed point in time that determines the subscription''s recurring billing cycle.
+
+                It affects when charges occur and how prorations are calculated.
+
+                Common anchors:
+
+                - Calendar month (1st of each month): `2025-01-01T00:00:00Z`
+
+                - Subscription anniversary (day customer signed up)
+
+                - Custom date (customer-specified day)'
+              type: string
+              format: date-time
+              example: '2023-01-01T01:01:01.001Z'
+              readOnly: true
+              title: Billing anchor
+            status:
+              description: The status of the subscription.
+              type: string
+              enum:
+              - active
+              - inactive
+              - canceled
+              - scheduled
+              readOnly: true
+              title: Status
+              x-speakeasy-unknown-values: allow
+          required:
+          - id
+          - created_at
+          - updated_at
+          - customer_id
+          - billing_anchor
+          - status
+      required:
+      - current
+      - next
+    BillingSubscriptionCancel:
+      description: Request for canceling a subscription.
+      type: object
+      properties:
+        timing:
+          description: If not provided the subscription is canceled immediately.
+          example: immediate
+          default: immediate
+          oneOf:
+          - $ref: '#/components/schemas/BillingSubscriptionEditTimingEnum'
+          - $ref: '#/components/schemas/DateTime'
+    BillingSubscriptionEditTimingEnum:
+      description: 'Subscription edit timing.
+
+        When immediate, the requested changes take effect immediately.
+
+        When next_billing_cycle, the requested changes take effect at the next billing cycle.'
+      type: string
+      enum:
+      - immediate
+      - next_billing_cycle
+      x-speakeasy-unknown-values: allow
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BillingSubscriptionChange:
+      description: Request for changing a subscription.
+      type: object
+      properties:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        customer:
+          description: The customer to create the subscription for.
+          type: object
+          properties:
+            id:
+              description: 'The ID of the customer to create the subscription for.
+
+
+                Either customer ID or customer key must be provided.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              title: Customer ID
+            key:
+              description: 'The key of the customer to create the subscription for.
+
+
+                Either customer ID or customer key must be provided.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: 019ae40f-4258-7f15-9491-842f42a7d6ac
+              maxLength: 256
+              minLength: 1
+              title: Customer Key
+        plan:
+          description: The plan reference of the subscription.
+          type: object
+          properties:
+            id:
+              description: 'The plan ID of the subscription.
+
+                Set if subscription is created from a plan.
+
+
+                ID or Key of the plan is required if creating a subscription from a plan.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              title: Plan ID
+            key:
+              description: 'The plan Key of the subscription, if any.
+
+                Set if subscription is created from a plan.
+
+
+                ID or Key of the plan is required if creating a subscription from a plan.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: resource_key
+              maxLength: 64
+              minLength: 1
+              pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+              title: Plan Key
+            version:
+              description: 'The plan version of the subscription, if any.
+
+                If not provided, the latest version of the plan will be used.'
+              type: integer
+              title: Plan Version
+        billing_anchor:
+          description: 'A billing anchor is the fixed point in time that determines the subscription''s recurring billing cycle.
+
+            It affects when charges occur and how prorations are calculated.
+
+            Common anchors:
+
+            - Calendar month (1st of each month): `2025-01-01T00:00:00Z`
+
+            - Subscription anniversary (day customer signed up)
+
+            - Custom date (customer-specified day)
+
+
+            If not provided, the subscription will be created with the subscription''s creation time as the billing anchor.'
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          title: Billing anchor
+        timing:
+          description: 'Timing configuration for the change, when the change should take effect.
+
+            For changing a subscription, the accepted values depend on the subscription configuration.'
+          example: immediate
+          oneOf:
+          - $ref: '#/components/schemas/BillingSubscriptionEditTimingEnum'
+          - $ref: '#/components/schemas/DateTime'
+      required:
+      - customer
+      - plan
+      - timing
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    DateTime:
+      description: '[RFC3339](https://tools.ietf.org/html/rfc3339) formatted date-time string in UTC.'
+      type: string
+      format: date-time
+      example: '2023-01-01T01:01:01.001Z'
+      title: RFC3339 Date-Time
+    SubscriptionPagePaginatedResponse:
+      description: Page paginated response.
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillingSubscription'
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+      required:
+      - data
+      - meta
+    ULID:
+      description: ULID (Universally Unique Lexicographically Sortable Identifier).
+      type: string
+      example: 01G65Z755AFWAKHE12NY0CQ9FH
+      pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+      title: ULID
+    BillingSubscriptionCreate:
+      description: Subscription create request.
+      type: object
+      properties:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        customer:
+          description: The customer to create the subscription for.
+          type: object
+          properties:
+            id:
+              description: 'The ID of the customer to create the subscription for.
+
+
+                Either customer ID or customer key must be provided.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              title: Customer ID
+            key:
+              description: 'The key of the customer to create the subscription for.
+
+
+                Either customer ID or customer key must be provided.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: 019ae40f-4258-7f15-9491-842f42a7d6ac
+              maxLength: 256
+              minLength: 1
+              title: Customer Key
+        plan:
+          description: The plan reference of the subscription.
+          type: object
+          properties:
+            id:
+              description: 'The plan ID of the subscription.
+
+                Set if subscription is created from a plan.
+
+
+                ID or Key of the plan is required if creating a subscription from a plan.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              title: Plan ID
+            key:
+              description: 'The plan Key of the subscription, if any.
+
+                Set if subscription is created from a plan.
+
+
+                ID or Key of the plan is required if creating a subscription from a plan.
+
+                If both are provided, the ID will be used.'
+              type: string
+              example: resource_key
+              maxLength: 64
+              minLength: 1
+              pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+              title: Plan Key
+            version:
+              description: 'The plan version of the subscription, if any.
+
+                If not provided, the latest version of the plan will be used.'
+              type: integer
+              title: Plan Version
+        billing_anchor:
+          description: 'A billing anchor is the fixed point in time that determines the subscription''s recurring billing cycle.
+
+            It affects when charges occur and how prorations are calculated.
+
+            Common anchors:
+
+            - Calendar month (1st of each month): `2025-01-01T00:00:00Z`
+
+            - Subscription anniversary (day customer signed up)
+
+            - Custom date (customer-specified day)
+
+
+            If not provided, the subscription will be created with the subscription''s creation time as the billing anchor.'
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          title: Billing anchor
+      required:
+      - customer
+      - plan
+    BillingSubscription:
+      description: Subscription.
+      type: object
+      properties:
+        id:
+          description: ULID (Universally Unique Lexicographically Sortable Identifier).
+          type: string
+          example: 01G65Z755AFWAKHE12NY0CQ9FH
+          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+          readOnly: true
+          title: ULID
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          description: An ISO-8601 timestamp representation of entity creation date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        updated_at:
+          description: An ISO-8601 timestamp representation of entity last update date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        deleted_at:
+          description: An ISO-8601 timestamp representation of entity deletion date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        customer_id:
+          description: The customer ID of the subscription.
+          type: string
+          example: 01G65Z755AFWAKHE12NY0CQ9FH
+          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+          readOnly: true
+          title: Customer ID
+        plan_id:
+          description: 'The plan ID of the subscription.
+
+            Set if subscription is created from a plan.'
+          type: string
+          example: 01G65Z755AFWAKHE12NY0CQ9FH
+          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+          readOnly: true
+          title: Plan ID
+        billing_anchor:
+          description: 'A billing anchor is the fixed point in time that determines the subscription''s recurring billing cycle.
+
+            It affects when charges occur and how prorations are calculated.
+
+            Common anchors:
+
+            - Calendar month (1st of each month): `2025-01-01T00:00:00Z`
+
+            - Subscription anniversary (day customer signed up)
+
+            - Custom date (customer-specified day)'
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: Billing anchor
+        status:
+          description: The status of the subscription.
+          type: string
+          enum:
+          - active
+          - inactive
+          - canceled
+          - scheduled
+          readOnly: true
+          title: Status
+          x-speakeasy-unknown-values: allow
+      required:
+      - id
+      - created_at
+      - updated_at
+      - customer_id
+      - billing_anchor
+      - status
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    PagePaginationQuery:
+      name: page
+      in: query
+      required: false
+      description: Determines which page of the collection to retrieve.
+      schema:
+        type: object
+        properties:
+          size:
+            description: The number of items to include per page.
+            type: integer
+          number:
+            description: The page number.
+            type: integer
+      style: deepObject
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

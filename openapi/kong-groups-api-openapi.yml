@@ -1,0 +1,341 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Groups API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- description: Group routes
+  name: Groups
+paths:
+  /groups:
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Group#create
+      operationId: create-group
+      summary: Create a new Group
+      description: Create a new Group
+      requestBody:
+        description: Description of the new Group for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          description: Successfully created Group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Groups
+  /groups/{GroupId}:
+    parameters:
+    - $ref: '#/components/parameters/GroupId'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Group#delete
+      operationId: delete-group
+      summary: Delete a Group
+      description: Delete a Group
+      parameters:
+      - $ref: '#/components/parameters/GroupId'
+      responses:
+        '204':
+          description: Successfully deleted Group or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Groups
+    get:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Group#read
+      operationId: get-group
+      summary: Get a Group
+      description: Get a Group using ID.
+      responses:
+        '200':
+          description: Successfully fetched Group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - Groups
+    put:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Group#update
+      operationId: upsert-group
+      summary: Upsert a Group
+      description: Create or Update Group using ID.
+      requestBody:
+        description: Description of the Group
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          description: Successfully upserted Group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Groups
+  /groups/{GroupId}/roles:
+    parameters:
+    - $ref: '#/components/parameters/GroupRoleId'
+    delete:
+      x-speakeasy-entity-operation: GroupRole#delete
+      operationId: delete-groups-group_id_or_name-roles
+      summary: Delete a Group’s Role
+      description: Delete a group's roles.
+      parameters:
+      - name: rbac_role_id
+        in: query
+        description: ID of the role to remove from the group.
+        required: true
+        schema:
+          type: string
+        example: 12773c9a-7f7c-45f2-bcea-5285eb18fd2f
+        x-speakeasy-match: role_id
+      - name: workspace_id
+        in: query
+        required: true
+        schema:
+          type: string
+        x-speakeasy-match: workspace
+      responses:
+        '204':
+          description: Successfully deleted role.
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Groups
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: GroupRole#create
+      operationId: create-groups-group_id_or_name-roles
+      summary: Create Group's Roles
+      description: Create roles for a specified group
+      requestBody:
+        $ref: '#/components/requestBodies/GroupRoleRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/CreateGroupRolesResponse'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Groups
+components:
+  parameters:
+    GroupRoleId:
+      description: ID of the Group to lookup
+      example: ''
+      in: path
+      name: GroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-name-override: group_id
+    GroupId:
+      description: ID of the Group to lookup
+      example: ''
+      in: path
+      name: GroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+  requestBodies:
+    GroupRoleRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GroupRole'
+      description: Request body schema for assigning or updating roles for a group.
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+    CreateGroupRolesResponse:
+      description: Successfully created or updated roles.
+      content:
+        application/json:
+          example:
+            group:
+              comment: Read access to all endpoints, across all workspaces
+              id: 7574eb1d-c9fa-46a9-bd3a-3f1b4b196287
+              name: read-only
+              updated_at: '2024-04-23T18:25:43Z'
+            rbac_role:
+              id: 7fdea5c8-2bfa-4aa9-9c21-7bb9e607186d
+              name: admin
+            workspace:
+              id: 99bd8d18-f5b6-410e-aefe-d75f4252f13c
+          schema:
+            $ref: '#/components/schemas/GroupRole'
+  schemas:
+    GroupRole:
+      x-speakeasy-entity: GroupRole
+      type: object
+      properties:
+        group:
+          type: object
+          nullable: true
+          properties:
+            comment:
+              type: string
+            id:
+              type: string
+            name:
+              type: string
+            updated_at:
+              type: string
+              format: date-time
+          x-foreign: true
+          x-speakeasy-terraform-ignore: true
+        group_id:
+          description: ID of the group.
+          type: string
+          nullable: true
+        rbac_role:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+          x-speakeasy-terraform-ignore: true
+        role_id:
+          description: ID of the RBAC role assigned to the group.
+          type: string
+          nullable: true
+        workspace:
+          description: Workspace ID.
+          type: string
+          nullable: true
+      additionalProperties: false
+      x-speakeasy-transform-from-api:
+        jq: ".\n| if .group != null and .group.id != null\n  then . + { group_id: .group.id }\n  else .\n  end\n| if .rbac_role != null and .rbac_role.id != null\n  then . + { role_id: .rbac_role.id }\n  else .\n  end\n| if .workspace != null and (.workspace | type) == \"object\" and .workspace.id != null\n  then .workspace = .workspace.id\n  else .\n  end\n| del(.group, .rbac_role)\n"
+      x-speakeasy-transform-to-api:
+        jq: ".\n| if .workspace != null\n  then . + { workspace_id: .workspace }\n  else .\n  end\n| if .role_id != null\n  then . + { rbac_role_id: .role_id }\n  else .\n  end\n| del(.group_id, .role_id, .workspace, .group, .rbac_role)\n"
+    Group:
+      x-speakeasy-entity: Group
+      type: object
+      properties:
+        comment:
+          description: Any comments associated with the specific group.
+          type: string
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the group
+          type: string
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        comment: This is an example comment for the group.
+        created_at: 1706598432
+        id: d4e7f2c9-8a7b-4e89-b3a1-9c3d6f1e5b92
+        name: example-group
+        updated_at: 1706684832
+      additionalProperties: false
+      required:
+      - name
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

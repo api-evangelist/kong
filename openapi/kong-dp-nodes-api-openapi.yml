@@ -1,0 +1,337 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs DP Nodes API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- description: DP Nodes
+  name: DP Nodes
+paths:
+  /v2/control-planes/{controlPlaneId}/expected-config-hash:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: get-expected-config-hash
+      summary: Get an Expected Config Hash
+      description: Retrieve the expected config hash for this control plane. The expected config hash can be used to verify if the config hash of a data plane node is up to date with the control plane. The config hash will be the same if they are in sync.
+      responses:
+        '200':
+          $ref: '#/components/responses/GetExpectedConfigHashResponse'
+      tags:
+      - DP Nodes
+  /v2/control-planes/{controlPlaneId}/nodes:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: list-dataplane-nodes
+      summary: List Data Plane Node Records
+      description: Returns a list of data plane node records that are associated to this control plane. A data plane node record contains metadata information for the data plane running Kong Gateway.
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/PageAfter'
+      responses:
+        '200':
+          $ref: '#/components/responses/list-nodes'
+      tags:
+      - DP Nodes
+  /v2/control-planes/{controlPlaneId}/nodes/{nodeId}:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    - $ref: '#/components/parameters/nodeId'
+    get:
+      operationId: get-nodes-node_id
+      summary: Get a Data Plane Node Record
+      description: Retrieve a specific data plane node record associated to this control plane. A data plane node record contains all the metadata information of the Kong Gateway dataplane.
+      parameters:
+      - $ref: '#/components/parameters/pagination-size'
+      - $ref: '#/components/parameters/pagination-tags-filter'
+      responses:
+        '200':
+          $ref: '#/components/responses/get-node'
+      tags:
+      - DP Nodes
+    delete:
+      operationId: delete-nodes-node_id
+      summary: Delete Data Plane Node Record
+      description: Remove a specific data plane node record associated to this control plane. Deleting this record does not prevent the data plane node from re-connecting to the control plane.
+      responses:
+        '204':
+          description: No Content
+      tags:
+      - DP Nodes
+  /v2/control-planes/{controlPlaneId}/nodes/eol:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: get-nodes-eol
+      summary: List End-of-Life Data Plane Node Records
+      description: Returns a list of records of data plane nodes, whose versions are approaching End of Full Support/End of Life, that are associated with this control plane. Each record contains a data plane node's id, version, and corresponding resolution message to upgrade to the closest Long Term Support version.
+      parameters:
+      - $ref: '#/components/parameters/PageSize'
+      - $ref: '#/components/parameters/PageAfter'
+      responses:
+        '200':
+          $ref: '#/components/responses/list-nodes-eol'
+      tags:
+      - DP Nodes
+components:
+  parameters:
+    nodeId:
+      schema:
+        type: string
+        format: uuid
+        example: d32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: nodeId
+      in: path
+      required: true
+      description: Node identifier
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    pagination-tags-filter:
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    pagination-size:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+  responses:
+    list-nodes:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    version:
+                      type: string
+                    hostname:
+                      type: string
+                    last_ping:
+                      type: integer
+                    type:
+                      type: string
+                    created_at:
+                      type: integer
+                    updated_at:
+                      type: integer
+                    config_hash:
+                      type: string
+                    compatibility_status:
+                      type: object
+                      properties:
+                        state:
+                          type: string
+                        issues:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/NodeCompatibilityIssue'
+              page:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  next:
+                    type: string
+    list-nodes-eol:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    node_id:
+                      type: string
+                    node_version:
+                      type: string
+                    message:
+                      type: string
+              page:
+                type: object
+                properties:
+                  total:
+                    type: integer
+    GetExpectedConfigHashResponse:
+      description: Response body for retrieving the expected config hash of the control plane.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              expected_hash:
+                description: The expected configuration hash.
+                type: string
+              created_at:
+                description: Date the control plane configuration was created.
+                type: integer
+              updated_at:
+                description: Date the control plane configuration was last updated.
+                type: integer
+            required:
+            - expected_hash
+            - created_at
+            - updated_at
+    get-node:
+      description: Example response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              item:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  version:
+                    type: string
+                  hostname:
+                    type: string
+                  last_ping:
+                    type: integer
+                  type:
+                    type: string
+                  created_at:
+                    type: integer
+                  updated_at:
+                    type: integer
+                  config_hash:
+                    type: string
+                  compatibility_status:
+                    type: object
+                    properties:
+                      state:
+                        type: string
+                      issues:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/NodeCompatibilityIssue'
+  schemas:
+    NodeCompatibilityIssue:
+      type: object
+      properties:
+        code:
+          description: The compatibility issue code.
+          type: string
+        severity:
+          description: The severity of the issue.
+          type: string
+        description:
+          description: The description of the issue.
+          type: string
+        resolution:
+          description: Steps required to take in order to resolve the issue.
+          type: string
+        affected_resources:
+          description: Details of the resources affected by the issue.
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeCompatibilityIssueAffectedResource'
+        documentation_url:
+          description: Doc URL for the compatibility issue.
+          type: string
+    NodeCompatibilityIssueAffectedResource:
+      type: object
+      properties:
+        id:
+          description: ID of the affected resource.
+          type: string
+        type:
+          description: Type of the affected resource.
+          type: string
+        parent_code:
+          description: Parent Issue Code.
+          type: string
+        details:
+          description: Deatils of the affected resource.
+          type: array
+          items:
+            type: string
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

@@ -1,0 +1,311 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Workspaces API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- description: 'The workspace object describes the workspace entity, which has an ID and a name.
+
+    <br><br>
+
+    Workspaces provide a way to segment Kong Gateway entities. Entities in a workspace are isolated from those in other workspaces.
+
+    '
+  name: Workspaces
+paths:
+  /workspaces:
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Workspace#create
+      operationId: create-workspace
+      summary: Create a new Workspace
+      description: Create a new Workspace
+      requestBody:
+        description: Description of the new Workspace for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+      responses:
+        '201':
+          description: Successfully created Workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Workspaces
+  /workspaces/{WorkspaceIdOrName}:
+    parameters:
+    - $ref: '#/components/parameters/WorkspaceIdOrName'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Workspace#delete
+      operationId: delete-workspace
+      summary: Delete a Workspace
+      description: Delete a Workspace
+      parameters:
+      - $ref: '#/components/parameters/WorkspaceIdOrName'
+      responses:
+        '204':
+          description: Successfully deleted Workspace or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Workspaces
+    get:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Workspace#read
+      operationId: get-workspace
+      summary: Get a Workspace
+      description: Get a Workspace using ID or name.
+      responses:
+        '200':
+          description: Successfully fetched Workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - Workspaces
+    put:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Workspace#update
+      operationId: upsert-workspace
+      summary: Upsert a Workspace
+      description: Create or Update Workspace using ID or name.
+      requestBody:
+        description: Description of the Workspace
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workspace'
+      responses:
+        '200':
+          description: Successfully upserted Workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Workspaces
+components:
+  schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+    Workspace:
+      x-speakeasy-entity: Workspace
+      type: object
+      properties:
+        comment:
+          description: A description or additional information about the workspace.
+          type: string
+          nullable: true
+        config:
+          type: object
+          nullable: true
+          properties:
+            meta:
+              type: object
+              additionalProperties:
+                type: string
+            portal:
+              type: boolean
+              default: false
+            portal_access_request_email:
+              type: boolean
+            portal_application_request_email:
+              type: boolean
+            portal_application_status_email:
+              type: boolean
+            portal_approved_email:
+              type: boolean
+            portal_auth:
+              type: string
+            portal_auth_conf:
+              type: string
+            portal_auto_approve:
+              type: boolean
+            portal_cors_origins:
+              type: array
+              items:
+                type: string
+            portal_developer_meta_fields:
+              type: string
+              default: '[{"label":"Full Name","title":"full_name","validator":{"required":true,"type":"string"}}]'
+            portal_emails_from:
+              type: string
+            portal_emails_reply_to:
+              type: string
+            portal_invite_email:
+              type: boolean
+            portal_is_legacy:
+              type: boolean
+            portal_reset_email:
+              type: boolean
+            portal_reset_success_email:
+              type: boolean
+            portal_session_conf:
+              type: string
+            portal_smtp_admin_emails:
+              type: array
+              items:
+                type: string
+            portal_token_exp:
+              type: integer
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        meta:
+          type: object
+          nullable: true
+          properties:
+            color:
+              type: string
+            thumbnail:
+              type: string
+        name:
+          description: A unique string representing a UTF-8 encoded name.
+          type: string
+          minLength: 1
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        comment: Example workspace comment
+        config:
+          meta: {}
+          portal: false
+          portal_access_request_email: true
+          portal_application_request_email: true
+          portal_application_status_email: true
+          portal_approved_email: true
+          portal_auth: basic
+          portal_auth_conf: some-auth-config
+          portal_auto_approve: true
+          portal_cors_origins:
+          - https://example.com
+          - https://another-origin.com
+          portal_developer_meta_fields: '[{"label":"Full Name","title":"full_name","validator":{"required":true,"type":"string"}}]'
+          portal_emails_from: admin@example.com
+          portal_emails_reply_to: support@example.com
+          portal_invite_email: true
+          portal_is_legacy: false
+          portal_reset_email: true
+          portal_reset_success_email: true
+          portal_session_conf: some-session-config
+          portal_smtp_admin_emails:
+          - admin@example.com
+          - dev@example.com
+          portal_token_exp: 3600
+        created_at: 1706598432
+        id: b58c7d9d-e54f-444c-b24d-cdfc4159f61e
+        meta:
+          color: '#ffcc00'
+          thumbnail: https://example.com/image.png
+        name: example-workspace
+      additionalProperties: false
+      required:
+      - name
+  parameters:
+    WorkspaceIdOrName:
+      description: ID or name of the Workspace to lookup
+      example: ''
+      in: path
+      name: WorkspaceIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

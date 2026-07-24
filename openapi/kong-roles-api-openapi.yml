@@ -1,0 +1,1516 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Roles API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: Roles
+paths:
+  /v3/roles:
+    get:
+      operationId: get-predefined-roles
+      summary: Get Predefined Roles
+      description: Retrieves the predefined, or system managed, roles.
+      responses:
+        '200':
+          $ref: '#/components/responses/Roles'
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+  /v3/teams/{teamId}/assigned-roles:
+    parameters:
+    - name: teamId
+      in: path
+      description: The team ID
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: e81bc3e5-e9db-4764-b7dd-e81e39072cbe
+    get:
+      operationId: list-team-roles
+      summary: List Team Roles
+      description: Lists the roles belonging to a team. Returns 400 if any filter parameters are invalid.
+      parameters:
+      - name: filter
+        in: query
+        description: Filter roles returned in the response.
+        required: false
+        schema:
+          type: object
+          properties:
+            role_name:
+              $ref: '#/components/schemas/StringFieldEqualsFilter'
+            entity_type_name:
+              $ref: '#/components/schemas/StringFieldEqualsFilter'
+        style: deepObject
+      responses:
+        '200':
+          $ref: '#/components/responses/AssignedRoleCollection'
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+        '403':
+          $ref: '#/components/responses/IdentityPermissionDenied'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+    post:
+      x-speakeasy-entity-operation:
+        terraform-resource: TeamRole#create
+        terraform-datasource: null
+      operationId: teams-assign-role
+      summary: Assign Team Role
+      description: Assigns a role to a team. Returns 409 if role is already assigned.
+      requestBody:
+        $ref: '#/components/requestBodies/AssignRole'
+      responses:
+        '201':
+          $ref: '#/components/responses/AssignedRoleSingle'
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+        '403':
+          $ref: '#/components/responses/IdentityPermissionDenied'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+        '409':
+          $ref: '#/components/responses/IdentityConflict'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+  /v3/teams/{teamId}/assigned-roles/{roleId}:
+    parameters:
+    - name: teamId
+      in: path
+      description: The team ID.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: e81bc3e5-e9db-4764-b7dd-e81e39072cbe
+    - name: roleId
+      in: path
+      description: The role ID.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 8350205f-a305-4e39-abe9-bc082a80091a
+      x-speakeasy-match: id
+    get:
+      x-speakeasy-entity-operation:
+        terraform-resource: TeamRole#read
+        terraform-datasource: null
+      operationId: get-team-role
+      summary: Get Team Role
+      description: Returns the assigned role for the specified ID.
+      responses:
+        '200':
+          $ref: '#/components/responses/AssignedRoleSingle'
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+        '403':
+          $ref: '#/components/responses/IdentityPermissionDenied'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-resource: TeamRole#delete
+        terraform-datasource: null
+      operationId: teams-remove-role
+      summary: Remove Team Role
+      description: Removes an assigned role from a team. Returns 404 if the requested team or assigned role were not found.
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+        '403':
+          $ref: '#/components/responses/IdentityPermissionDenied'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+  /v3/users/{userId}/assigned-roles:
+    parameters:
+    - name: userId
+      in: path
+      description: The user ID
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: e81bc3e5-e9db-4764-b7dd-e81e39072cbe
+    get:
+      operationId: list-user-roles
+      summary: List User Roles
+      description: Lists the roles assigned to a user.  Returns 400 if any filter parameters are invalid.
+      parameters:
+      - name: filter
+        in: query
+        description: Filter roles returned in the response.
+        required: false
+        schema:
+          type: object
+          properties:
+            entity_id:
+              $ref: '#/components/schemas/StringFieldEqualsFilter'
+            role_name:
+              $ref: '#/components/schemas/StringFieldEqualsFilter'
+            entity_type_name:
+              $ref: '#/components/schemas/StringFieldEqualsFilter'
+        style: deepObject
+      responses:
+        '200':
+          $ref: '#/components/responses/AssignedRoleCollection'
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+    post:
+      operationId: users-assign-role
+      summary: Assign Role
+      description: Assigns a role to a user. Returns 409 if role is already assigned.
+      requestBody:
+        $ref: '#/components/requestBodies/AssignRole'
+      responses:
+        '201':
+          $ref: '#/components/responses/AssignedRoleSingle'
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+        '403':
+          $ref: '#/components/responses/IdentityPermissionDenied'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+        '409':
+          $ref: '#/components/responses/IdentityConflict'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+  /v3/users/{userId}/assigned-roles/{roleId}:
+    parameters:
+    - name: userId
+      in: path
+      description: ID of the user.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: e81bc3e5-e9db-4764-b7dd-e81e39072cbe
+    - name: roleId
+      in: path
+      description: ID of the role.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 8350205f-a305-4e39-abe9-bc082a80091a
+      x-speakeasy-match: id
+    get:
+      operationId: get-user-role
+      summary: Get User Role
+      description: Returns the assigned role for the specified ID.
+      responses:
+        '200':
+          $ref: '#/components/responses/AssignedRoleSingle'
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+        '403':
+          $ref: '#/components/responses/IdentityPermissionDenied'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+    delete:
+      operationId: users-remove-role
+      summary: Remove Role
+      description: Removes an assigned role from a user. Returns 404 if the requested user or assigned role were not found.
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/IdentityBadRequest'
+        '401':
+          $ref: '#/components/responses/IdentityUnauthenticated'
+        '404':
+          $ref: '#/components/responses/IdentityNotFound'
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Roles
+components:
+  schemas:
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    StringFieldEqualsFilter:
+      description: Filters on the given string field value by exact match.
+      properties:
+        eq:
+          type: string
+      title: StringFieldEqualsFilter
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    AssignedRole:
+      description: An assigned role is a role that has been assigned to a user or team.
+      type: object
+      properties:
+        id:
+          description: The ID of the role assignment.
+          type: string
+          format: uuid
+          example: eaf7adf1-32c8-4bbf-b960-d1f8456afe67
+        role_name:
+          description: Name of the role being assigned.
+          type: string
+          example: Viewer
+        entity_id:
+          description: A RBAC entity ID.
+          type: string
+          format: uuid
+          example: 817d0422-45c9-4d88-8d64-45aef05c1ae7
+        entity_type_name:
+          description: Name of the entity type the role is being assigned to.
+          type: string
+          example: Control Planes
+        entity_region:
+          description: Region of the entity.
+          type: string
+          example: eu
+          enum:
+          - us
+          - eu
+          - au
+          - me
+          - in
+          - sg
+          - '*'
+          x-speakeasy-unknown-values: allow
+      example:
+        id: 54cc6168-ebb1-4300-8168-d62a0dd08fc8
+        role_name: Viewer
+        entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
+        entity_type_name: Control Planes
+        entity_region: us
+      title: AssignedRole
+  responses:
+    Roles:
+      description: The predefined, or system managed, roles.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              control_planes:
+                type: object
+                additionalProperties: false
+                properties:
+                  name:
+                    type: string
+                    enum:
+                    - Control Planes
+                  roles:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to all entities within a control plane.
+                            enum:
+                            - This role grants full write access to all entities within a control plane.
+                        required:
+                        - name
+                        - description
+                      certificate_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Certificate Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to administer certificates.
+                            enum:
+                            - This role grants full write access to administer certificates.
+                        required:
+                        - name
+                        - description
+                      consumer_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Consumer Admin
+                          description:
+                            description: This role grants full write access to administer Consumers. Can configure plugins and view plugin partials for Consumers they have access to. Cannot create or modify global plugins or plugins outside their scope.
+                            type: string
+                            example: This role grants full write access to administer consumers.
+                            enum:
+                            - This role grants full write access to administer consumers.
+                        required:
+                        - name
+                        - description
+                      creator:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Creator
+                          description:
+                            type: string
+                            example: Creates a new Control Plane in an organization. The creator becomes the owner of the Control Plane they create.
+                            enum:
+                            - Creates a new Control Plane in an organization. The creator becomes the owner of the Control Plane they create.
+                        required:
+                        - name
+                        - description
+                      debug_session_creator:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Debug Session Creator
+                          description:
+                            type: string
+                            example: This role grants access to create debug sessions. This role also grants read-only access to all entities within a control plane.
+                            enum:
+                            - This role grants access to create debug sessions. This role also grants read-only access to all entities within a control plane.
+                        required:
+                        - name
+                        - description
+                      deployer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Deployer
+                          description:
+                            type: string
+                            example: This role grants full write access to administer services, routes and plugins necessary to deploy services in Service Hub.
+                            enum:
+                            - This role grants full write access to administer services, routes and plugins necessary to deploy services in Service Hub.
+                        required:
+                        - name
+                        - description
+                      gateway_service_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Gateway Service Admin
+                          description:
+                            description: This role grants full write access to administer Gateway Services. Can configure plugins and view plugin partials for Services they have access to. Cannot create or modify global plugins or plugins outside their scope.
+                            type: string
+                            example: This role grants full write access to administer gateway services.
+                            enum:
+                            - This role grants full write access to administer gateway services.
+                        required:
+                        - name
+                        - description
+                      plugin_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Plugin Admin
+                          description:
+                            description: Can configure plugins at any scope (global, Service, Route, or Consumer) within a Control Plane Group. Also has write access to plugin partials.
+                            type: string
+                            example: This role grants full write access to administer plugins.
+                            enum:
+                            - This role grants full write access to administer plugins.
+                        required:
+                        - name
+                        - description
+                      route_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Route Admin
+                          description:
+                            description: This role grants full write access to administer Routes. Can configure plugins and view plugin partials for Routes they have access to. Cannot create or modify global plugins or plugins outside their scope.
+                            type: string
+                            example: This role grants full write access to administer routes.
+                            enum:
+                            - This role grants full write access to administer routes.
+                        required:
+                        - name
+                        - description
+                      sni_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - SNI Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to administer SNIs.
+                            enum:
+                            - This role grants full write access to administer SNIs.
+                        required:
+                        - name
+                        - description
+                      upstream_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Upstream Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to administer upstreams.
+                            enum:
+                            - This role grants full write access to administer upstreams.
+                        required:
+                        - name
+                        - description
+                      viewer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Viewer
+                          description:
+                            description: This role grants read-only access to all the configurations of a Control Plane Group and corresponding Data Plane nodes. Includes read-only access to plugin partials within accessible scopes.
+                            type: string
+                            example: This role grants read only access to all entities within a control plane.
+                            enum:
+                            - This role grants read only access to all entities within a control plane.
+                        required:
+                        - name
+                        - description
+                required:
+                - name
+                - roles
+              api_products:
+                type: object
+                additionalProperties: false
+                properties:
+                  name:
+                    type: string
+                    enum:
+                    - API Products
+                  roles:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to an API product and its versions.
+                            enum:
+                            - This role grants full write access to an API product and its versions.
+                        required:
+                        - name
+                        - description
+                      application_registration:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Application Registration
+                          description:
+                            type: string
+                            example: This role grants permission to enable and disable application registration on an API product.
+                            enum:
+                            - This role grants permission to enable and disable application registration on an API product.
+                        required:
+                        - name
+                        - description
+                      creator:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Creator
+                          description:
+                            type: string
+                            example: This access is required to create API products. This access is not for creating sub-entities such as versions, API specs, etc.
+                            enum:
+                            - This access is required to create API products. This access is not for creating sub-entities such as versions, API specs, etc.
+                        required:
+                        - name
+                        - description
+                      deployer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Deployer
+                          description:
+                            type: string
+                            example: This role grants permission to deploy and remove an API product from a control plane.
+                            enum:
+                            - This role grants permission to deploy and remove an API product from a control plane.
+                        required:
+                        - name
+                        - description
+                      maintainer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Maintainer
+                          description:
+                            type: string
+                            example: This role grants all write permission to manage an API product and to administer plugins.
+                            enum:
+                            - This role grants all write permission to manage an API product and to administer plugins.
+                        required:
+                        - name
+                        - description
+                      plugins_admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Plugins Admin
+                          description:
+                            type: string
+                            example: This role grants full write permission to administer plugins.
+                            enum:
+                            - This role grants full write permission to administer plugins.
+                        required:
+                        - name
+                        - description
+                      publisher:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Publisher
+                          description:
+                            type: string
+                            example: This role grants permission to publish an API product to one or more portals.
+                            enum:
+                            - This role grants permission to publish an API product to one or more portals.
+                        required:
+                        - name
+                        - description
+                      viewer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Viewer
+                          description:
+                            type: string
+                            example: Viewer has read-only access to an API product and its sub-entities.
+                            enum:
+                            - Viewer has read-only access to an API product and its sub-entities.
+                        required:
+                        - name
+                        - description
+                required:
+                - name
+                - roles
+              audit_logs:
+                type: object
+                additionalProperties: false
+                properties:
+                  name:
+                    type: string
+                    enum:
+                    - Audit Logs
+                  roles:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to the Audit log configuration.
+                            enum:
+                            - This role grants full write access to the Audit log configuration.
+                        required:
+                        - name
+                        - description
+                required:
+                - name
+                - roles
+              identity:
+                type: object
+                additionalProperties: false
+                properties:
+                  name:
+                    type: string
+                    enum:
+                    - Identity
+                  roles:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to the Identity configuration.
+                            enum:
+                            - This role grants full write access to the Identity configuration.
+                        required:
+                        - name
+                        - description
+                required:
+                - name
+                - roles
+              mesh_control_planes:
+                type: object
+                additionalProperties: false
+                properties:
+                  name:
+                    type: string
+                    enum:
+                    - Mesh Control Plane
+                  roles:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Admin
+                          description:
+                            type: string
+                            example: This role grants full write access to the related to Mesh control planes.
+                            enum:
+                            - This role grants full write access to the related to Mesh control planes.
+                        required:
+                        - name
+                        - description
+                      connector:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Connector
+                          description:
+                            type: string
+                            example: This role grants a mesh zone to connect to the mesh control plane in Konnect.
+                            enum:
+                            - This role grants a mesh zone to connect to the mesh control plane in Konnect.
+                        required:
+                        - name
+                        - description
+                      creator:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Creator
+                          description:
+                            type: string
+                            example: This role grants access to create new Mesh control planes.
+                            enum:
+                            - This role grants access to create new Mesh control planes.
+                        required:
+                        - name
+                        - description
+                      viewer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Viewer
+                          description:
+                            type: string
+                            example: This role grants access to read-only permissions to Mesh control planes.
+                            enum:
+                            - This role grants access to read-only permissions to Mesh control planes.
+                        required:
+                        - name
+                        - description
+                required:
+                - name
+                - roles
+              dashboards:
+                type: object
+                additionalProperties: false
+                properties:
+                  name:
+                    type: string
+                    enum:
+                    - Dashboards
+                  roles:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Admin
+                          description:
+                            type: string
+                            example: Allows users to edit, delete, and share a Dashboard in Konnect Analytics.
+                            enum:
+                            - Allows users to edit, delete, and share a Dashboard in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                      creator:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Creator
+                          description:
+                            type: string
+                            example: Allows users to create a new Dashboard in Konnect Analytics.
+                            enum:
+                            - Allows users to create a new Dashboard in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                      editor:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Editor
+                          description:
+                            type: string
+                            example: Allows users to edit a Dashboard in Konnect Analytics.
+                            enum:
+                            - Allows users to edit a Dashboard in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                      viewer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Viewer
+                          description:
+                            type: string
+                            example: Allows users to view any Dashboards content in Konnect Analytics.
+                            enum:
+                            - Allows users to view any Dashboards content in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                required:
+                - name
+                - roles
+              reports:
+                type: object
+                additionalProperties: false
+                properties:
+                  name:
+                    type: string
+                    enum:
+                    - Reports
+                  roles:
+                    type: object
+                    properties:
+                      admin:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Admin
+                          description:
+                            type: string
+                            example: Allows users to edit, delete, and share a Report in Konnect Analytics.
+                            enum:
+                            - Allows users to edit, delete, and share a Report in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                      creator:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Creator
+                          description:
+                            type: string
+                            example: Allows users to create a new Report in Konnect Analytics.
+                            enum:
+                            - Allows users to create a new Report in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                      editor:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Editor
+                          description:
+                            type: string
+                            example: Allows users to edit a Report in Konnect Analytics.
+                            enum:
+                            - Allows users to edit a Report in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                      viewer:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          name:
+                            type: string
+                            enum:
+                            - Viewer
+                          description:
+                            type: string
+                            example: Allows users to view a Report in Konnect Analytics.
+                            enum:
+                            - Allows users to view a Report in Konnect Analytics.
+                        required:
+                        - name
+                        - description
+                required:
+                - name
+                - roles
+            title: Roles Response
+    IdentityPermissionDenied:
+      description: Permission denied
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    IdentityConflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    IdentityUnauthenticated:
+      description: Unauthenticated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    AssignedRoleSingle:
+      description: A get action response of a single assigned role.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AssignedRole'
+    AssignedRoleCollection:
+      description: A paginated list response for a collection of assigned roles.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                description: An Array
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssignedRole'
+            title: Assigned Role Collection Response
+    IdentityBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    IdentityNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+  requestBodies:
+    AssignRole:
+      content:
+        application/json:
+          schema:
+            description: An assigned role is a role that has been assigned to a user or team.
+            type: object
+            properties:
+              role_name:
+                description: The desired role.
+                type: string
+                example: Viewer
+                enum:
+                - Admin
+                - Appearance Maintainer
+                - Application Registration
+                - Certificate Admin
+                - Cloud Gateway Cluster Admin
+                - Cloud Gateway Cluster Viewer
+                - Consumer Admin
+                - Connector
+                - Creator
+                - Debug Session Creator
+                - Deployer
+                - Discovery Admin
+                - Discovery Viewer
+                - Editor
+                - Gateway Service Admin
+                - Integration Admin
+                - Integration Viewer
+                - Key Admin
+                - Maintainer
+                - Network Admin
+                - Network Creator
+                - Network Viewer
+                - Plugin Admin
+                - Plugins Admin
+                - Product Publisher
+                - Publisher
+                - Route Admin
+                - SNI Admin
+                - Scorecard Admin
+                - Scorecard Viewer
+                - Service Admin
+                - Service Creator
+                - Service Viewer
+                - Upstream Admin
+                - Vault Admin
+                - Viewer
+                - Registration Approver
+                - Content Editor
+                - Add On Admin
+                - Add On Viewer
+                x-speakeasy-unknown-values: allow
+              entity_id:
+                description: The ID of the entity.
+                type: string
+                format: uuid
+                example: e67490ce-44dc-4cbd-b65e-b52c746fc26a
+              entity_type_name:
+                description: The type of entity.
+                type: string
+                example: Control Planes
+                enum:
+                - Add Ons
+                - APIs
+                - API Products
+                - Application Auth Strategies
+                - Audit Logs
+                - Control Planes
+                - Dashboards
+                - DCR Providers
+                - Identity
+                - Mesh Control Planes
+                - Networks
+                - Portals
+                - Reports
+                - Service Hub
+                x-speakeasy-unknown-values: allow
+              entity_region:
+                description: Region of the team.
+                type: string
+                example: eu
+                enum:
+                - us
+                - eu
+                - au
+                - me
+                - in
+                - sg
+                - '*'
+                x-speakeasy-unknown-values: allow
+      description: The request schema for assigning a role.
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

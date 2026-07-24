@@ -1,0 +1,230 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs RBACRoleEndpoints API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: RBACRoleEndpoints
+paths:
+  /{workspace}/rbac/roles/{RBACRoleIdForNestedEntities}/endpoints:
+    parameters:
+    - $ref: '#/components/parameters/RBACRoleIdForNestedEntities'
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacRoleEndpoint#create
+      operationId: create-rbac_role_endpoint
+      summary: Create a new RBAC Role Endpoint
+      description: Create a new RBAC Role Endpoint
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the new RBAC Role Endpoint for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RBACRoleEndpoint'
+      responses:
+        '201':
+          description: Successfully created RBAC Role Endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBACRoleEndpoint'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACRoleEndpoints
+  /{workspace}/rbac/roles/{RBACRoleIdForNestedEntities}/endpoints/{workspace}{RBACRoleEndpointId}:
+    parameters:
+    - $ref: '#/components/parameters/RBACRoleEndpointId'
+    - $ref: '#/components/parameters/RBACRoleIdForNestedEntities'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacRoleEndpoint#delete
+      operationId: delete-rbac_role_endpoint
+      summary: Delete a RBAC Role Endpoint
+      description: Delete a RBAC Role Endpoint
+      parameters:
+      - $ref: '#/components/parameters/RBACRoleEndpointId'
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '204':
+          description: Successfully deleted RBAC Role Endpoint or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACRoleEndpoints
+components:
+  parameters:
+    RBACRoleIdForNestedEntities:
+      description: ID of the RBAC Role to lookup
+      example: ''
+      in: path
+      name: RBACRoleIdForNestedEntities
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: role_id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    RBACRoleEndpointId:
+      description: ID of the RBAC Role Endpoint to lookup
+      example: ''
+      in: path
+      name: RBACRoleEndpointId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: endpoint
+  schemas:
+    RBACRoleEndpoint:
+      x-speakeasy-entity: RbacRoleEndpoint
+      type: object
+      properties:
+        actions:
+          type: array
+          items:
+            type: string
+          format: set
+        comment:
+          description: Additional comment or description for the RBAC role endpoint.
+          type: string
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        endpoint:
+          description: The endpoint associated with the RBAC role.
+          type: string
+          nullable: true
+        negative:
+          description: Indicates whether the RBAC role has negative permissions for the endpoint.
+          type: boolean
+          default: false
+          nullable: true
+        role:
+          description: The RBAC role associated with the endpoint.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+          x-speakeasy-terraform-ignore: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+        workspace:
+          description: The workspace associated with the endpoint.
+          type: string
+          default: default
+          nullable: true
+        role_id:
+          type: string
+          nullable: true
+      additionalProperties: false
+      required:
+      - actions
+      - endpoint
+      x-speakeasy-transform-from-api:
+        jq: '.
+
+          | if .role != null and .role.id != null then . + { role_id: .role.id } else . end
+
+          | del(.role)
+
+          '
+      x-speakeasy-transform-to-api:
+        jq: '.
+
+          | if .role_id != null then .role = { id: .role_id } else . end
+
+          | del(.role_id)
+
+          '
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

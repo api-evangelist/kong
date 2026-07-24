@@ -1,0 +1,608 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs SNIs API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- description: 'An SNI object represents a many-to-one mapping of hostnames to a certificate.
+
+    <br><br>
+
+    A certificate object can have many hostnames associated with it. When Kong Gateway receives an SSL request, it uses the SNI field in the Client Hello to look up the certificate object based on the SNI associated with the certificate.'
+  name: SNIs
+paths:
+  /{workspace}/snis:
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: SNI#create
+      operationId: create-sni
+      summary: Create a new SNI
+      description: Create a new SNI
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the new SNI for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNI'
+      responses:
+        '201':
+          description: Successfully created SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - SNIs
+  /{workspace}/snis/{SNIIdOrName}:
+    parameters:
+    - $ref: '#/components/parameters/SNIIdOrName'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: SNI#delete
+      operationId: delete-sni
+      summary: Delete an SNI
+      description: Delete an SNI
+      parameters:
+      - $ref: '#/components/parameters/SNIIdOrName'
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '204':
+          description: Successfully deleted SNI or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - SNIs
+    get:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: SNI#read
+      operationId: get-sni
+      summary: Get an SNI
+      description: Get an SNI using ID or name.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '200':
+          description: Successfully fetched SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - SNIs
+    put:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: SNI#update
+      operationId: upsert-sni
+      summary: Upsert a SNI
+      description: Create or Update SNI using ID or name.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the SNI
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNI'
+      responses:
+        '200':
+          description: Successfully upserted SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - SNIs
+  /v2/control-planes/{controlPlaneId}/core-entities/certificates/{CertificateId}/snis:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: list-sni-with-certificate
+      summary: List all SNIs associated with a Certificate
+      description: List all SNIs associated with a Certificate
+      parameters:
+      - $ref: '#/components/parameters/CertificateId'
+      - $ref: '#/components/parameters/PaginationSize'
+      - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/PaginationTagsFilter'
+      responses:
+        '200':
+          description: A successful response listing SNIs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SNI_2'
+                  next:
+                    $ref: '#/components/schemas/PaginationNextResponse'
+                  offset:
+                    $ref: '#/components/schemas/PaginationOffsetResponse'
+      tags:
+      - SNIs
+    post:
+      operationId: create-sni-with-certificate
+      summary: Create a new SNI associated with a Certificate
+      description: Create a new SNI associated with a Certificate
+      parameters:
+      - $ref: '#/components/parameters/CertificateId'
+      requestBody:
+        description: Description of new SNI for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNIWithoutParents'
+      responses:
+        '201':
+          description: Successfully created SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI_2'
+      tags:
+      - SNIs
+  /v2/control-planes/{controlPlaneId}/core-entities/certificates/{CertificateId}/snis/{SNIId}:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    delete:
+      operationId: delete-sni-with-certificate
+      summary: Delete a an SNI associated with a Certificate
+      description: Delete a an SNI associated with a Certificate using ID or name.
+      parameters:
+      - $ref: '#/components/parameters/CertificateId'
+      - $ref: '#/components/parameters/SNIId'
+      responses:
+        '204':
+          description: Successfully deleted SNI or the resource didn't exist
+      tags:
+      - SNIs
+    get:
+      operationId: get-sni-with-certificate
+      summary: Get an SNI associated with a Certificate
+      description: Get an SNI associated with a Certificate using ID or name.
+      parameters:
+      - $ref: '#/components/parameters/CertificateId'
+      - $ref: '#/components/parameters/SNIId'
+      responses:
+        '200':
+          description: Successfully fetched SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI_2'
+        '404':
+          description: Resource does not exist
+      tags:
+      - SNIs
+    put:
+      operationId: upsert-sni-with-certificate
+      summary: Upsert an SNI associated with a Certificate
+      description: Create or Update an SNI associated with a Certificate using ID or name.
+      parameters:
+      - $ref: '#/components/parameters/CertificateId'
+      - $ref: '#/components/parameters/SNIId'
+      requestBody:
+        description: Description of the SNI
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNIWithoutParents'
+      responses:
+        '200':
+          description: Successfully upserted SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI_2'
+      tags:
+      - SNIs
+  /v2/control-planes/{controlPlaneId}/core-entities/snis:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: list-sni
+      summary: List all SNIs
+      description: List all SNIs
+      parameters:
+      - $ref: '#/components/parameters/PaginationSize'
+      - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/PaginationTagsFilter'
+      responses:
+        '200':
+          description: A successful response listing SNIs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SNI_2'
+                  next:
+                    $ref: '#/components/schemas/PaginationNextResponse'
+                  offset:
+                    $ref: '#/components/schemas/PaginationOffsetResponse'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - SNIs
+    post:
+      operationId: create-sni
+      summary: Create a new SNI
+      description: Create a new SNI
+      requestBody:
+        description: Description of the new SNI for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNI_2'
+      responses:
+        '201':
+          description: Successfully created SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - SNIs
+  /v2/control-planes/{controlPlaneId}/core-entities/snis/{SNIId}:
+    parameters:
+    - $ref: '#/components/parameters/SNIId'
+    - $ref: '#/components/parameters/controlPlaneId'
+    delete:
+      operationId: delete-sni
+      summary: Delete an SNI
+      description: Delete an SNI
+      parameters:
+      - $ref: '#/components/parameters/SNIId'
+      responses:
+        '204':
+          description: Successfully deleted SNI or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - SNIs
+    get:
+      operationId: get-sni
+      summary: Get an SNI
+      description: Get an SNI using ID or name.
+      responses:
+        '200':
+          description: Successfully fetched SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+        '404':
+          description: Resource does not exist
+      tags:
+      - SNIs
+    put:
+      operationId: upsert-sni
+      summary: Upsert a SNI
+      description: Create or Update SNI using ID or name.
+      requestBody:
+        description: Description of the SNI
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SNI_2'
+      responses:
+        '200':
+          description: Successfully upserted SNI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SNI_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - SNIs
+components:
+  parameters:
+    SNIIdOrName:
+      description: ID or name of the SNI to lookup
+      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
+      in: path
+      name: SNIIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    SNIId:
+      description: ID of the SNI to lookup
+      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
+      in: path
+      name: SNIId
+      required: true
+      schema:
+        type: string
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    CertificateId:
+      description: ID of the Certificate to lookup
+      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
+      in: path
+      name: CertificateId
+      required: true
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+  responses:
+    HTTP401Error_2:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  schemas:
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+    SNI_2:
+      description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
+      type: object
+      properties:
+        certificate:
+          description: The id (a UUID) of the certificate with which to associate the SNI hostname. The Certificate must have a valid private key associated with it to be used by the SNI object.
+          type: object
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The SNI name to associate with the given certificate.
+          type: string
+        tags:
+          description: An optional set of strings associated with the SNIs for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        certificate:
+          id: bd380f99-659d-415e-b0e7-72ea05df3218
+        id: 36c4566c-14cc-4132-9011-4139fcbbe50a
+        name: some.example.org
+      additionalProperties: false
+      required:
+      - name
+      - certificate
+    SNI:
+      x-speakeasy-entity: SNI
+      description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
+      type: object
+      properties:
+        certificate:
+          description: The id (a UUID) of the certificate with which to associate the SNI hostname. The Certificate must have a valid private key associated with it to be used by the SNI object.
+          type: object
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The SNI name to associate with the given certificate.
+          type: string
+        tags:
+          description: An optional set of strings associated with the SNIs for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        certificate:
+          id: bd380f99-659d-415e-b0e7-72ea05df3218
+        id: 36c4566c-14cc-4132-9011-4139fcbbe50a
+        name: some.example.org
+      additionalProperties: false
+      required:
+      - name
+      - certificate
+    SNIWithoutParents:
+      description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
+      type: object
+      properties:
+        certificate:
+          description: The id (a UUID) of the certificate with which to associate the SNI hostname. The Certificate must have a valid private key associated with it to be used by the SNI object.
+          type: object
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The SNI name to associate with the given certificate.
+          type: string
+        tags:
+          description: An optional set of strings associated with the SNIs for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        id: 36c4566c-14cc-4132-9011-4139fcbbe50a
+        name: some.example.org
+      additionalProperties: false
+      required:
+      - name
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

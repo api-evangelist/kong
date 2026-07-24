@@ -1,0 +1,1515 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Event Gateway Listener Policies API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: Event Gateway Listener Policies
+  description: 'Policies control how Kafka protocol traffic is modified between the client and the backend cluster.
+
+
+    Listener policies are routing policies that pass traffic to the virtual cluster.
+
+    '
+paths:
+  /v1/event-gateways/{gatewayId}/listeners/{eventGatewayListenerId}/policies:
+    parameters:
+    - $ref: '#/components/parameters/gatewayId'
+    - $ref: '#/components/parameters/eventGatewayListenerId'
+    get:
+      operationId: list-event-gateway-listener-policies
+      summary: List Policies for Listener
+      description: Returns a list of policies associated with the specified Event Gateway listener.
+      parameters:
+      - $ref: '#/components/parameters/EventGatewayCommonFilter'
+      responses:
+        '200':
+          $ref: '#/components/responses/ListEventGatewayListenerPoliciesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - Event Gateway Listener Policies
+    post:
+      x-speakeasy-entity-operation:
+        terraform-resource: EventGatewayListenerPolicy#create
+        terraform-datasource: null
+      operationId: create-event-gateway-listener-policy
+      summary: Create Policy for Listener
+      description: Creates a new policy associated with the specified Event Gateway listener.
+      parameters:
+      - $ref: '#/components/parameters/EventGatewayPolicyBefore'
+      - $ref: '#/components/parameters/EventGatewayPolicyAfter'
+      requestBody:
+        $ref: '#/components/requestBodies/CreateEventGatewayListenerPolicyRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventGatewayListenerPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - Event Gateway Listener Policies
+  /v1/event-gateways/{gatewayId}/listeners/{eventGatewayListenerId}/policies/{policyId}:
+    parameters:
+    - $ref: '#/components/parameters/gatewayId'
+    - $ref: '#/components/parameters/eventGatewayListenerId'
+    - name: policyId
+      in: path
+      description: The UUID of the policy.
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      x-speakeasy-match: id
+    get:
+      x-speakeasy-entity-operation:
+        terraform-resource: EventGatewayListenerPolicy#read
+        terraform-datasource: null
+      operationId: get-event-gateway-listener-policy
+      summary: Get a Policy for Listener
+      description: Returns information about a specific policy associated with the Event Gateway listener.
+      responses:
+        '200':
+          description: A single policy object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventGatewayListenerPolicy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - Event Gateway Listener Policies
+    put:
+      x-speakeasy-entity-operation:
+        terraform-resource: EventGatewayListenerPolicy#update
+        terraform-datasource: null
+      operationId: update-event-gateway-listener-policy
+      summary: Update Policy for Listener
+      description: Updates an existing policy associated with the specified Event Gateway listener.
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateEventGatewayListenerPolicyRequest'
+      responses:
+        '200':
+          description: Updated policy object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventGatewayListenerPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - Event Gateway Listener Policies
+    patch:
+      operationId: patch-event-gateway-listener-policy
+      summary: Partially Update Policy for Listener
+      description: Partially updates an existing policy associated with the specified Event Gateway listener.
+      requestBody:
+        $ref: '#/components/requestBodies/PatchEventGatewayListenerPolicyRequest'
+      responses:
+        '200':
+          description: Updated policy object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventGatewayListenerPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - Event Gateway Listener Policies
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-resource: EventGatewayListenerPolicy#delete
+        terraform-datasource: null
+      operationId: delete-event-gateway-listener-policy
+      summary: Delete Policy for Listener
+      description: Deletes a specific policy associated with the Event Gateway listener.
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - Event Gateway Listener Policies
+  /v1/event-gateways/{gatewayId}/listeners/{eventGatewayListenerId}/policies/{policyId}/move:
+    parameters:
+    - $ref: '#/components/parameters/gatewayId'
+    - $ref: '#/components/parameters/eventGatewayListenerId'
+    - $ref: '#/components/parameters/policyId'
+    post:
+      operationId: move-event-gateway-listener-policy
+      summary: Move Policy
+      description: 'Moves the position of a specific policy relative to the chain associated with the Event Gateway listener.
+
+        '
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveEventGatewayPolicy'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - Event Gateway Listener Policies
+  /v1/event-gateways/{gatewayId}/listeners/{eventGatewayListenerId}/policy-chain:
+    parameters:
+    - $ref: '#/components/parameters/gatewayId'
+    - $ref: '#/components/parameters/eventGatewayListenerId'
+    get:
+      operationId: get-event-gateway-listener-policy-chain
+      summary: Get Policy Chain for Listener
+      description: 'Get the policy chain for a listener composed of all the ids of the policies in order of execution.
+
+        '
+      responses:
+        '200':
+          $ref: '#/components/responses/EventGatewayPolicyChainResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - Event Gateway Listener Policies
+    put:
+      operationId: update-event-gateway-listener-policy-chain
+      summary: Update Policy Chain for Listener
+      description: Update the policy chain for a listener by providing an ordered list of policy ids.
+      requestBody:
+        $ref: '#/components/requestBodies/UpdateEventGatewayPolicyChainRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/EventGatewayPolicyChainResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - Event Gateway Listener Policies
+components:
+  schemas:
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    EventGatewayListenerPolicyPatch:
+      description: The schema of the policy to patch it.
+      properties:
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          minLength: 1
+          nullable: true
+          pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          maxLength: 512
+          nullable: true
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+        labels:
+          $ref: '#/components/schemas/Labels'
+    ForwardToClusterBySNIConfig:
+      description: 'The configuration to forward requests to virtual clusters configured with SNI routing.
+
+        '
+      type: object
+      properties:
+        type:
+          type: string
+          const: sni
+        sni_suffix:
+          description: 'Optional suffix for TLS SNI validation.
+
+
+            This suffix is concatenated with the virtual cluster "dns.label" label to form the base name for the SNI.
+
+            If not provided, the virtual cluster "dns.label" label alone is used as the base name for the SNI.
+
+            For example with sni_suffix: `.example.com` and virtual cluster "dns.label" label: `my-cluster`,
+
+            the SNI suffix for it is `my-cluster.example.com`.
+
+            If "dns.label" label is absent on the virtual cluster, the traffic won''t be routed there.
+
+
+            The bootstrap host is `bootstrap.my-cluster.example.com` and then each broker is addressable at `broker-0.my-cluster.example.com`, `broker-1.my-cluster.example.com`, etc.
+
+            This means that your deployment needs to have a wildcard certificate for the domain and a DNS resolver that routes `*.my-cluster.example.com` to the proxy.
+
+
+            The accepted format is a DNS subdomain starting with either `.` or `-`. For example, `-keg.example.com`, `.keg.example.com`, `.namespace.svc.cluster.local`, and `.localhost` are all valid,
+
+            while `keg.example.com` is not.
+
+            '
+          type: string
+          example: .example.com
+          pattern: ^[\.-]([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)*([a-z0-9-]*[a-z0-9])$
+        advertised_port:
+          description: 'Virtual brokers are advertised to clients with this port instead of listen_port. Useful when proxy is
+
+            behind loadbalancer listening on different port.
+
+            '
+          type: integer
+          maximum: 65535
+          minimum: 1
+        broker_host_format:
+          description: 'Configures DNS names assigned to brokers in virtual clusters.
+
+
+            - `per_cluster_suffix` is the default and allocates one level in the hierarchy for virtual clusters: `broker-{node_id}.{virtual_cluster}.{sni_suffix}`
+
+            - `shared_suffix` puts all brokers from every virtual clusters into the same level: `broker-{node_id}-{virtual_cluster}.{sni_suffix}`. This makes it easier to manage certificates for this listener.
+
+
+            **Requires a minimum runtime version of `1.1`**.'
+          type: object
+          properties:
+            type:
+              type: string
+              default: per_cluster_suffix
+              enum:
+              - per_cluster_suffix
+              - shared_suffix
+              x-speakeasy-unknown-values: allow
+          required:
+          - type
+          x-min-runtime-version: '1.1'
+      additionalProperties: false
+      required:
+      - type
+    TLSCertificate:
+      description: A TLS certificate and its associated private key.
+      type: object
+      properties:
+        certificate:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        key:
+          $ref: '#/components/schemas/GatewaySecret'
+      required:
+      - certificate
+      - key
+    TLSTrustBundleReferenceByName:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/TLSTrustBundleName'
+      required:
+      - name
+    TLSTrustBundleReferenceById:
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the TLS trust bundle.
+          type: string
+          format: uuid
+          minLength: 1
+      required:
+      - id
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    EventGatewayListenerPolicyUpdate:
+      description: The typed schema of the listener policy to modify it.
+      discriminator:
+        propertyName: type
+        mapping:
+          tls_server: '#/components/schemas/EventGatewayTLSListenerSensitiveDataAwarePolicy'
+          forward_to_virtual_cluster: '#/components/schemas/ForwardToVirtualClusterPolicy'
+      oneOf:
+      - $ref: '#/components/schemas/EventGatewayTLSListenerSensitiveDataAwarePolicy'
+      - $ref: '#/components/schemas/ForwardToVirtualClusterPolicy'
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    EventGatewayTLSListenerPolicy:
+      description: 'The TLS Server policy defines the certificates and keys used by the gateway server when the client connects
+
+        to the gateway over TLS.
+
+
+        While it is possible to have multiple TLS policies on a listener, only one can be active at a time.
+
+        '
+      type: object
+      properties:
+        type:
+          description: The type name of the policy.
+          type: string
+          const: tls_server
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        config:
+          description: The configuration of the policy.
+          type: object
+          $ref: '#/components/schemas/EventGatewayTLSListenerPolicyConfig'
+      required:
+      - type
+      - config
+      title: TLS Listener
+    VirtualClusterReferenceById:
+      description: Reference a virtual cluster by its unique identifier.
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the virtual cluster.
+          type: string
+          format: uuid
+          minLength: 1
+      required:
+      - id
+    GatewaySecretReferenceOrLiteral:
+      description: 'A literal value or a reference to an existing secret as a template string expression.
+
+        The value is stored and returned by the API as-is, not treated as sensitive information.
+
+        '
+      type: string
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    TLSTrustBundleName:
+      description: The unique name of the TLS trust bundle.
+      type: string
+      maxLength: 255
+      minLength: 1
+      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+    EventGatewayListenerPolicyCreate:
+      description: The typed schema of the listener policy to modify it.
+      discriminator:
+        propertyName: type
+        mapping:
+          tls_server: '#/components/schemas/EventGatewayTLSListenerPolicy'
+          forward_to_virtual_cluster: '#/components/schemas/ForwardToVirtualClusterPolicy'
+      oneOf:
+      - $ref: '#/components/schemas/EventGatewayTLSListenerPolicy'
+      - $ref: '#/components/schemas/ForwardToVirtualClusterPolicy'
+    ForwardToVirtualClusterPolicy:
+      description: 'Forwards requests to virtual clusters configured with port routing or SNI routing.
+
+        While there can be multiple of these policies configured on a listener, there can only be one instance of
+
+        `port_mapping`.
+
+        When multiple policies are configured, the first one that matches the connection is used.
+
+        If no policy matches, the connection is rejected.
+
+
+        When using `port_mapping`, there must be a mapping port for each broker on the backend cluster see
+
+        `ForwardToClusterBySNIConfig` for more details.
+
+        '
+      type: object
+      properties:
+        type:
+          description: The type name of the policy.
+          type: string
+          const: forward_to_virtual_cluster
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        config:
+          description: The configuration of the policy.
+          type: object
+          discriminator:
+            propertyName: type
+            mapping:
+              port_mapping: '#/components/schemas/ForwardToClusterByPortMappingConfig'
+              sni: '#/components/schemas/ForwardToClusterBySNIConfig'
+          oneOf:
+          - $ref: '#/components/schemas/ForwardToClusterBySNIConfig'
+          - $ref: '#/components/schemas/ForwardToClusterByPortMappingConfig'
+      required:
+      - type
+      - config
+      title: Forward to Virtual Cluster
+    EventGatewayListenerPolicy:
+      description: A policy associated with an Event Gateway.
+      type: object
+      properties:
+        type:
+          description: The type name of the policy.
+          type: string
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        id:
+          description: The unique identifier of the policy.
+          type: string
+          format: uuid
+        config:
+          description: The configuration of the policy.
+          type: object
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        parent_policy_id:
+          description: The unique identifier of the parent policy, if any.
+          type: string
+          format: uuid
+          nullable: true
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      required:
+      - type
+      - id
+      - created_at
+      - updated_at
+      - config
+    EventGatewayTLSListenerSensitiveDataAwarePolicy:
+      description: 'The TLS Server policy defines the certificates and keys used by the gateway server when the client connects
+
+        to the gateway over TLS.
+
+
+        While it is possible to have multiple TLS policies on a listener, only one can be active at a time.
+
+        '
+      type: object
+      properties:
+        type:
+          description: The type name of the policy.
+          type: string
+          const: tls_server
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        config:
+          description: The configuration of the policy.
+          type: object
+          $ref: '#/components/schemas/EventGatewayTLSListenerPolicyConfigSensitiveDataAware'
+      required:
+      - type
+      - config
+    EventGatewayPolicyReference:
+      description: The unique identifier of the policy.
+      type: string
+      format: uuid
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
+      type: object
+      properties:
+        contains:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      title: StringFieldContainsFilter
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    TLSTrustBundleReference:
+      description: 'A reference to a TLS trust bundle resource.
+
+
+        Either `id` or `name` must be provided. Following changes to the trust bundle name won''t affect the
+
+        reference, as the system will create the entities relationship by `id`.
+
+        '
+      anyOf:
+      - $ref: '#/components/schemas/TLSTrustBundleReferenceById'
+      - $ref: '#/components/schemas/TLSTrustBundleReferenceByName'
+      x-terraform-preferred: '#/components/schemas/TLSTrustBundleReferenceById'
+    VirtualClusterReference:
+      description: A reference to a virtual cluster.
+      anyOf:
+      - $ref: '#/components/schemas/VirtualClusterReferenceById'
+      - $ref: '#/components/schemas/VirtualClusterReferenceByName'
+      x-terraform-preferred: '#/components/schemas/VirtualClusterReferenceById'
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    EventGatewayTLSListenerPolicyConfig:
+      type: object
+      properties:
+        certificates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TLSCertificate'
+          maxItems: 1
+          minItems: 1
+        versions:
+          $ref: '#/components/schemas/TLSVersionRange'
+        allow_plaintext:
+          description: 'If false, only TLS connections are allowed. If true, both TLS and plaintext connections are allowed.
+
+            '
+          type: boolean
+          default: false
+        client_authentication:
+          description: 'Configures mutual TLS (mTLS) client certificate verification. When set, the gateway
+
+            requests or requires clients to present a certificate during the TLS handshake.
+
+
+            **Requires a minimum runtime version of `1.1`**.'
+          type: object
+          properties:
+            mode:
+              description: '* required - Reject TLS connections without a valid client certificate.
+
+                * requested - Request a client certificate during the TLS handshake, but allow connections without one (falls back to other configured authentication methods). If a certificate is presented but cannot be verified, the connection is closed.
+
+                '
+              type: string
+              enum:
+              - required
+              - requested
+              x-speakeasy-unknown-values: allow
+            tls_trust_bundles:
+              description: 'TLS trust bundles contain CA certificate bundles used to verify client certificates.
+
+                All bundles are merged into a single trust store; a client certificate is accepted if it
+
+                chains to any trusted CA across all bundles.
+
+                '
+              type: array
+              items:
+                $ref: '#/components/schemas/TLSTrustBundleReference'
+              minItems: 1
+            principal_mapping:
+              description: 'An expression that extracts a principal identifier from a verified client certificate.
+
+                This expression must evaluate to a string.
+
+
+                **Requires a minimum runtime version of `1.1`**.'
+              type: string
+              example: '${context.certificate.subject[''CN''] ? context.certificate.subject[''CN''] : context.certificate.sans.uri[0]}'
+              x-expression:
+                type: string
+                fields:
+                - name: context.certificate.serialNumber
+                  type: string
+                  description: The string serial number of the certificate
+                - name: context.certificate.subject
+                  type: object
+                  description: 'A map of the subject distinguished name.
+
+
+                    A distinguished name as described by RFC 4514 is represented as a map with each key being
+
+                    the attribute type and the value being the attribute value.
+
+                    For example:
+
+                    * `certificate.subject[''CN'']` is the common name
+
+                    * `certificate.subject[''O'']` is the organization
+
+                    '
+                - name: context.certificate.issuer
+                  type: object
+                  description: 'A map of the issuer distinguished name.
+
+
+                    A distinguished name as described by RFC 4514 is represented as a map with each key being
+
+                    the attribute type and the value being the attribute value.
+
+                    For example:
+
+                    * `certificate.issuer[''CN'']` is the common name
+
+                    * `certificate.issuer[''O'']` is the organization
+
+                    '
+                - name: context.certificate.sans.dns
+                  type: array
+                  items:
+                    type: string
+                  description: An array of the DNS Subject Alternative Names from the certificate.
+                - name: context.certificate.sans.uri
+                  type: array
+                  items:
+                    type: string
+                  description: An array of the URI Subject Alternative Names from the certificate.
+              x-min-runtime-version: '1.1'
+          required:
+          - mode
+          - tls_trust_bundles
+          x-min-runtime-version: '1.1'
+      required:
+      - certificates
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    TLSCertificateSensitiveDataAware:
+      description: A TLS certificate and its associated private key.
+      type: object
+      properties:
+        certificate:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        key:
+          $ref: '#/components/schemas/GatewaySecret'
+      required:
+      - certificate
+    TLSVersionRange:
+      description: A range of TLS versions.
+      type: object
+      properties:
+        min:
+          description: Minimum TLS version to use.
+          type: string
+          default: TLSv1.2
+          enum:
+          - TLSv1.2
+          - TLSv1.3
+          x-speakeasy-unknown-values: allow
+        max:
+          description: Maximum TLS version to use.
+          type: string
+          default: TLSv1.3
+          enum:
+          - TLSv1.2
+          - TLSv1.3
+          x-speakeasy-unknown-values: allow
+      default:
+        min: TLSv1.2
+        max: TLSv1.3
+    EventGatewayTLSListenerPolicyConfigSensitiveDataAware:
+      type: object
+      properties:
+        certificates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TLSCertificateSensitiveDataAware'
+          maxItems: 1
+          minItems: 1
+        versions:
+          $ref: '#/components/schemas/TLSVersionRange'
+        allow_plaintext:
+          description: 'If false, only TLS connections are allowed. If true, both TLS and plaintext connections are allowed.
+
+            '
+          type: boolean
+          default: false
+        client_authentication:
+          description: 'Configures mutual TLS (mTLS) client certificate verification. When set, the gateway
+
+            requests or requires clients to present a certificate during the TLS handshake.
+
+
+            **Requires a minimum runtime version of `1.1`**.'
+          type: object
+          properties:
+            mode:
+              description: '* required - Reject TLS connections without a valid client certificate.
+
+                * requested - Request a client certificate during the TLS handshake, but allow connections without one (falls back to other configured authentication methods). If a certificate is presented but cannot be verified, the connection is closed.
+
+                '
+              type: string
+              enum:
+              - required
+              - requested
+              x-speakeasy-unknown-values: allow
+            tls_trust_bundles:
+              description: 'TLS trust bundles contain CA certificate bundles used to verify client certificates.
+
+                All bundles are merged into a single trust store; a client certificate is accepted if it
+
+                chains to any trusted CA across all bundles.
+
+                '
+              type: array
+              items:
+                $ref: '#/components/schemas/TLSTrustBundleReference'
+              minItems: 1
+            principal_mapping:
+              description: 'An expression that extracts a principal identifier from a verified client certificate.
+
+                This expression must evaluate to a string.
+
+
+                **Requires a minimum runtime version of `1.1`**.'
+              type: string
+              example: '${context.certificate.subject[''CN''] ? context.certificate.subject[''CN''] : context.certificate.sans.uri[0]}'
+              x-expression:
+                type: string
+                fields:
+                - name: context.certificate.serialNumber
+                  type: string
+                  description: The string serial number of the certificate
+                - name: context.certificate.subject
+                  type: object
+                  description: 'A map of the subject distinguished name.
+
+
+                    A distinguished name as described by RFC 4514 is represented as a map with each key being
+
+                    the attribute type and the value being the attribute value.
+
+                    For example:
+
+                    * `certificate.subject[''CN'']` is the common name
+
+                    * `certificate.subject[''O'']` is the organization
+
+                    '
+                - name: context.certificate.issuer
+                  type: object
+                  description: 'A map of the issuer distinguished name.
+
+
+                    A distinguished name as described by RFC 4514 is represented as a map with each key being
+
+                    the attribute type and the value being the attribute value.
+
+                    For example:
+
+                    * `certificate.issuer[''CN'']` is the common name
+
+                    * `certificate.issuer[''O'']` is the organization
+
+                    '
+                - name: context.certificate.sans.dns
+                  type: array
+                  items:
+                    type: string
+                  description: An array of the DNS Subject Alternative Names from the certificate.
+                - name: context.certificate.sans.uri
+                  type: array
+                  items:
+                    type: string
+                  description: An array of the URI Subject Alternative Names from the certificate.
+              x-min-runtime-version: '1.1'
+          required:
+          - mode
+          - tls_trust_bundles
+          x-min-runtime-version: '1.1'
+      required:
+      - certificates
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    VirtualClusterReferenceByName:
+      description: Reference a virtual cluster by its unique name.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/VirtualClusterName'
+      required:
+      - name
+    GatewaySecret:
+      description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
+
+        If the value is provided as plain text, it is encrypted at rest and omitted from API responses.
+
+        If provided as an expression, the expression itself is stored and returned by the API.
+
+        '
+      type: string
+      example: ${vault.env['MY_ENV_VAR']}
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+      x-sensitive: true
+    ForwardToClusterByPortMappingConfig:
+      description: 'The configuration to forward request to `destination` and rewrite ports accordingly.
+
+        All broker ids must fit in the range of ports defined in the listener, if it doesn''t the metadata request will
+
+        return an error.
+
+
+        For example with ports: [9000, "9092-9094", "9100"] and `bootstrap_port: at_start` and brokers with ids
+
+        1, 2, 3, 4 we will map: bootstrap to 9000 broker 1 to 9001, broker 2 to 9002, broker 3 to 9003, and broker 4
+
+        to 9004 and fail the metadata request as these ports are not open.
+
+
+        However, with the same configuration but with brokers with ids: 92,93,94,100 we will map: bootstrap to 9000,
+
+        broker 92 to 9092, broker 93 to 9093, broker 94 to 9094, and broker 100 to 9100.
+
+
+        In most cases users should use a single range `["9090-9094"] ` and `bootstrap_port: at_start` and connect with
+
+        `<host>:9090` as bootstrap server. Being able to use multiple ranges is only useful when when dealing with
+
+        gaps in broker ids.
+
+
+        It is strongly discouraged to use port mapping in production.
+
+        '
+      type: object
+      properties:
+        type:
+          type: string
+          const: port_mapping
+        destination:
+          $ref: '#/components/schemas/VirtualClusterReference'
+        advertised_host:
+          description: Virtual brokers are advertised to clients using this host. Any kind of host supported by kafka can be used. If not defined, it's listen_address. If listen_address is `0.0.0.0` it's the destination IP of the TCP connection.
+          type: string
+          pattern: ^[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?)*$
+        bootstrap_port:
+          description: 'If set to `at_start`, the first port will be used as a bootstrap port.
+
+            It provides a stable endpoint to use as the bootstrap server for clients, regardless of broker
+
+            IDs in the cluster.
+
+
+            Additionally, it offsets all ports by one, so for example, if there are 3 brokers (id=1, id=2, id=3)
+
+            then we will use 4 ports: 9092 (bootstrap), 9093 (id=1), 9094 (id=2), 9095 (id=3)
+
+            With `none` we will use 3 ports: 9092 (id=1), 9093 (id=2), 9094 (id=3).
+
+            '
+          type: string
+          default: at_start
+          enum:
+          - none
+          - at_start
+          x-speakeasy-unknown-values: allow
+        min_broker_id:
+          description: The lowest broker node ID in the cluster.
+          type: integer
+          default: 0
+      additionalProperties: false
+      required:
+      - type
+      - destination
+      - advertised_host
+    VirtualClusterName:
+      description: The name of the virtual cluster.
+      type: string
+      maxLength: 255
+      minLength: 1
+      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+    MoveEventGatewayPolicy:
+      description: Defines the position of a policy relative to the policy chain.
+      type: object
+      properties:
+        index:
+          description: The position of the policy relative to the policy chain.
+          type: integer
+          example: 2
+          minimum: 0
+      required:
+      - index
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+  parameters:
+    EventGatewayCommonFilter:
+      schema:
+        type: object
+        properties:
+          name:
+            $ref: '#/components/schemas/StringFieldContainsFilter'
+      in: query
+      name: filter
+      description: Filter documents returned in the response.
+      required: false
+      style: deepObject
+    EventGatewayPolicyBefore:
+      schema:
+        type: string
+        format: uuid
+      in: query
+      name: before
+      x-speakeasy-terraform-ignore: true
+      description: 'Determines the id of the existing policy the new policy should be inserted before. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
+
+        '
+      required: false
+    eventGatewayListenerId:
+      schema:
+        type: string
+        format: uuid
+      name: eventGatewayListenerId
+      in: path
+      required: true
+      description: The ID of the Event Gateway Listener.
+      x-speakeasy-name-override: listenerId
+    gatewayId:
+      name: gatewayId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your Gateway.
+    policyId:
+      name: policyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of the policy.
+    EventGatewayPolicyAfter:
+      schema:
+        type: string
+        format: uuid
+      in: query
+      name: after
+      x-speakeasy-terraform-ignore: true
+      description: 'Determines the id of the existing policy the new policy should be inserted after. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
+
+        '
+      required: false
+  responses:
+    EventGatewayPolicyChainResponse:
+      description: A response containing the list of policies in order of execution.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              policies:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayPolicyReference'
+            required:
+            - policies
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ListEventGatewayListenerPoliciesResponse:
+      description: A list response for a collection of policies associated with an Event Gateway listener.
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventGatewayListenerPolicy'
+  requestBodies:
+    CreateEventGatewayListenerPolicyRequest:
+      description: The request schema for creating a listener policy.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayListenerPolicyCreate'
+    PatchEventGatewayListenerPolicyRequest:
+      description: The request schema for patching a listener policy.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayListenerPolicyPatch'
+    UpdateEventGatewayListenerPolicyRequest:
+      description: The request schema for updating a listener policy.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayListenerPolicyUpdate'
+    UpdateEventGatewayPolicyChainRequest:
+      description: The request schema for updating the policy chain.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              policies:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayPolicyReference'
+            required:
+            - policies
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

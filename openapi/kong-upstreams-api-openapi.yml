@@ -1,0 +1,1488 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Upstreams API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- description: 'The upstream object represents a virtual hostname and can be used to load balance incoming requests over multiple services (targets).
+
+    <br><br>
+
+    An upstream also includes a [health checker](https://developer.konghq.com/gateway/traffic-control/health-checks-circuit-breakers/), which can enable and disable targets based on their ability or inability to serve requests.
+
+    The configuration for the health checker is stored in the upstream object, and applies to all of its targets.'
+  name: Upstreams
+paths:
+  /{workspace}/upstreams:
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Upstream#create
+      operationId: create-upstream
+      summary: Create a new Upstream
+      description: Create a new Upstream
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the new Upstream for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Upstream'
+      responses:
+        '201':
+          description: Successfully created Upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upstream'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Upstreams
+  /{workspace}/upstreams/{UpstreamIdOrName}:
+    parameters:
+    - $ref: '#/components/parameters/UpstreamIdOrName'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Upstream#delete
+      operationId: delete-upstream
+      summary: Delete an Upstream
+      description: Delete an Upstream
+      parameters:
+      - $ref: '#/components/parameters/UpstreamIdOrName'
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '204':
+          description: Successfully deleted Upstream or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Upstreams
+    get:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Upstream#read
+      operationId: get-upstream
+      summary: Get an Upstream
+      description: Get an Upstream using ID or name.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '200':
+          description: Successfully fetched Upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upstream'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - Upstreams
+    put:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Upstream#update
+      operationId: upsert-upstream
+      summary: Upsert a Upstream
+      description: Create or Update Upstream using ID or name.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the Upstream
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Upstream'
+      responses:
+        '200':
+          description: Successfully upserted Upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upstream'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Upstreams
+  /v2/control-planes/{controlPlaneId}/core-entities/upstreams:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: list-upstream
+      summary: List all Upstreams
+      description: List all Upstreams
+      parameters:
+      - $ref: '#/components/parameters/PaginationSize'
+      - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/PaginationTagsFilter'
+      responses:
+        '200':
+          description: A successful response listing Upstreams
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Upstream_2'
+                  next:
+                    $ref: '#/components/schemas/PaginationNextResponse'
+                  offset:
+                    $ref: '#/components/schemas/PaginationOffsetResponse'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Upstreams
+    post:
+      operationId: create-upstream
+      summary: Create a new Upstream
+      description: Create a new Upstream
+      requestBody:
+        description: Description of the new Upstream for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Upstream_2'
+      responses:
+        '201':
+          description: Successfully created Upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upstream_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Upstreams
+  /v2/control-planes/{controlPlaneId}/core-entities/upstreams/{UpstreamId}:
+    parameters:
+    - $ref: '#/components/parameters/UpstreamId'
+    - $ref: '#/components/parameters/controlPlaneId'
+    delete:
+      operationId: delete-upstream
+      summary: Delete an Upstream
+      description: Delete an Upstream
+      parameters:
+      - $ref: '#/components/parameters/UpstreamId'
+      responses:
+        '204':
+          description: Successfully deleted Upstream or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Upstreams
+    get:
+      operationId: get-upstream
+      summary: Get an Upstream
+      description: Get an Upstream using ID or name.
+      responses:
+        '200':
+          description: Successfully fetched Upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upstream_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+        '404':
+          description: Resource does not exist
+      tags:
+      - Upstreams
+    put:
+      operationId: upsert-upstream
+      summary: Upsert a Upstream
+      description: Create or Update Upstream using ID or name.
+      requestBody:
+        description: Description of the Upstream
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Upstream_2'
+      responses:
+        '200':
+          description: Successfully upserted Upstream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Upstream_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Upstreams
+components:
+  responses:
+    HTTP401Error_2:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  parameters:
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    UpstreamId:
+      description: ID of the Upstream to lookup
+      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
+      in: path
+      name: UpstreamId
+      required: true
+      schema:
+        type: string
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    UpstreamIdOrName:
+      description: ID or name of the Upstream to lookup
+      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
+      in: path
+      name: UpstreamIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+  schemas:
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+    Upstream:
+      x-speakeasy-entity: Upstream
+      description: The upstream object represents a virtual hostname and can be used to loadbalance incoming requests over multiple services (targets). So for example an upstream named `service.v1.xyz` for a Service object whose `host` is `service.v1.xyz`. Requests for this Service would be proxied to the targets defined within the upstream. An upstream also includes a [health checker][healthchecks], which is able to enable and disable targets based on their ability or inability to serve requests. The configuration for the health checker is stored in the upstream object, and applies to all of its targets.
+      type: object
+      properties:
+        algorithm:
+          description: Which load balancing algorithm to use.
+          type: string
+          default: round-robin
+          enum:
+          - consistent-hashing
+          - latency
+          - least-connections
+          - round-robin
+          - sticky-sessions
+          nullable: true
+        client_certificate:
+          description: If set, the certificate to be used as client certificate while TLS handshaking to the upstream server.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        hash_fallback:
+          description: What to use as hashing input if the primary `hash_on` does not return a hash (eg. header is missing, or no Consumer identified). Not available if `hash_on` is set to `cookie`.
+          type: string
+          default: none
+          enum:
+          - consumer
+          - cookie
+          - header
+          - ip
+          - none
+          - path
+          - query_arg
+          - uri_capture
+          nullable: true
+        hash_fallback_header:
+          description: The header name to take the value from as hash input. Only required when `hash_fallback` is set to `header`.
+          type: string
+          nullable: true
+        hash_fallback_query_arg:
+          description: The name of the query string argument to take the value from as hash input. Only required when `hash_fallback` is set to `query_arg`.
+          type: string
+          minLength: 1
+          nullable: true
+        hash_fallback_uri_capture:
+          description: The name of the route URI capture to take the value from as hash input. Only required when `hash_fallback` is set to `uri_capture`.
+          type: string
+          minLength: 1
+          nullable: true
+        hash_on:
+          description: What to use as hashing input. Using `none` results in a weighted-round-robin scheme with no hashing.
+          type: string
+          default: none
+          enum:
+          - consumer
+          - cookie
+          - header
+          - ip
+          - none
+          - path
+          - query_arg
+          - uri_capture
+          nullable: true
+        hash_on_cookie:
+          description: The cookie name to take the value from as hash input. Only required when `hash_on` or `hash_fallback` is set to `cookie`. If the specified cookie is not in the request, Kong will generate a value and set the cookie in the response.
+          type: string
+          nullable: true
+        hash_on_cookie_path:
+          description: The cookie path to set in the response headers. Only required when `hash_on` or `hash_fallback` is set to `cookie`.
+          type: string
+          default: /
+          nullable: true
+        hash_on_header:
+          description: The header name to take the value from as hash input. Only required when `hash_on` is set to `header`.
+          type: string
+          nullable: true
+        hash_on_query_arg:
+          description: The name of the query string argument to take the value from as hash input. Only required when `hash_on` is set to `query_arg`.
+          type: string
+          minLength: 1
+          nullable: true
+        hash_on_uri_capture:
+          description: The name of the route URI capture to take the value from as hash input. Only required when `hash_on` is set to `uri_capture`.
+          type: string
+          minLength: 1
+          nullable: true
+        healthchecks:
+          description: The array of healthchecks.
+          type: object
+          default:
+            active:
+              concurrency: 10
+              healthy:
+                http_statuses:
+                - 200
+                - 302
+                interval: 0
+                successes: 0
+              http_path: /
+              https_verify_certificate: true
+              timeout: 1
+              type: http
+              unhealthy:
+                http_failures: 0
+                http_statuses:
+                - 429
+                - 404
+                - 500
+                - 501
+                - 502
+                - 503
+                - 504
+                - 505
+                interval: 0
+                tcp_failures: 0
+                timeouts: 0
+            passive:
+              healthy:
+                http_statuses:
+                - 200
+                - 201
+                - 202
+                - 203
+                - 204
+                - 205
+                - 206
+                - 207
+                - 208
+                - 226
+                - 300
+                - 301
+                - 302
+                - 303
+                - 304
+                - 305
+                - 306
+                - 307
+                - 308
+                successes: 0
+              type: http
+              unhealthy:
+                http_failures: 0
+                http_statuses:
+                - 429
+                - 500
+                - 503
+                tcp_failures: 0
+                timeouts: 0
+          nullable: true
+          properties:
+            active:
+              type: object
+              default:
+                concurrency: 10
+                healthy:
+                  http_statuses:
+                  - 200
+                  - 302
+                  interval: 0
+                  successes: 0
+                http_path: /
+                https_verify_certificate: true
+                timeout: 1
+                type: http
+                unhealthy:
+                  http_failures: 0
+                  http_statuses:
+                  - 429
+                  - 404
+                  - 500
+                  - 501
+                  - 502
+                  - 503
+                  - 504
+                  - 505
+                  interval: 0
+                  tcp_failures: 0
+                  timeouts: 0
+              properties:
+                concurrency:
+                  type: integer
+                  default: 10
+                  maximum: 2147483648
+                  minimum: 1
+                headers:
+                  description: A map of header names to arrays of header values.
+                  type: object
+                  additionalProperties:
+                    items:
+                      type: string
+                    type: array
+                healthy:
+                  type: object
+                  default:
+                    http_statuses:
+                    - 200
+                    - 302
+                    interval: 0
+                    successes: 0
+                  properties:
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 200
+                      - 302
+                    interval:
+                      type: number
+                      default: 0
+                      maximum: 65535
+                      minimum: 0
+                    successes:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                http_path:
+                  description: A string representing a URL path, such as /path/to/resource. Must start with a forward slash (/) and must not contain empty segments (i.e., two consecutive forward slashes).
+                  type: string
+                  default: /
+                https_sni:
+                  description: A string representing an SNI (server name indication) value for TLS.
+                  type: string
+                https_verify_certificate:
+                  type: boolean
+                  default: true
+                timeout:
+                  type: number
+                  default: 1
+                  maximum: 65535
+                  minimum: 0
+                type:
+                  type: string
+                  default: http
+                  enum:
+                  - grpc
+                  - grpcs
+                  - http
+                  - https
+                  - tcp
+                unhealthy:
+                  type: object
+                  default:
+                    http_failures: 0
+                    http_statuses:
+                    - 429
+                    - 404
+                    - 500
+                    - 501
+                    - 502
+                    - 503
+                    - 504
+                    - 505
+                    interval: 0
+                    tcp_failures: 0
+                    timeouts: 0
+                  properties:
+                    http_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 429
+                      - 404
+                      - 500
+                      - 501
+                      - 502
+                      - 503
+                      - 504
+                      - 505
+                    interval:
+                      type: number
+                      default: 0
+                      maximum: 65535
+                      minimum: 0
+                    tcp_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    timeouts:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+            passive:
+              type: object
+              default:
+                healthy:
+                  http_statuses:
+                  - 200
+                  - 201
+                  - 202
+                  - 203
+                  - 204
+                  - 205
+                  - 206
+                  - 207
+                  - 208
+                  - 226
+                  - 300
+                  - 301
+                  - 302
+                  - 303
+                  - 304
+                  - 305
+                  - 306
+                  - 307
+                  - 308
+                  successes: 0
+                type: http
+                unhealthy:
+                  http_failures: 0
+                  http_statuses:
+                  - 429
+                  - 500
+                  - 503
+                  tcp_failures: 0
+                  timeouts: 0
+              properties:
+                healthy:
+                  type: object
+                  default:
+                    http_statuses:
+                    - 200
+                    - 201
+                    - 202
+                    - 203
+                    - 204
+                    - 205
+                    - 206
+                    - 207
+                    - 208
+                    - 226
+                    - 300
+                    - 301
+                    - 302
+                    - 303
+                    - 304
+                    - 305
+                    - 306
+                    - 307
+                    - 308
+                    successes: 0
+                  properties:
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 200
+                      - 201
+                      - 202
+                      - 203
+                      - 204
+                      - 205
+                      - 206
+                      - 207
+                      - 208
+                      - 226
+                      - 300
+                      - 301
+                      - 302
+                      - 303
+                      - 304
+                      - 305
+                      - 306
+                      - 307
+                      - 308
+                    successes:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                type:
+                  type: string
+                  default: http
+                  enum:
+                  - grpc
+                  - grpcs
+                  - http
+                  - https
+                  - tcp
+                unhealthy:
+                  type: object
+                  default:
+                    http_failures: 0
+                    http_statuses:
+                    - 429
+                    - 500
+                    - 503
+                    tcp_failures: 0
+                    timeouts: 0
+                  properties:
+                    http_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 429
+                      - 500
+                      - 503
+                    tcp_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    timeouts:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+            threshold:
+              type: number
+              default: 0
+              maximum: 100
+              minimum: 0
+        host_header:
+          description: The hostname to be used as `Host` header when proxying requests through Kong.
+          type: string
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: This is a hostname, which must be equal to the `host` of a Service.
+          type: string
+        slots:
+          description: The number of slots in the load balancer algorithm. If `algorithm` is set to `round-robin`, this setting determines the maximum number of slots. If `algorithm` is set to `consistent-hashing`, this setting determines the actual number of slots in the algorithm. Accepts an integer in the range `10`-`65536`.
+          type: integer
+          default: 10000
+          maximum: 65536
+          minimum: 10
+          nullable: true
+        sticky_sessions_cookie:
+          description: The cookie name to keep sticky sessions.
+          type: string
+          nullable: true
+        sticky_sessions_cookie_path:
+          description: A string representing a URL path, such as /path/to/resource. Must start with a forward slash (/) and must not contain empty segments (i.e., two consecutive forward slashes).
+          type: string
+          default: /
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Upstream for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+        use_srv_name:
+          description: If set, the balancer will use SRV hostname(if DNS Answer has SRV record) as the proxy upstream `Host`.
+          type: boolean
+          default: false
+          nullable: true
+      example:
+        algorithm: round-robin
+        hash_fallback: none
+        hash_on: none
+        hash_on_cookie_path: /
+        healthchecks:
+          active:
+            concurrency: 10
+            healthy:
+              http_statuses:
+              - 200
+              - 302
+              interval: 0
+              successes: 0
+            http_path: /
+            https_verify_certificate: true
+            timeout: 1
+            type: http
+            unhealthy:
+              http_failures: 0
+              http_statuses:
+              - 429
+              - 404
+              - 500
+              - 501
+              - 502
+              - 503
+              - 504
+              - 505
+              interval: 0
+              tcp_failures: 0
+              timeouts: 0
+          passive:
+            healthy:
+              http_statuses:
+              - 200
+              - 201
+              - 202
+              - 203
+              - 204
+              - 205
+              - 206
+              - 207
+              - 208
+              - 226
+              - 300
+              - 301
+              - 302
+              - 303
+              - 304
+              - 305
+              - 306
+              - 307
+              - 308
+              successes: 0
+            type: http
+            unhealthy:
+              http_failures: 0
+              http_statuses:
+              - 429
+              - 500
+              - 503
+              tcp_failures: 0
+              timeouts: 0
+          threshold: 0
+        id: 6eed5e9c-5398-4026-9a4c-d48f18a2431e
+        name: api.example.internal
+        slots: 10000
+      additionalProperties: false
+      required:
+      - name
+    Upstream_2:
+      description: The upstream object represents a virtual hostname and can be used to loadbalance incoming requests over multiple services (targets). So for example an upstream named `service.v1.xyz` for a Service object whose `host` is `service.v1.xyz`. Requests for this Service would be proxied to the targets defined within the upstream. An upstream also includes a [health checker][healthchecks], which is able to enable and disable targets based on their ability or inability to serve requests. The configuration for the health checker is stored in the upstream object, and applies to all of its targets.
+      type: object
+      properties:
+        algorithm:
+          description: Which load balancing algorithm to use.
+          type: string
+          default: round-robin
+          enum:
+          - consistent-hashing
+          - latency
+          - least-connections
+          - round-robin
+          - sticky-sessions
+          nullable: true
+          x-speakeasy-unknown-values: allow
+        client_certificate:
+          description: If set, the certificate to be used as client certificate while TLS handshaking to the upstream server.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        hash_fallback:
+          description: What to use as hashing input if the primary `hash_on` does not return a hash (eg. header is missing, or no Consumer identified). Not available if `hash_on` is set to `cookie`.
+          type: string
+          default: none
+          enum:
+          - consumer
+          - cookie
+          - header
+          - ip
+          - none
+          - path
+          - query_arg
+          - uri_capture
+          nullable: true
+          x-speakeasy-unknown-values: allow
+        hash_fallback_header:
+          description: The header name to take the value from as hash input. Only required when `hash_fallback` is set to `header`.
+          type: string
+          nullable: true
+        hash_fallback_query_arg:
+          description: The name of the query string argument to take the value from as hash input. Only required when `hash_fallback` is set to `query_arg`.
+          type: string
+          minLength: 1
+          nullable: true
+        hash_fallback_uri_capture:
+          description: The name of the route URI capture to take the value from as hash input. Only required when `hash_fallback` is set to `uri_capture`.
+          type: string
+          minLength: 1
+          nullable: true
+        hash_on:
+          description: What to use as hashing input. Using `none` results in a weighted-round-robin scheme with no hashing.
+          type: string
+          default: none
+          enum:
+          - consumer
+          - cookie
+          - header
+          - ip
+          - none
+          - path
+          - query_arg
+          - uri_capture
+          nullable: true
+          x-speakeasy-unknown-values: allow
+        hash_on_cookie:
+          description: The cookie name to take the value from as hash input. Only required when `hash_on` or `hash_fallback` is set to `cookie`. If the specified cookie is not in the request, Kong will generate a value and set the cookie in the response.
+          type: string
+          nullable: true
+        hash_on_cookie_path:
+          description: The cookie path to set in the response headers. Only required when `hash_on` or `hash_fallback` is set to `cookie`.
+          type: string
+          default: /
+          nullable: true
+        hash_on_header:
+          description: The header name to take the value from as hash input. Only required when `hash_on` is set to `header`.
+          type: string
+          nullable: true
+        hash_on_query_arg:
+          description: The name of the query string argument to take the value from as hash input. Only required when `hash_on` is set to `query_arg`.
+          type: string
+          minLength: 1
+          nullable: true
+        hash_on_uri_capture:
+          description: The name of the route URI capture to take the value from as hash input. Only required when `hash_on` is set to `uri_capture`.
+          type: string
+          minLength: 1
+          nullable: true
+        healthchecks:
+          description: The array of healthchecks.
+          type: object
+          default:
+            active:
+              concurrency: 10
+              healthy:
+                http_statuses:
+                - 200
+                - 302
+                interval: 0
+                successes: 0
+              http_path: /
+              https_verify_certificate: true
+              timeout: 1
+              type: http
+              unhealthy:
+                http_failures: 0
+                http_statuses:
+                - 429
+                - 404
+                - 500
+                - 501
+                - 502
+                - 503
+                - 504
+                - 505
+                interval: 0
+                tcp_failures: 0
+                timeouts: 0
+            passive:
+              healthy:
+                http_statuses:
+                - 200
+                - 201
+                - 202
+                - 203
+                - 204
+                - 205
+                - 206
+                - 207
+                - 208
+                - 226
+                - 300
+                - 301
+                - 302
+                - 303
+                - 304
+                - 305
+                - 306
+                - 307
+                - 308
+                successes: 0
+              type: http
+              unhealthy:
+                http_failures: 0
+                http_statuses:
+                - 429
+                - 500
+                - 503
+                tcp_failures: 0
+                timeouts: 0
+          nullable: true
+          properties:
+            active:
+              type: object
+              default:
+                concurrency: 10
+                healthy:
+                  http_statuses:
+                  - 200
+                  - 302
+                  interval: 0
+                  successes: 0
+                http_path: /
+                https_verify_certificate: true
+                timeout: 1
+                type: http
+                unhealthy:
+                  http_failures: 0
+                  http_statuses:
+                  - 429
+                  - 404
+                  - 500
+                  - 501
+                  - 502
+                  - 503
+                  - 504
+                  - 505
+                  interval: 0
+                  tcp_failures: 0
+                  timeouts: 0
+              properties:
+                concurrency:
+                  type: integer
+                  default: 10
+                  maximum: 2147483648
+                  minimum: 1
+                headers:
+                  description: A map of header names to arrays of header values.
+                  type: object
+                  additionalProperties:
+                    items:
+                      type: string
+                    type: array
+                healthy:
+                  type: object
+                  default:
+                    http_statuses:
+                    - 200
+                    - 302
+                    interval: 0
+                    successes: 0
+                  properties:
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 200
+                      - 302
+                    interval:
+                      type: number
+                      default: 0
+                      maximum: 65535
+                      minimum: 0
+                    successes:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                http_path:
+                  description: A string representing a URL path, such as /path/to/resource. Must start with a forward slash (/) and must not contain empty segments (i.e., two consecutive forward slashes).
+                  type: string
+                  default: /
+                https_sni:
+                  description: A string representing an SNI (server name indication) value for TLS.
+                  type: string
+                https_verify_certificate:
+                  type: boolean
+                  default: true
+                timeout:
+                  type: number
+                  default: 1
+                  maximum: 65535
+                  minimum: 0
+                type:
+                  type: string
+                  default: http
+                  enum:
+                  - grpc
+                  - grpcs
+                  - http
+                  - https
+                  - tcp
+                  x-speakeasy-unknown-values: allow
+                unhealthy:
+                  type: object
+                  default:
+                    http_failures: 0
+                    http_statuses:
+                    - 429
+                    - 404
+                    - 500
+                    - 501
+                    - 502
+                    - 503
+                    - 504
+                    - 505
+                    interval: 0
+                    tcp_failures: 0
+                    timeouts: 0
+                  properties:
+                    http_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 429
+                      - 404
+                      - 500
+                      - 501
+                      - 502
+                      - 503
+                      - 504
+                      - 505
+                    interval:
+                      type: number
+                      default: 0
+                      maximum: 65535
+                      minimum: 0
+                    tcp_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    timeouts:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+            passive:
+              type: object
+              default:
+                healthy:
+                  http_statuses:
+                  - 200
+                  - 201
+                  - 202
+                  - 203
+                  - 204
+                  - 205
+                  - 206
+                  - 207
+                  - 208
+                  - 226
+                  - 300
+                  - 301
+                  - 302
+                  - 303
+                  - 304
+                  - 305
+                  - 306
+                  - 307
+                  - 308
+                  successes: 0
+                type: http
+                unhealthy:
+                  http_failures: 0
+                  http_statuses:
+                  - 429
+                  - 500
+                  - 503
+                  tcp_failures: 0
+                  timeouts: 0
+              properties:
+                healthy:
+                  type: object
+                  default:
+                    http_statuses:
+                    - 200
+                    - 201
+                    - 202
+                    - 203
+                    - 204
+                    - 205
+                    - 206
+                    - 207
+                    - 208
+                    - 226
+                    - 300
+                    - 301
+                    - 302
+                    - 303
+                    - 304
+                    - 305
+                    - 306
+                    - 307
+                    - 308
+                    successes: 0
+                  properties:
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 200
+                      - 201
+                      - 202
+                      - 203
+                      - 204
+                      - 205
+                      - 206
+                      - 207
+                      - 208
+                      - 226
+                      - 300
+                      - 301
+                      - 302
+                      - 303
+                      - 304
+                      - 305
+                      - 306
+                      - 307
+                      - 308
+                    successes:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                type:
+                  type: string
+                  default: http
+                  enum:
+                  - grpc
+                  - grpcs
+                  - http
+                  - https
+                  - tcp
+                  x-speakeasy-unknown-values: allow
+                unhealthy:
+                  type: object
+                  default:
+                    http_failures: 0
+                    http_statuses:
+                    - 429
+                    - 500
+                    - 503
+                    tcp_failures: 0
+                    timeouts: 0
+                  properties:
+                    http_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    http_statuses:
+                      type: array
+                      items:
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      default:
+                      - 429
+                      - 500
+                      - 503
+                    tcp_failures:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+                    timeouts:
+                      type: integer
+                      default: 0
+                      maximum: 255
+                      minimum: 0
+            threshold:
+              type: number
+              default: 0
+              maximum: 100
+              minimum: 0
+        host_header:
+          description: The hostname to be used as `Host` header when proxying requests through Kong.
+          type: string
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: This is a hostname, which must be equal to the `host` of a Service.
+          type: string
+        slots:
+          description: The number of slots in the load balancer algorithm. If `algorithm` is set to `round-robin`, this setting determines the maximum number of slots. If `algorithm` is set to `consistent-hashing`, this setting determines the actual number of slots in the algorithm. Accepts an integer in the range `10`-`65536`.
+          type: integer
+          default: 10000
+          maximum: 65536
+          minimum: 10
+          nullable: true
+        sticky_sessions_cookie:
+          description: The cookie name to keep sticky sessions.
+          type: string
+          nullable: true
+        sticky_sessions_cookie_path:
+          description: A string representing a URL path, such as /path/to/resource. Must start with a forward slash (/) and must not contain empty segments (i.e., two consecutive forward slashes).
+          type: string
+          default: /
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Upstream for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+        use_srv_name:
+          description: If set, the balancer will use SRV hostname(if DNS Answer has SRV record) as the proxy upstream `Host`.
+          type: boolean
+          default: false
+          nullable: true
+      example:
+        algorithm: round-robin
+        hash_fallback: none
+        hash_on: none
+        hash_on_cookie_path: /
+        healthchecks:
+          active:
+            concurrency: 10
+            healthy:
+              http_statuses:
+              - 200
+              - 302
+              interval: 0
+              successes: 0
+            http_path: /
+            https_verify_certificate: true
+            timeout: 1
+            type: http
+            unhealthy:
+              http_failures: 0
+              http_statuses:
+              - 429
+              - 404
+              - 500
+              - 501
+              - 502
+              - 503
+              - 504
+              - 505
+              interval: 0
+              tcp_failures: 0
+              timeouts: 0
+          passive:
+            healthy:
+              http_statuses:
+              - 200
+              - 201
+              - 202
+              - 203
+              - 204
+              - 205
+              - 206
+              - 207
+              - 208
+              - 226
+              - 300
+              - 301
+              - 302
+              - 303
+              - 304
+              - 305
+              - 306
+              - 307
+              - 308
+              successes: 0
+            type: http
+            unhealthy:
+              http_failures: 0
+              http_statuses:
+              - 429
+              - 500
+              - 503
+              tcp_failures: 0
+              timeouts: 0
+          threshold: 0
+        id: 6eed5e9c-5398-4026-9a4c-d48f18a2431e
+        name: api.example.internal
+        slots: 10000
+      additionalProperties: false
+      required:
+      - name
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

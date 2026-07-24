@@ -1,0 +1,917 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs OpenMeter Apps API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: OpenMeter Apps
+  description: Apps enable you to extend and customize billing and usage workflows by integrating with external systems and services. Apps can automate and enhance your billing ecosystem by supporting capabilities such as synchronizing usage data with third-party platforms, calculating taxes, generating and delivering invoices, handling payment collection, and other billing-related tasks.
+paths:
+  /v3/openmeter/apps:
+    get:
+      operationId: list-apps
+      summary: List apps
+      description: List installed apps.
+      parameters:
+      - $ref: '#/components/parameters/PagePaginationQuery'
+      responses:
+        '200':
+          description: Page paginated response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppPagePaginatedResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+      tags:
+      - OpenMeter Apps
+  /v3/openmeter/apps/{appId}:
+    get:
+      operationId: get-app
+      summary: Get app
+      description: Get an installed app.
+      parameters:
+      - name: appId
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/ULID'
+      responses:
+        '200':
+          description: App response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingApp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      tags:
+      - OpenMeter Apps
+components:
+  schemas:
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    BillingAppSandbox:
+      description: Sandbox app can be used for testing billing features.
+      type: object
+      properties:
+        id:
+          description: ULID (Universally Unique Lexicographically Sortable Identifier).
+          type: string
+          example: 01G65Z755AFWAKHE12NY0CQ9FH
+          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+          readOnly: true
+          title: ULID
+        name:
+          description: 'Display name of the resource.
+
+
+            Between 1 and 256 characters.'
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: 'Optional description of the resource.
+
+
+            Maximum 1024 characters.'
+          type: string
+          maxLength: 1024
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          description: An ISO-8601 timestamp representation of entity creation date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        updated_at:
+          description: An ISO-8601 timestamp representation of entity last update date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        deleted_at:
+          description: An ISO-8601 timestamp representation of entity deletion date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        type:
+          description: The app type.
+          type: string
+          enum:
+          - sandbox
+          readOnly: true
+        definition:
+          description: The app catalog definition that this installed app is based on.
+          type: object
+          example:
+            type: stripe
+            name: Stripe
+            description: Stripe integration allows you to collect payments with Stripe.
+          properties:
+            type:
+              description: Type of the app.
+              type: string
+              enum:
+              - sandbox
+              - stripe
+              - external_invoicing
+              readOnly: true
+              x-speakeasy-unknown-values: allow
+            name:
+              description: Name of the app.
+              type: string
+              readOnly: true
+            description:
+              description: Description of the app.
+              type: string
+              readOnly: true
+          readOnly: true
+          required:
+          - type
+          - name
+          - description
+        status:
+          description: Status of the app connection.
+          type: string
+          enum:
+          - ready
+          - unauthorized
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+      required:
+      - id
+      - name
+      - created_at
+      - updated_at
+      - type
+      - definition
+      - status
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    BillingAppStripe:
+      description: Stripe app.
+      type: object
+      properties:
+        id:
+          description: ULID (Universally Unique Lexicographically Sortable Identifier).
+          type: string
+          example: 01G65Z755AFWAKHE12NY0CQ9FH
+          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+          readOnly: true
+          title: ULID
+        name:
+          description: 'Display name of the resource.
+
+
+            Between 1 and 256 characters.'
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: 'Optional description of the resource.
+
+
+            Maximum 1024 characters.'
+          type: string
+          maxLength: 1024
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          description: An ISO-8601 timestamp representation of entity creation date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        updated_at:
+          description: An ISO-8601 timestamp representation of entity last update date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        deleted_at:
+          description: An ISO-8601 timestamp representation of entity deletion date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        type:
+          description: The app type.
+          type: string
+          enum:
+          - stripe
+          readOnly: true
+        definition:
+          description: The app catalog definition that this installed app is based on.
+          type: object
+          example:
+            type: stripe
+            name: Stripe
+            description: Stripe integration allows you to collect payments with Stripe.
+          properties:
+            type:
+              description: Type of the app.
+              type: string
+              enum:
+              - sandbox
+              - stripe
+              - external_invoicing
+              readOnly: true
+              x-speakeasy-unknown-values: allow
+            name:
+              description: Name of the app.
+              type: string
+              readOnly: true
+            description:
+              description: Description of the app.
+              type: string
+              readOnly: true
+          readOnly: true
+          required:
+          - type
+          - name
+          - description
+        status:
+          description: Status of the app connection.
+          type: string
+          enum:
+          - ready
+          - unauthorized
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        account_id:
+          description: The Stripe account ID associated with the connected Stripe account.
+          type: string
+          readOnly: true
+        livemode:
+          description: Indicates whether the app is connected to a live Stripe account.
+          type: boolean
+          readOnly: true
+        masked_api_key:
+          description: The masked Stripe API key that only exposes the first and last few characters.
+          type: string
+          readOnly: true
+      required:
+      - id
+      - name
+      - created_at
+      - updated_at
+      - type
+      - definition
+      - status
+      - account_id
+      - livemode
+      - masked_api_key
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    AppPagePaginatedResponse:
+      description: Page paginated response.
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillingApp'
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+      required:
+      - data
+      - meta
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    BillingApp:
+      description: Installed application.
+      type: object
+      discriminator:
+        propertyName: type
+        mapping:
+          stripe: '#/components/schemas/BillingAppStripe'
+          sandbox: '#/components/schemas/BillingAppSandbox'
+          external_invoicing: '#/components/schemas/BillingAppExternalInvoicing'
+      oneOf:
+      - $ref: '#/components/schemas/BillingAppStripe'
+      - $ref: '#/components/schemas/BillingAppSandbox'
+      - $ref: '#/components/schemas/BillingAppExternalInvoicing'
+    BillingAppExternalInvoicing:
+      description: 'External Invoicing app enables integration with third-party invoicing or payment system.
+
+
+        The app supports a bi-directional synchronization pattern where OpenMeter Billing manages
+
+        the invoice lifecycle while the external system handles invoice presentation and payment collection.
+
+
+        Integration workflow:
+
+        1. The billing system creates invoices and transitions them through lifecycle states (draft → issuing → issued)
+
+        2. The integration receives webhook notifications about invoice state changes
+
+        3. The integration calls back to provide external system IDs and metadata
+
+        4. The integration reports payment events back via the payment status API
+
+
+        State synchronization is controlled by hooks that pause invoice progression until the
+
+        external system confirms synchronization via API callbacks.'
+      type: object
+      properties:
+        id:
+          description: ULID (Universally Unique Lexicographically Sortable Identifier).
+          type: string
+          example: 01G65Z755AFWAKHE12NY0CQ9FH
+          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+          readOnly: true
+          title: ULID
+        name:
+          description: 'Display name of the resource.
+
+
+            Between 1 and 256 characters.'
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: 'Optional description of the resource.
+
+
+            Maximum 1024 characters.'
+          type: string
+          maxLength: 1024
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          description: An ISO-8601 timestamp representation of entity creation date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        updated_at:
+          description: An ISO-8601 timestamp representation of entity last update date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        deleted_at:
+          description: An ISO-8601 timestamp representation of entity deletion date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        type:
+          description: The app type.
+          type: string
+          enum:
+          - external_invoicing
+          readOnly: true
+        definition:
+          description: The app catalog definition that this installed app is based on.
+          type: object
+          example:
+            type: stripe
+            name: Stripe
+            description: Stripe integration allows you to collect payments with Stripe.
+          properties:
+            type:
+              description: Type of the app.
+              type: string
+              enum:
+              - sandbox
+              - stripe
+              - external_invoicing
+              readOnly: true
+              x-speakeasy-unknown-values: allow
+            name:
+              description: Name of the app.
+              type: string
+              readOnly: true
+            description:
+              description: Description of the app.
+              type: string
+              readOnly: true
+          readOnly: true
+          required:
+          - type
+          - name
+          - description
+        status:
+          description: Status of the app connection.
+          type: string
+          enum:
+          - ready
+          - unauthorized
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        enable_draft_sync_hook:
+          description: 'Enable draft synchronization hook.
+
+
+            When enabled, invoices will pause at the draft state and wait for the integration
+
+            to call the draft synchronized endpoint before progressing to the issuing state.
+
+            This allows the external system to validate and prepare the invoice data.
+
+
+            When disabled, invoices automatically progress through the draft state based on
+
+            the configured workflow timing.'
+          type: boolean
+        enable_issuing_sync_hook:
+          description: 'Enable issuing synchronization hook.
+
+
+            When enabled, invoices will pause at the issuing state and wait for the integration
+
+            to call the issuing synchronized endpoint before progressing to the issued state.
+
+            This ensures the external invoicing system has successfully created and finalized
+
+            the invoice before it is marked as issued.
+
+
+            When disabled, invoices automatically progress through the issuing state and are
+
+            immediately marked as issued.'
+          type: boolean
+      required:
+      - id
+      - name
+      - created_at
+      - updated_at
+      - type
+      - definition
+      - status
+      - enable_draft_sync_hook
+      - enable_issuing_sync_hook
+    ULID:
+      description: ULID (Universally Unique Lexicographically Sortable Identifier).
+      type: string
+      example: 01G65Z755AFWAKHE12NY0CQ9FH
+      pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+      title: ULID
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    PagePaginationQuery:
+      name: page
+      in: query
+      required: false
+      description: Determines which page of the collection to retrieve.
+      schema:
+        type: object
+        properties:
+          size:
+            description: The number of items to include per page.
+            type: integer
+          number:
+            description: The page number.
+            type: integer
+      style: deepObject
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

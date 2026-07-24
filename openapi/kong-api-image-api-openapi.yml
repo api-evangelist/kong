@@ -1,0 +1,403 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs API Image API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: API Image
+paths:
+  /v3/apis/{apiId}/images/{imageType}:
+    parameters:
+    - $ref: '#/components/parameters/ApiId'
+    - $ref: '#/components/parameters/ImageType'
+    put:
+      operationId: upsert-api-image
+      summary: Create or Replace an API Image
+      description: Create or Replace an API Image. The replacement image is not applied to the API until asynchronous validation completes successfully.
+      requestBody:
+        $ref: '#/components/requestBodies/ReplaceApiImageRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ApiImageResponse'
+        '201':
+          $ref: '#/components/responses/ApiImageResponse'
+        '401':
+          $ref: '#/components/responses/ApiImageUnauthorized'
+        '403':
+          $ref: '#/components/responses/ApiImageForbidden'
+        '404':
+          $ref: '#/components/responses/ApiImageNotFound'
+        '409':
+          $ref: '#/components/responses/ApiImageConflict'
+      tags:
+      - API Image
+    get:
+      operationId: fetch-api-image
+      summary: Get API Image
+      description: 'Retrieves the status and metadata associated with an API Image. Returns the latest image if it has not yet been applied (status: uploading, validating, or invalid), otherwise returns the details of currently applied image (status: valid).'
+      responses:
+        '200':
+          $ref: '#/components/responses/ApiImageResponse'
+        '401':
+          $ref: '#/components/responses/ApiImageUnauthorized'
+        '403':
+          $ref: '#/components/responses/ApiImageForbidden'
+        '404':
+          $ref: '#/components/responses/ApiImageNotFound'
+      tags:
+      - API Image
+    delete:
+      operationId: delete-api-image
+      summary: Delete an API Image
+      description: Delete an API Image.
+      responses:
+        '204':
+          description: API Image was deleted successfully.
+        '401':
+          $ref: '#/components/responses/ApiImageUnauthorized'
+        '403':
+          $ref: '#/components/responses/ApiImageForbidden'
+        '404':
+          $ref: '#/components/responses/ApiImageNotFound'
+      tags:
+      - API Image
+  /v3/apis/{apiId}/images/{imageType}/raw:
+    parameters:
+    - $ref: '#/components/parameters/ApiId'
+    - $ref: '#/components/parameters/ImageType'
+    get:
+      operationId: fetch-api-raw-image
+      summary: Get an API Raw Image
+      description: 'Retrieves the raw image of an API. Only the currently applied image (status: valid) can be retrieved.'
+      responses:
+        '302':
+          description: Redirect to the image URL.
+          headers:
+            Location:
+              description: The CDN URL of the image.
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/ApiImageUnauthorized'
+        '403':
+          $ref: '#/components/responses/ApiImageForbidden'
+        '404':
+          $ref: '#/components/responses/ApiImageNotFound'
+      tags:
+      - API Image
+components:
+  schemas:
+    APIImage:
+      type: object
+      properties:
+        error:
+          description: An error related to the image invalid status.
+          type: string
+          example: null
+          nullable: true
+          readOnly: true
+        status:
+          description: The status of the image.
+          type: string
+          example: valid
+          enum:
+          - uploading
+          - validating
+          - valid
+          - invalid
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        api_id:
+          description: The API identifier which the image belongs to.
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+          readOnly: true
+        image_type:
+          allOf:
+          - $ref: '#/components/schemas/ImageTypeSchema'
+          - readOnly: true
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      required:
+      - status
+      - error
+      - api_id
+      - image_type
+      - created_at
+      - updated_at
+      title: Image Status
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    ImageDataUri:
+      example: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA
+      oneOf:
+      - $ref: '#/components/schemas/ImagePNGDataUri'
+      - $ref: '#/components/schemas/ImageJPGDataUri'
+      - $ref: '#/components/schemas/ImageSVGDataUri'
+      title: ImageDataUri
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    ImageSVGDataUri:
+      description: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/svg+xml,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/svg\+xml(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImageSVGDataUri
+      x-validation-message: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
+    ImageJPGDataUri:
+      description: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/jpeg,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/jpeg(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImageJPGDataUri
+      x-validation-message: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
+    ImagePNGDataUri:
+      description: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/png,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/png(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImagePNGDataUri
+      x-validation-message: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    ImageTypeSchema:
+      description: The type of the image.
+      type: string
+      example: icon
+      enum:
+      - icon
+    ReplaceImageRequestSchema:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ImageDataUri'
+      additionalProperties: false
+      required:
+      - data
+      title: Replace Image Payload
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+  parameters:
+    ApiId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiId
+      in: path
+      required: true
+      description: The UUID API identifier
+    ImageType:
+      schema:
+        $ref: '#/components/schemas/ImageTypeSchema'
+      name: imageType
+      in: path
+      required: true
+      description: The Supported image type.
+  responses:
+    ApiImageUnauthorized:
+      description: ApiImageUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiImageForbidden:
+      description: ApiImageForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiImageNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ApiImageResponse:
+      description: ApiImageResponse
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIImage'
+    ApiImageConflict:
+      description: Conflict - The image is currently being updated by another request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+  requestBodies:
+    ReplaceApiImageRequest:
+      required: true
+      description: Request body to upload an image base64 dataURI for API.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReplaceImageRequestSchema'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

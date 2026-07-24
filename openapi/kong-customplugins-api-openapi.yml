@@ -1,0 +1,292 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs CustomPlugins API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: CustomPlugins
+paths:
+  /v2/control-planes/{controlPlaneId}/core-entities/custom-plugins:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: list-custom-plugin
+      summary: List all CustomPlugins
+      description: '**Pre-release Endpoint**
+
+        This endpoint is currently in beta and is subject to change.
+
+
+        List all CustomPlugins'
+      parameters:
+      - $ref: '#/components/parameters/PaginationSize'
+      - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/PaginationTagsFilter'
+      responses:
+        '200':
+          description: A successful response listing CustomPlugins
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CustomPlugin'
+                  next:
+                    $ref: '#/components/schemas/PaginationNextResponse'
+                  offset:
+                    $ref: '#/components/schemas/PaginationOffsetResponse'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - CustomPlugins
+    post:
+      operationId: create-custom-plugin
+      summary: Create a new CustomPlugin
+      description: '**Pre-release Endpoint**
+
+        This endpoint is currently in beta and is subject to change.
+
+
+        Create a new CustomPlugin'
+      requestBody:
+        description: Description of the new CustomPlugin for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomPlugin'
+      responses:
+        '201':
+          description: Successfully created CustomPlugin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPlugin'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - CustomPlugins
+  /v2/control-planes/{controlPlaneId}/core-entities/custom-plugins/{CustomPluginId}:
+    parameters:
+    - $ref: '#/components/parameters/CustomPluginId'
+    - $ref: '#/components/parameters/controlPlaneId'
+    delete:
+      operationId: delete-custom-plugin
+      summary: Delete a CustomPlugin
+      description: '**Pre-release Endpoint**
+
+        This endpoint is currently in beta and is subject to change.
+
+
+        Delete a CustomPlugin'
+      parameters:
+      - $ref: '#/components/parameters/CustomPluginId'
+      responses:
+        '204':
+          description: Successfully deleted CustomPlugin or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - CustomPlugins
+    get:
+      operationId: get-custom-plugin
+      summary: Get a CustomPlugin
+      description: '**Pre-release Endpoint**
+
+        This endpoint is currently in beta and is subject to change.
+
+
+        Get a CustomPlugin using ID or name.'
+      responses:
+        '200':
+          description: Successfully fetched CustomPlugin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPlugin'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - CustomPlugins
+    put:
+      operationId: upsert-custom-plugin
+      summary: Upsert a CustomPlugin
+      description: '**Pre-release Endpoint**
+
+        This endpoint is currently in beta and is subject to change.
+
+
+        Create or Update CustomPlugin using ID or name.'
+      requestBody:
+        description: Description of the CustomPlugin
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomPlugin'
+      responses:
+        '200':
+          description: Successfully upserted CustomPlugin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPlugin'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - CustomPlugins
+components:
+  parameters:
+    CustomPluginId:
+      description: ID of the CustomPlugin to lookup
+      example: ''
+      in: path
+      name: CustomPluginId
+      required: true
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+  schemas:
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+    CustomPlugin:
+      type: object
+      properties:
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        handler:
+          description: The handler for the given custom plugin.
+          type: string
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name to associate with the given custom plugin.
+          type: string
+        schema:
+          description: The schema for the given custom plugin.
+          type: string
+        tags:
+          description: A set of strings representing tags.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        handler: return { VERSION = '1.0,0', PRIORITY = 500, access = function(self, config) kong.service.request.set_header(config.name, config.value) end }
+        id: 868346aa-1105-4b77-8346-aa1105fb77c4
+        name: set-header
+        schema: return { name = 'set-header', fields = { { protocols = require('kong.db.schema.typedefs').protocols_http }, { config = { type = 'record', fields = { { name = { description = 'The name of the header to set.', type = 'string', required = true } }, { value = { description = 'The value for the header.', type = 'string', required = true } } } } } } }
+      additionalProperties: false
+      required:
+      - handler
+      - name
+      - schema
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

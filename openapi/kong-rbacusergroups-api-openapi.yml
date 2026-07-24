@@ -1,0 +1,212 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs RBACUserGroups API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: RBACUserGroups
+paths:
+  /{workspace}/rbac/users/{RBACUserIdForNestedEntities}/groups:
+    parameters:
+    - $ref: '#/components/parameters/RBACUserIdForNestedEntities'
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacUserGroup#create
+      operationId: create-rbac_user_group
+      summary: Create a new RBAC User Group
+      description: Create a new RBAC User Group
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the new RBAC User Group for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RBACUserGroup'
+      responses:
+        '201':
+          description: Successfully created RBAC User Group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBACUserGroup'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACUserGroups
+  /{workspace}/rbac/users/{RBACUserIdForNestedEntities}/groups/{RBACUserGroupId}:
+    parameters:
+    - $ref: '#/components/parameters/RBACUserGroupId'
+    - $ref: '#/components/parameters/RBACUserIdForNestedEntities'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacUserGroup#delete
+      operationId: delete-rbac_user_group
+      summary: Delete a RBAC User Group
+      description: Delete a RBAC User Group
+      parameters:
+      - $ref: '#/components/parameters/RBACUserGroupId'
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '204':
+          description: Successfully deleted RBAC User Group or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACUserGroups
+components:
+  parameters:
+    RBACUserGroupId:
+      description: ID of the RBAC User Group to lookup
+      example: ''
+      in: path
+      name: RBACUserGroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: group_id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    RBACUserIdForNestedEntities:
+      description: ID of the RBAC User to lookup
+      example: ''
+      in: path
+      name: RBACUserIdForNestedEntities
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: user_id
+  schemas:
+    RBACUserGroup:
+      x-speakeasy-entity: RbacUserGroup
+      type: object
+      properties:
+        group:
+          description: The group assigned to the user.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+          x-speakeasy-terraform-ignore: true
+        user:
+          description: The RBAC user associated with the group.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+          x-speakeasy-terraform-ignore: true
+        group_id:
+          type: string
+          nullable: true
+        user_id:
+          type: string
+          nullable: true
+      additionalProperties: false
+      x-speakeasy-transform-from-api:
+        jq: '.
+
+          | if .group != null and .group.id != null then . + { group_id: .group.id } else . end
+
+          | if .user != null and .user.id != null then . + { user_id: .user.id } else . end
+
+          | del(.group, .user)
+
+          '
+      x-speakeasy-transform-to-api:
+        jq: '.
+
+          | if .group_id != null then .group = { id: .group_id } else . end
+
+          | if .user_id != null then .user = { id: .user_id } else . end
+
+          | del(.group_id, .user_id)
+
+          '
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

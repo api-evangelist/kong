@@ -1,0 +1,234 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs RBACRoles API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: RBACRoles
+paths:
+  /{workspace}/rbac/roles:
+    parameters: []
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacRole#create
+      operationId: create-rbac_role
+      summary: Create a new RBAC Role
+      description: Create a new RBAC Role
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the new RBAC Role for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RBACRole'
+      responses:
+        '201':
+          description: Successfully created RBAC Role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBACRole'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACRoles
+  /{workspace}/rbac/roles/{RBACRoleId}:
+    parameters:
+    - $ref: '#/components/parameters/RBACRoleId'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacRole#delete
+      operationId: delete-rbac_role
+      summary: Delete a RBAC Role
+      description: Delete a RBAC Role
+      parameters:
+      - $ref: '#/components/parameters/RBACRoleId'
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '204':
+          description: Successfully deleted RBAC Role or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACRoles
+    get:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacRole#read
+      operationId: get-rbac_role
+      summary: Get a RBAC Role
+      description: Get a RBAC Role using ID.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '200':
+          description: Successfully fetched RBAC Role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBACRole'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - RBACRoles
+    put:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacRole#update
+      operationId: upsert-rbac_role
+      summary: Upsert a RBAC Role
+      description: Create or Update RBAC Role using ID.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the RBAC Role
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RBACRole'
+      responses:
+        '200':
+          description: Successfully upserted RBAC Role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBACRole'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACRoles
+components:
+  parameters:
+    RBACRoleId:
+      description: ID of the RBAC Role to lookup
+      example: ''
+      in: path
+      name: RBACRoleId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  schemas:
+    RBACRole:
+      x-speakeasy-entity: RbacRole
+      type: object
+      properties:
+        comment:
+          description: Additional comment or description for the RBAC role.
+          type: string
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+          x-speakeasy-param-suppress-computed-diff: true
+        is_default:
+          description: Indicates whether the RBAC role is the default role.
+          type: boolean
+          default: false
+          nullable: true
+        name:
+          description: The name of the RBAC role.
+          type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      additionalProperties: false
+      required:
+      - name
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

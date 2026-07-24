@@ -1,0 +1,595 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Consumers API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- description: 'The consumer object represents a consumer - or a user - of a service.
+
+    You can either rely on Kong Gateway as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong Gateway and your existing primary datastore.
+
+    '
+  name: Consumers
+paths:
+  /{workspace}/consumers:
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Consumer#create
+      operationId: create-consumer
+      summary: Create a new Consumer
+      description: Create a new Consumer
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the new Consumer for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Consumer'
+      responses:
+        '201':
+          description: Successfully created Consumer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumer'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Consumers
+  /{workspace}/consumers/{ConsumerIdOrUsername}:
+    parameters:
+    - $ref: '#/components/parameters/ConsumerIdOrUsername'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Consumer#delete
+      operationId: delete-consumer
+      summary: Delete a Consumer
+      description: Delete a Consumer
+      parameters:
+      - $ref: '#/components/parameters/ConsumerIdOrUsername'
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '204':
+          description: Successfully deleted Consumer or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Consumers
+    get:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Consumer#read
+      operationId: get-consumer
+      summary: Get a Consumer
+      description: Get a Consumer using ID or username.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '200':
+          description: Successfully fetched Consumer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumer'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - Consumers
+    put:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: Consumer#update
+      operationId: upsert-consumer
+      summary: Upsert a Consumer
+      description: Create or Update Consumer using ID or username.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the Consumer
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Consumer'
+      responses:
+        '200':
+          description: Successfully upserted Consumer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumer'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - Consumers
+  /v2/control-planes/{controlPlaneId}/core-entities/consumers:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: list-consumer
+      summary: List all Consumers
+      description: List all Consumers
+      parameters:
+      - $ref: '#/components/parameters/PaginationSize'
+      - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/PaginationTagsFilter'
+      - $ref: '#/components/parameters/CustomId'
+      - $ref: '#/components/parameters/NameContainsFilter'
+      - $ref: '#/components/parameters/NameEqualsFilter'
+      responses:
+        '200':
+          description: A successful response listing Consumers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Consumer_2'
+                  next:
+                    $ref: '#/components/schemas/PaginationNextResponse'
+                  offset:
+                    $ref: '#/components/schemas/PaginationOffsetResponse'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Consumers
+    post:
+      operationId: create-consumer
+      summary: Create a new Consumer
+      description: Create a new Consumer
+      requestBody:
+        description: Description of the new Consumer for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Consumer_2'
+      responses:
+        '201':
+          description: Successfully created Consumer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumer_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Consumers
+  /v2/control-planes/{controlPlaneId}/core-entities/consumers/{ConsumerId}:
+    parameters:
+    - $ref: '#/components/parameters/ConsumerId'
+    - $ref: '#/components/parameters/controlPlaneId'
+    delete:
+      operationId: delete-consumer
+      summary: Delete a Consumer
+      description: Delete a Consumer
+      parameters:
+      - $ref: '#/components/parameters/ConsumerId'
+      responses:
+        '204':
+          description: Successfully deleted Consumer or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Consumers
+    get:
+      operationId: get-consumer
+      summary: Get a Consumer
+      description: Get a Consumer using ID or username.
+      responses:
+        '200':
+          description: Successfully fetched Consumer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumer_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+        '404':
+          description: Resource does not exist
+      tags:
+      - Consumers
+    put:
+      operationId: upsert-consumer
+      summary: Upsert a Consumer
+      description: Create or Update Consumer using ID or username.
+      requestBody:
+        description: Description of the Consumer
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Consumer_2'
+      responses:
+        '200':
+          description: Successfully upserted Consumer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consumer_2'
+        '401':
+          $ref: '#/components/responses/HTTP401Error_2'
+      tags:
+      - Consumers
+  /v2/control-planes/{controlPlaneId}/core-entities/consumers/{ConsumerId}/consumer_groups:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    delete:
+      operationId: remove-consumer-from-all-consumer-groups
+      summary: Remove consumer from all consumer groups
+      description: Removes a consumer from all Consumer Groups. This operation does not delete the consumer group.
+      parameters:
+      - $ref: '#/components/parameters/ConsumerId'
+      responses:
+        '204':
+          description: Consumer removed from all groups
+        '404':
+          description: Consumer does not exist
+      tags:
+      - Consumers
+    get:
+      operationId: list-consumer-groups-for-consumer
+      summary: List all Consumer Groups a Consumer belongs to
+      description: List all Consumer Groups a Consumer belongs to
+      parameters:
+      - $ref: '#/components/parameters/ConsumerId'
+      - $ref: '#/components/parameters/PaginationSize'
+      - $ref: '#/components/parameters/PaginationOffset'
+      - $ref: '#/components/parameters/PaginationTagsFilter'
+      responses:
+        '200':
+          description: A successful response listing Consumer Groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConsumerGroup'
+                  next:
+                    $ref: '#/components/schemas/PaginationNextResponse'
+                  offset:
+                    $ref: '#/components/schemas/PaginationOffsetResponse'
+      tags:
+      - Consumers
+    post:
+      operationId: add-consumer-to-specific-consumer-group
+      summary: Add consumer to a specific consumer group
+      description: Add a consumer to a consumer group
+      parameters:
+      - $ref: '#/components/parameters/ConsumerId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group:
+                  type: string
+                  example: fedee695-2ae2-4e45-877a-776d9b2fc793
+                  x-speakeasy-name-override: group
+      responses:
+        '201':
+          description: Consumer added to a specific group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consumer:
+                    $ref: '#/components/schemas/Consumer_2'
+                  consumer_groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConsumerGroup'
+      tags:
+      - Consumers
+  /v2/control-planes/{controlPlaneId}/core-entities/consumers/{ConsumerId}/consumer_groups/{ConsumerGroupId}:
+    parameters:
+    - $ref: '#/components/parameters/controlPlaneId'
+    delete:
+      operationId: remove-consumer-from-consumer-group
+      summary: Remove consumer from consumer group
+      description: Removes a consumer from a Consumer Group. This operation does not delete the consumer group.
+      parameters:
+      - $ref: '#/components/parameters/ConsumerId'
+      - $ref: '#/components/parameters/ConsumerGroupId'
+      responses:
+        '204':
+          description: Consumer removed from group
+      tags:
+      - Consumers
+components:
+  parameters:
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    NameEqualsFilter:
+      description: Filter routes by their name.
+      example: john
+      in: query
+      name: filter[name][eq]
+      schema:
+        type: string
+    ConsumerGroupId:
+      description: ID of the Consumer Group to lookup
+      example: ''
+      in: path
+      name: ConsumerGroupId
+      required: true
+      schema:
+        type: string
+    ConsumerId:
+      description: ID of the Consumer to lookup
+      example: c1059869-6fa7-4329-a5f5-5946d14ca2c5
+      in: path
+      name: ConsumerId
+      required: true
+      schema:
+        type: string
+    CustomId:
+      description: Filter consumers by their custom_id.
+      example: my-custom-id
+      in: query
+      name: custom_id
+      schema:
+        type: string
+    ConsumerIdOrUsername:
+      description: ID or username of the Consumer to lookup
+      example: c1059869-6fa7-4329-a5f5-5946d14ca2c5
+      in: path
+      name: ConsumerIdOrUsername
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    NameContainsFilter:
+      description: Filter routes by a substring of the name.
+      example: john
+      in: query
+      name: filter[name][contains]
+      schema:
+        type: string
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+  responses:
+    HTTP401Error_2:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  schemas:
+    Consumer_2:
+      description: The Consumer object represents a consumer - or a user - of a Service. You can either rely on Kong as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong and your existing primary datastore.
+      type: object
+      properties:
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        custom_id:
+          description: Field for storing an existing unique ID for the Consumer - useful for mapping Kong with users in your existing database. You must send either this field or `username` with the request.
+          type: string
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Consumer for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+        username:
+          description: The unique username of the Consumer. You must send either this field or `custom_id` with the request.
+          type: string
+          nullable: true
+      example:
+        custom_id: '4200'
+        id: 8a388226-80e8-4027-a486-25e4f7db5d21
+        tags:
+        - silver-tier
+        username: bob-the-builder
+      additionalProperties: false
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    ConsumerGroup:
+      type: object
+      properties:
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the consumer group.
+          type: string
+        tags:
+          description: A set of strings representing tags.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      additionalProperties: false
+      required:
+      - name
+    Consumer:
+      x-speakeasy-entity: Consumer
+      description: The Consumer object represents a consumer - or a user - of a Service. You can either rely on Kong as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong and your existing primary datastore.
+      type: object
+      properties:
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        custom_id:
+          description: Field for storing an existing unique ID for the Consumer - useful for mapping Kong with users in your existing database. You must send either this field or `username` with the request.
+          type: string
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Consumer for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+        username:
+          description: The unique username of the Consumer. You must send either this field or `custom_id` with the request.
+          type: string
+          nullable: true
+      example:
+        custom_id: '4200'
+        id: 8a388226-80e8-4027-a486-25e4f7db5d21
+        tags:
+        - silver-tier
+        username: bob-the-builder
+      additionalProperties: false
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Schemas API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: Schemas
+paths:
+  /v2/control-planes/{controlPlaneId}/core-entities/schemas/{entityName}/validate:
+    parameters:
+    - name: entityName
+      in: path
+      description: The name of the entity
+      required: true
+      schema:
+        type: string
+    - $ref: '#/components/parameters/controlPlaneId'
+    post:
+      operationId: validate-entity-schema
+      summary: Validate entity schema
+      description: Validate schema for an entity
+      requestBody:
+        description: Request body of a Koko entity to validate against its schema
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          $ref: '#/components/responses/ValidateEntityResponse'
+      tags:
+      - Schemas
+  /v2/control-planes/{controlPlaneId}/core-entities/schemas/partials/{partialType}:
+    parameters:
+    - name: partialType
+      in: path
+      description: The type of a partial
+      required: true
+      schema:
+        type: string
+    - $ref: '#/components/parameters/controlPlaneId'
+    get:
+      operationId: fetch-partial-schema
+      summary: Get partial schema
+      description: Get the schema for a partial
+      responses:
+        '200':
+          $ref: '#/components/responses/GetPartialSchemaResponse'
+      tags:
+      - Schemas
+components:
+  responses:
+    GetPartialSchemaResponse:
+      description: The schema for a partial
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              fields:
+                type: array
+                items:
+                  additionalProperties: true
+                  type: object
+    ValidateEntityResponse:
+      description: Validation result of the request against a schema
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+  parameters:
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

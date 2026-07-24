@@ -1,0 +1,215 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs RBACUsers API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: RBACUsers
+paths:
+  /{workspace}/rbac/users:
+    parameters: []
+    post:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacUser#create
+      operationId: create-rbac_user
+      summary: Create a new RBAC User
+      description: Create a new RBAC User
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      requestBody:
+        description: Description of the new RBAC User for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RBACUser'
+      responses:
+        '201':
+          description: Successfully created RBAC User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBACUser'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACUsers
+  /{workspace}/rbac/users/{RBACUserId}:
+    parameters:
+    - $ref: '#/components/parameters/RBACUserId'
+    delete:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacUser#delete
+      operationId: delete-rbac_user
+      summary: Delete a RBAC User
+      description: Delete a RBAC User
+      parameters:
+      - $ref: '#/components/parameters/RBACUserId'
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '204':
+          description: Successfully deleted RBAC User or the resource didn't exist
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+      tags:
+      - RBACUsers
+    get:
+      x-speakeasy-entity-operation:
+        terraform-datasource: null
+        terraform-resource: RbacUser#read
+      operationId: get-rbac_user
+      summary: Get a RBAC User
+      description: Get a RBAC User using ID.
+      parameters:
+      - $ref: '#/components/parameters/Workspace'
+      responses:
+        '200':
+          description: Successfully fetched RBAC User
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBACUser'
+        '401':
+          $ref: '#/components/responses/HTTP401Error'
+        '404':
+          description: Resource does not exist
+      tags:
+      - RBACUsers
+components:
+  parameters:
+    RBACUserId:
+      description: ID of the RBAC User to lookup
+      example: ''
+      in: path
+      name: RBACUserId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+  schemas:
+    RBACUser:
+      x-speakeasy-entity: RbacUser
+      type: object
+      properties:
+        comment:
+          description: Any comments associated with the user.
+          type: string
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        enabled:
+          description: Wether or not the user has RBAC enabled.
+          type: boolean
+          default: true
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the user.
+          type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+        user_token:
+          type: string
+          nullable: true
+          writeOnly: true
+        user_token_ident:
+          description: The user token.
+          type: string
+          nullable: true
+      additionalProperties: false
+      required:
+      - name
+      - user_token
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

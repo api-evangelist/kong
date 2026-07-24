@@ -1,0 +1,297 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Resource Availability API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: Resource Availability
+paths:
+  /v2/cloud-gateways/availability.json:
+    get:
+      operationId: get-availability-json
+      summary: Get Resource Availability JSON
+      description: 'Get Cloud Gateways Availability JSON document for describing cloud provider and region availability, pricing,
+
+        gateway version availability, and instance type information.
+
+        '
+      responses:
+        '200':
+          $ref: '#/components/responses/RetrieveCloudGatewaysAvailabilityDocumentResponse'
+      security: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Resource Availability
+      x-speakeasy-group: CloudGateways
+components:
+  schemas:
+    Provider:
+      description: Description of cloud provider that runs cloud gateway instances.
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/ProviderName'
+        regions:
+          $ref: '#/components/schemas/ProviderRegions'
+      additionalProperties: false
+      required:
+      - provider
+      - regions
+      title: Provider
+    ServerlessV1ProviderName:
+      description: Name of cloud provider.
+      type: string
+      example: aws
+      enum:
+      - aws
+    ProviderRegionName:
+      description: 'Human-readable name for cloud provider region. The list of available provider regions can be retrieved via the
+
+        availability endpoint `/v2/cloud-gateways/availability.json`.
+
+        '
+      type: string
+      example: N. Virginia
+      title: Provider Region Name
+    GatewayVersion:
+      description: Supported gateway version. For serverless.v1 kind of cloud gateways, this field should be omitted.
+      type: string
+      example: '3.2'
+      title: Gateway Version
+    ServerlessV1ProviderRegionId:
+      description: Region ID for serverless v1 cloud provider region.
+      type: string
+      example: us
+      title: Serverless V1 Provider Region ID
+    InstanceType:
+      description: Resource parameters and pricing of a given supported instance type.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/InstanceTypeName'
+        hourly_cost:
+          description: Hourly cost to run a single cloud gateway instance of this instance type.
+          type: string
+          format: ^(\d)+(\.(\d)+)?$
+          example: '1.00'
+        v_cpu:
+          description: Number of virtual CPUs available to a cloud gateway instance of this instance type.
+          type: string
+          format: ^(\d)+
+          example: '2'
+        gb_memory:
+          description: Number of gigabytes of memory available to a cloud gateway instance of this instance type.
+          type: string
+          format: ^(\d)+
+          example: '2'
+      additionalProperties: false
+      readOnly: true
+      required:
+      - name
+      - hourly_cost
+      - v_cpu
+      - gb_memory
+      title: Instance Type
+    ServerlessV1ProviderRegions:
+      description: List of available regions to run serverless v1 cloud gateway instances on for a given cloud provider.
+      type: array
+      items:
+        $ref: '#/components/schemas/ServerlessV1ProviderRegion'
+      title: Serverless V1 Provider Regions
+    ProviderRegion:
+      description: Region ID and human-readable name for a cloud provider region.
+      type: object
+      properties:
+        region:
+          $ref: '#/components/schemas/ProviderRegionId'
+        name:
+          $ref: '#/components/schemas/ProviderRegionName'
+        availability_zones:
+          description: 'List of supported availability zones for cloud provider region, for network AZ configuration.
+
+            '
+          type: array
+          items:
+            type: string
+          example:
+          - use2-az1
+          - use2-az2
+          - use2-az3
+        cidr_blocks:
+          description: 'List of supported CIDR blocks for cloud provider region, for network CIDR block configuration.
+
+            '
+          type: array
+          items:
+            type: string
+          example:
+          - 10.0.0.0/8
+          - 100.64.0.0/10
+          - 172.16.0.0/12
+          - 192.168.0.0/16
+          - 198.18.0.0/15
+        reserved_cidr_blocks:
+          description: 'List of reserved CIDR blocks for cloud provider region, to restrict allowed network CIDR block
+
+            configuration.
+
+            '
+          type: array
+          items:
+            type: string
+          example:
+          - 10.100.0.0/16
+          - 172.17.0.0/16
+      additionalProperties: false
+      required:
+      - region
+      - name
+      - availability_zones
+      - cidr_blocks
+      - reserved_cidr_blocks
+      title: Provider Region
+    ProviderRegions:
+      description: List of available regions to run cloud gateway instances on for a given cloud provider.
+      type: array
+      items:
+        $ref: '#/components/schemas/ProviderRegion'
+      title: Provider Regions
+    ProviderName:
+      description: Name of cloud provider.
+      type: string
+      example: aws
+      enum:
+      - aws
+      - azure
+      - gcp
+      title: Provider Name
+      x-speakeasy-unknown-values: allow
+    VersionList:
+      description: List of supported gateway versions for cloud gateways.
+      type: array
+      items:
+        $ref: '#/components/schemas/GatewayVersion'
+      readOnly: true
+      title: Version List
+    AvailabilityDocument:
+      description: Document containing availability information for configurations.
+      type: object
+      properties:
+        versions:
+          $ref: '#/components/schemas/VersionList'
+        instance_types:
+          $ref: '#/components/schemas/InstanceTypes'
+        providers:
+          $ref: '#/components/schemas/Providers'
+        serverless_v1_providers:
+          $ref: '#/components/schemas/ServerlessV1Providers'
+      additionalProperties: false
+      required:
+      - versions
+      - instance_types
+      - providers
+      - serverless_v1_providers
+      title: Availability Document
+    ServerlessV1Providers:
+      description: List of supported cloud providers that run serverless v1 cloud gateway instances.
+      type: array
+      items:
+        $ref: '#/components/schemas/ServerlessV1Provider'
+      title: Serverless V1 Providers
+    Providers:
+      description: List of supported cloud providers that run cloud gateway instances.
+      type: array
+      items:
+        $ref: '#/components/schemas/Provider'
+      title: Providers
+    ServerlessV1ProviderRegion:
+      description: Region ID and human-readable name for a cloud provider region.
+      type: object
+      properties:
+        region:
+          $ref: '#/components/schemas/ServerlessV1ProviderRegionId'
+      additionalProperties: false
+      required:
+      - region
+      title: Serverless V1 Provider Region
+    ServerlessV1Provider:
+      description: Description of cloud provider that runs serverless v1 cloud gateway instances.
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/ServerlessV1ProviderName'
+        regions:
+          $ref: '#/components/schemas/ServerlessV1ProviderRegions'
+      additionalProperties: false
+      required:
+      - provider
+      - regions
+      title: Serverless V1 Provider
+    ProviderRegionId:
+      description: Region ID for cloud provider region.
+      type: string
+      example: us-east-2
+      title: Provider Region ID
+    InstanceTypes:
+      description: List of supported instance types, along with their associated resource parameters and pricing.
+      type: array
+      items:
+        $ref: '#/components/schemas/InstanceType'
+      title: Instance Types
+    InstanceTypeName:
+      description: Instance type name to indicate capacity.
+      type: string
+      enum:
+      - small
+      - medium
+      - large
+      x-speakeasy-unknown-values: allow
+  responses:
+    RetrieveCloudGatewaysAvailabilityDocumentResponse:
+      description: Response format for retrieving the cloud gateways availability JSON document.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AvailabilityDocument'
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com

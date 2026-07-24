@@ -1,0 +1,819 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@konghq.com
+    name: Kong Inc
+    url: https://konghq.com
+  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
+
+
+    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+
+    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  title: Kong Enterprise Admin ACLs Personal Access Tokens API
+  version: 3.14.0
+servers:
+- description: Default Admin API URL
+  url: '{protocol}://{hostname}:{port}{path}'
+  variables:
+    hostname:
+      default: localhost
+      description: Hostname for Kong's Admin API
+    path:
+      default: /
+      description: Base path for Kong's Admin API
+    port:
+      default: '8001'
+      description: Port for Kong's Admin API
+    protocol:
+      default: http
+      description: Protocol for requests to Kong's Admin API
+      enum:
+      - http
+      - https
+security:
+- adminToken: []
+tags:
+- name: Personal Access Tokens
+paths:
+  /v3/users/{userId}/access-tokens:
+    parameters:
+    - $ref: '#/components/parameters/userId'
+    get:
+      operationId: list-users-personal-access-tokens
+      summary: List PATs
+      description: List personal access tokens for a user.
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonalAccessTokenListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - personalAccessToken: []
+      - konnectAccessToken: []
+      - serviceAccessToken: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Personal Access Tokens
+    post:
+      operationId: create-personal-access-token
+      summary: Create a new personal access token
+      description: Create a new personal access token. A maximum of 10 personal access tokens can be created.
+      requestBody:
+        $ref: '#/components/requestBodies/PersonalAccessTokenCreateRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/PersonalAccessTokenCreateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+      security:
+      - personalAccessToken: []
+      - konnectAccessToken: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Personal Access Tokens
+  /v3/users/{userId}/access-tokens/{tokenId}:
+    parameters:
+    - $ref: '#/components/parameters/userId'
+    - name: tokenId
+      in: path
+      description: ID of the personal access token.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    get:
+      operationId: get-personal-access-token-details
+      summary: Get Personal Access Token details
+      description: Get Personal Access Token details.
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonalAccessTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - personalAccessToken: []
+      - konnectAccessToken: []
+      - serviceAccessToken: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Personal Access Tokens
+    patch:
+      operationId: update-personal-access-token-details
+      summary: Update personal access token details
+      description: Update personal access token details.
+      requestBody:
+        $ref: '#/components/requestBodies/PersonalAccessTokenUpdateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonalAccessTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - personalAccessToken: []
+      - konnectAccessToken: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Personal Access Tokens
+    delete:
+      operationId: delete-personal-access-token
+      summary: Delete personal access token
+      description: Delete personal access token.
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - personalAccessToken: []
+      - konnectAccessToken: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Personal Access Tokens
+  /v3/users/{userId}/access-tokens/{tokenId}/revoke:
+    parameters:
+    - $ref: '#/components/parameters/userId'
+    - name: tokenId
+      in: path
+      description: ID of the personal access token.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    patch:
+      operationId: revoke-personal-access-token
+      summary: Revoke Personal Access Token
+      description: Revoke Personal Access Token.
+      responses:
+        '200':
+          $ref: '#/components/responses/PersonalAccessTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - personalAccessToken: []
+      - konnectAccessToken: []
+      - serviceAccessToken: []
+      servers:
+      - url: https://global.api.konghq.com/
+      tags:
+      - Personal Access Tokens
+components:
+  schemas:
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    PersonalAccessTokenCreateRequestWithExpiresAt:
+      description: '**Deprecated:** Use `ttl_seconds` instead of `expires_at` to specify token expiration. Using a time-to-live value avoids clock skew issues when setting token expiration.'
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/PATName'
+        expires_at:
+          description: An ISO-8601 timestamp representation of entity expiration date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: false
+          x-speakeasy-param-suppress-computed-diff: true
+      additionalProperties: false
+      deprecated: true
+      required:
+      - name
+      - expires_at
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    PersonalAccessTokenCreateRequestWithTTL:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/PATName'
+        ttl_seconds:
+          description: The time to live in seconds for the personal access token.
+          type: integer
+          maximum: 31536000
+          minimum: 86400
+      additionalProperties: false
+      required:
+      - name
+      - ttl_seconds
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    LastUsedAt:
+      description: An ISO-8601 timestamp representation of entity last used date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      nullable: true
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    PersonalAccessTokenCreateResponse:
+      description: Details of the created personal access token.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        user_id:
+          $ref: '#/components/schemas/UserId'
+        name:
+          type: string
+        state:
+          description: State of the personal access token.
+          type: string
+          enum:
+          - ACTIVE
+          - REVOKED
+          - EXPIRED
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        konnect_token:
+          description: The Konnect token used to authenticate with Konnect.
+          type: string
+        revoked_by:
+          $ref: '#/components/schemas/RevokedBy'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        last_used_at:
+          $ref: '#/components/schemas/LastUsedAt'
+        expires_at:
+          $ref: '#/components/schemas/ExpiresAt'
+        revoked_at:
+          $ref: '#/components/schemas/RevokedAt'
+      required:
+      - id
+      - name
+      - state
+      - konnect_token
+      - user_id
+      - created_at
+      - expires_at
+    RevokedBy:
+      description: Contains a unique identifier used for the user that revoked this token.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      nullable: true
+      readOnly: true
+    PersonalAccessTokenState:
+      description: State of the personal access token.
+      type: string
+      enum:
+      - ACTIVE
+      - REVOKED
+      - EXPIRED
+      x-speakeasy-unknown-values: allow
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    PersonalAccessToken:
+      description: Properties of a personal access token.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        user_id:
+          $ref: '#/components/schemas/UserId'
+        name:
+          type: string
+        state:
+          $ref: '#/components/schemas/PersonalAccessTokenState'
+        revoked_by:
+          $ref: '#/components/schemas/RevokedBy'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        last_used_at:
+          $ref: '#/components/schemas/LastUsedAt'
+        expires_at:
+          $ref: '#/components/schemas/ExpiresAt'
+        revoked_at:
+          $ref: '#/components/schemas/RevokedAt'
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - state
+      - user_id
+      - created_at
+      - updated_at
+      - expires_at
+    ExpiresAt:
+      description: An ISO-8601 timestamp representation of entity expiration date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      nullable: true
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    RevokedAt:
+      description: An ISO-8601 timestamp representation of entity revoked at date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      nullable: true
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    PATName:
+      type: string
+      maxLength: 256
+      minLength: 1
+      pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    UserId:
+      description: Contains a unique identifier used for a user.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    responses-Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    PersonalAccessTokenCreateResponse:
+      description: Response containing details of the created personal access token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PersonalAccessTokenCreateResponse'
+    PersonalAccessTokenResponse:
+      description: Response containing details of a personal access token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PersonalAccessToken'
+    PersonalAccessTokenListResponse:
+      description: A list response for a collection of personal access tokens.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PageMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonalAccessToken'
+            additionalProperties: false
+            required:
+            - data
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      description: ID of the user.
+      x-go-name: userIdParam
+      schema:
+        $ref: '#/components/schemas/UUID'
+  requestBodies:
+    PersonalAccessTokenCreateRequest:
+      description: Request body schema for creating personal access tokens.
+      content:
+        application/json:
+          schema:
+            oneOf:
+            - $ref: '#/components/schemas/PersonalAccessTokenCreateRequestWithExpiresAt'
+            - $ref: '#/components/schemas/PersonalAccessTokenCreateRequestWithTTL'
+    PersonalAccessTokenUpdateRequest:
+      description: Request body schema for updating personal access tokens.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                $ref: '#/components/schemas/PATName'
+            minProperties: 1
+  securitySchemes:
+    adminToken:
+      in: header
+      name: Kong-Admin-Token
+      type: apiKey
+externalDocs:
+  description: Documentation for Kong Gateway and its APIs
+  url: https://developer.konghq.com
