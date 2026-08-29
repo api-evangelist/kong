@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK Catalog Service Resources API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs Catalog Service Resources API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: Catalog Service Resources
   description: 'Represents all the resources mapped to a specific service.
@@ -74,329 +61,15 @@ paths:
       - Catalog Service Resources
 components:
   schemas:
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    CatalogResourceRefFilterParameters:
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/StringFieldFilterExact'
-        name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        integration.name:
-          oneOf:
-          - $ref: '#/components/schemas/StringFieldFilter'
-        integration.display_name:
-          oneOf:
-          - $ref: '#/components/schemas/StringFieldFilter'
-        integration.instance.id:
-          oneOf:
-          - $ref: '#/components/schemas/UuidFieldFilter'
-        integration.instance.name:
-          oneOf:
-          - $ref: '#/components/schemas/StringFieldFilter'
-        integration.instance.display_name:
-          oneOf:
-          - $ref: '#/components/schemas/StringFieldFilter'
-        type:
-          $ref: '#/components/schemas/StringFieldFilterExact'
-        config:
-          oneOf:
-          - $ref: '#/components/schemas/CatalogResourceConfigFieldFilter'
-        integration_data:
-          oneOf:
-          - $ref: '#/components/schemas/CatalogResourceIntegrationDataFieldFilter'
-        service_associations:
-          $ref: '#/components/schemas/NumericFieldFilter'
-        created_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-        updated_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-    CatalogResourceConfigFieldFilter:
-      description: "Filters on the resource's `config` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[config.control_plane_id]`\n  - `filter[config.gateway_service_id][neq]=cedbd134-fc5c-4d44-9e38-ccd2a0c6e0ae`\n"
-      type: object
-      properties:
-        eq:
-          type: string
-        contains:
-          type: string
-        ocontains:
-          type: string
-        oeq:
-          type: string
-        neq:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      - ocontains
-      - oeq
-      - neq
-      title: CatalogResourceConfigFieldFilter
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    IntegrationInstanceRef:
-      description: Short-hand descriptor of an integration instance.
-      type: object
-      properties:
-        id:
-          description: The integration instance ID.
-          type: string
-          format: uuid
-          example: 772b9caf-ddbc-4f4f-8aa4-8dfbbe420351
-        name:
-          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
-
-            '
-          type: string
-          example: aws-lambda-prod
-          pattern: ^[0-9a-z.-]+$
-        display_name:
-          description: The display name of the integration instance.
-          type: string
-          example: AWS (prod)
-      required:
-      - id
-      - name
-      - display_name
-    ForbiddenError:
+    BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
+        required:
+        - invalid_parameters
         properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    CatalogResourceId:
-      description: The resource ID.
-      type: string
-      format: base64url
-      example: 4UdXnoaDYYJsH_Ir
-      maxLength: 16
-      minLength: 16
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    StringFieldFilterExact:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    CatalogResourceType:
-      description: 'The resource type. Available resource types are compiled from the integrations installed within the catalog.
-
-        '
-      type: string
-      example: gateway_svc
-      maxLength: 120
-      minLength: 1
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    CatalogResourceIntegrationDataFieldFilter:
-      description: "Filters on the resource's `integration_data` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[integration_data.control_plane.id]=760562c3-fedd-43e4-b742-fc1663fef188`\n  - `filter[integration_data.gateway_service.name][contains]=legacy`\n"
-      type: object
-      properties:
-        eq:
-          type: string
-        contains:
-          type: string
-        ocontains:
-          type: string
-        oeq:
-          type: string
-        neq:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      - ocontains
-      - oeq
-      - neq
-      title: CatalogResourceIntegrationDataFieldFilter
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     BaseError:
       description: standard error
       type: object
@@ -451,6 +124,576 @@ components:
       - instance
       - detail
       title: Error
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    IntegrationRef:
+      description: Short-hand descriptor of an integration installed within the catalog.
+      type: object
+      properties:
+        name:
+          type: string
+          example: gateway-manager
+        display_name:
+          type: string
+          example: gateway-manager
+        instance:
+          $ref: '#/components/schemas/IntegrationInstanceRef'
+      required:
+      - name
+      - display_name
+      - instance
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CatalogResourceConfigFieldFilter:
+      description: "Filters on the resource's `config` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[config.control_plane_id]`\n  - `filter[config.gateway_service_id][neq]=cedbd134-fc5c-4d44-9e38-ccd2a0c6e0ae`\n"
+      type: object
+      properties:
+        eq:
+          type: string
+        contains:
+          type: string
+        ocontains:
+          type: string
+        oeq:
+          type: string
+        neq:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      - ocontains
+      - oeq
+      - neq
+      title: CatalogResourceConfigFieldFilter
+    CatalogResourceType:
+      description: 'The resource type. Available resource types are compiled from the integrations installed within the catalog.
+
+        '
+      type: string
+      example: gateway_svc
+      maxLength: 120
+      minLength: 1
+    NumericFieldFilter:
+      description: Filter by a numeric value.
+      oneOf:
+      - type: number
+        description: Value strictly equals the given numeric value.
+        example: 21
+      - type: object
+        title: NumericFieldEqualsFilter
+        additionalProperties: false
+        properties:
+          eq:
+            description: Value strictly equals the given numeric value.
+            type: number
+            example: 3.14
+        required:
+        - eq
+      - type: object
+        title: NumericFieldLTFilter
+        additionalProperties: false
+        properties:
+          lt:
+            description: Value is less than the given numeric value.
+            type: number
+            example: 10
+        required:
+        - lt
+      - type: object
+        title: NumericFieldLTEFilter
+        additionalProperties: false
+        properties:
+          lte:
+            description: Value is less than or equal to the given numeric value.
+            type: number
+            example: 10
+        required:
+        - lte
+      - type: object
+        title: NumericFieldGTFilter
+        additionalProperties: false
+        properties:
+          gt:
+            description: Value is greater than the given numeric value.
+            type: number
+            example: 1.85
+        required:
+        - gt
+      - type: object
+        title: NumericFieldGTEFilter
+        additionalProperties: false
+        properties:
+          gte:
+            description: Value is greater than or equal to the given numeric value.
+            type: number
+            example: 1.85
+        required:
+        - gte
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    CatalogResourceConfig:
+      description: 'JSON object representing the properties used to identify the resource in the third-party system.
+
+        The schema depends on the resource type and is dynamically registered at runtime.
+
+        '
+      type: object
+      example:
+        control_plane_id: ccadfb0a-56cd-4f74-955d-aec1d87157c8
+        gateway_service_id: 94896d05-0c4d-45eb-aae3-de754885dd58
+      additionalProperties: true
+      x-speakeasy-type-override: any
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    DateTimeFieldFilter:
+      description: Filters on the given datetime (RFC-3339) field value.
+      oneOf:
+      - type: object
+        title: DateTimeFieldEqualsFilter
+        additionalProperties: false
+        properties:
+          eq:
+            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - eq
+      - type: object
+        title: DateTimeFieldLTFilter
+        additionalProperties: false
+        properties:
+          lt:
+            description: Value is less than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lt
+      - type: object
+        title: DateTimeFieldLTEFilter
+        additionalProperties: false
+        properties:
+          lte:
+            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lte
+      - type: object
+        title: DateTimeFieldGTFilter
+        additionalProperties: false
+        properties:
+          gt:
+            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gt
+      - type: object
+        title: DateTimeFieldGTEFilter
+        additionalProperties: false
+        properties:
+          gte:
+            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gte
+      title: DateTimeFieldFilter
+    CatalogResourceRefFilterParameters:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/StringFieldFilterExact'
+        name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        integration.name:
+          oneOf:
+          - $ref: '#/components/schemas/StringFieldFilter'
+        integration.display_name:
+          oneOf:
+          - $ref: '#/components/schemas/StringFieldFilter'
+        integration.instance.id:
+          oneOf:
+          - $ref: '#/components/schemas/UuidFieldFilter'
+        integration.instance.name:
+          oneOf:
+          - $ref: '#/components/schemas/StringFieldFilter'
+        integration.instance.display_name:
+          oneOf:
+          - $ref: '#/components/schemas/StringFieldFilter'
+        type:
+          $ref: '#/components/schemas/StringFieldFilterExact'
+        config:
+          oneOf:
+          - $ref: '#/components/schemas/CatalogResourceConfigFieldFilter'
+        integration_data:
+          oneOf:
+          - $ref: '#/components/schemas/CatalogResourceIntegrationDataFieldFilter'
+        service_associations:
+          $ref: '#/components/schemas/NumericFieldFilter'
+        created_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+        updated_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+    StringFieldFilterExact:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    CatalogResource:
+      description: Information about a catalog resource.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/CatalogResourceId'
+        name:
+          description: 'The name of the resource.
+
+            Will be `null` when the resource has not yet been hydrated by the integration.
+
+            '
+          type: string
+          maxLength: 255
+          minLength: 1
+          nullable: true
+        integration:
+          $ref: '#/components/schemas/IntegrationRef'
+        type:
+          $ref: '#/components/schemas/CatalogResourceType'
+        config:
+          $ref: '#/components/schemas/CatalogResourceConfig'
+        integration_data:
+          description: 'JSON object containing schemaless integration data of the resource.
+
+            This field is always populated by the system backing the integration.
+
+            When `null`, the resource has been manually initialized via API but has
+
+            yet to be hydrated by the integration.
+
+            '
+          type: object
+          additionalProperties: true
+          nullable: true
+        archived:
+          description: Whether or not the resource has been archived.
+          type: boolean
+          example: false
+        service_associations:
+          description: The number of catalog services this resource is mapped to.
+          type: number
+          example: 2
+          minimum: 0
+          readOnly: true
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      required:
+      - id
+      - name
+      - integration
+      - type
+      - config
+      - integration_data
+      - archived
+      - service_associations
+      - created_at
+      - updated_at
+    CatalogResourceId:
+      description: The resource ID.
+      type: string
+      format: base64url
+      example: 4UdXnoaDYYJsH_Ir
+      maxLength: 16
+      minLength: 16
+    CatalogResourceIntegrationDataFieldFilter:
+      description: "Filters on the resource's `integration_data` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[integration_data.control_plane.id]=760562c3-fedd-43e4-b742-fc1663fef188`\n  - `filter[integration_data.gateway_service.name][contains]=legacy`\n"
+      type: object
+      properties:
+        eq:
+          type: string
+        contains:
+          type: string
+        ocontains:
+          type: string
+        oeq:
+          type: string
+        neq:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      - ocontains
+      - oeq
+      - neq
+      title: CatalogResourceIntegrationDataFieldFilter
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -513,305 +756,48 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    NumericFieldFilter:
-      description: Filter by a numeric value.
-      oneOf:
-      - type: number
-        description: Value strictly equals the given numeric value.
-        example: 21
-      - type: object
-        title: NumericFieldEqualsFilter
-        additionalProperties: false
-        properties:
-          eq:
-            description: Value strictly equals the given numeric value.
-            type: number
-            example: 3.14
-        required:
-        - eq
-      - type: object
-        title: NumericFieldLTFilter
-        additionalProperties: false
-        properties:
-          lt:
-            description: Value is less than the given numeric value.
-            type: number
-            example: 10
-        required:
-        - lt
-      - type: object
-        title: NumericFieldLTEFilter
-        additionalProperties: false
-        properties:
-          lte:
-            description: Value is less than or equal to the given numeric value.
-            type: number
-            example: 10
-        required:
-        - lte
-      - type: object
-        title: NumericFieldGTFilter
-        additionalProperties: false
-        properties:
-          gt:
-            description: Value is greater than the given numeric value.
-            type: number
-            example: 1.85
-        required:
-        - gt
-      - type: object
-        title: NumericFieldGTEFilter
-        additionalProperties: false
-        properties:
-          gte:
-            description: Value is greater than or equal to the given numeric value.
-            type: number
-            example: 1.85
-        required:
-        - gte
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    DateTimeFieldFilter:
-      description: Filters on the given datetime (RFC-3339) field value.
-      oneOf:
-      - type: object
-        title: DateTimeFieldEqualsFilter
-        additionalProperties: false
-        properties:
-          eq:
-            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - eq
-      - type: object
-        title: DateTimeFieldLTFilter
-        additionalProperties: false
-        properties:
-          lt:
-            description: Value is less than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lt
-      - type: object
-        title: DateTimeFieldLTEFilter
-        additionalProperties: false
-        properties:
-          lte:
-            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lte
-      - type: object
-        title: DateTimeFieldGTFilter
-        additionalProperties: false
-        properties:
-          gt:
-            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gt
-      - type: object
-        title: DateTimeFieldGTEFilter
-        additionalProperties: false
-        properties:
-          gte:
-            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gte
-      title: DateTimeFieldFilter
-    CatalogResourceConfig:
-      description: 'JSON object representing the properties used to identify the resource in the third-party system.
-
-        The schema depends on the resource type and is dynamically registered at runtime.
-
-        '
-      type: object
-      example:
-        control_plane_id: ccadfb0a-56cd-4f74-955d-aec1d87157c8
-        gateway_service_id: 94896d05-0c4d-45eb-aae3-de754885dd58
-      additionalProperties: true
-      x-speakeasy-type-override: any
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    IntegrationRef:
-      description: Short-hand descriptor of an integration installed within the catalog.
-      type: object
-      properties:
-        name:
-          type: string
-          example: gateway-manager
-        display_name:
-          type: string
-          example: gateway-manager
-        instance:
-          $ref: '#/components/schemas/IntegrationInstanceRef'
-      required:
-      - name
-      - display_name
-      - instance
-    CatalogResource:
-      description: Information about a catalog resource.
+    IntegrationInstanceRef:
+      description: Short-hand descriptor of an integration instance.
       type: object
       properties:
         id:
-          $ref: '#/components/schemas/CatalogResourceId'
+          description: The integration instance ID.
+          type: string
+          format: uuid
+          example: 772b9caf-ddbc-4f4f-8aa4-8dfbbe420351
         name:
-          description: 'The name of the resource.
-
-            Will be `null` when the resource has not yet been hydrated by the integration.
+          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
 
             '
           type: string
-          maxLength: 255
-          minLength: 1
-          nullable: true
-        integration:
-          $ref: '#/components/schemas/IntegrationRef'
-        type:
-          $ref: '#/components/schemas/CatalogResourceType'
-        config:
-          $ref: '#/components/schemas/CatalogResourceConfig'
-        integration_data:
-          description: 'JSON object containing schemaless integration data of the resource.
-
-            This field is always populated by the system backing the integration.
-
-            When `null`, the resource has been manually initialized via API but has
-
-            yet to be hydrated by the integration.
-
-            '
-          type: object
-          additionalProperties: true
-          nullable: true
-        archived:
-          description: Whether or not the resource has been archived.
-          type: boolean
-          example: false
-        service_associations:
-          description: The number of catalog services this resource is mapped to.
-          type: number
-          example: 2
-          minimum: 0
-          readOnly: true
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
+          example: aws-lambda-prod
+          pattern: ^[0-9a-z.-]+$
+        display_name:
+          description: The display name of the integration instance.
+          type: string
+          example: AWS (prod)
       required:
       - id
       - name
-      - integration
-      - type
-      - config
-      - integration_data
-      - archived
-      - service_associations
-      - created_at
-      - updated_at
+      - display_name
   responses:
-    BadRequest:
-      description: Bad Request
+    ListCatalogServiceResourcesResponse:
+      description: A paginated list response for a collection of resources mapped to a service.
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogResource'
+            additionalProperties: false
+            required:
+            - meta
+            - data
     Unauthorized:
       description: Unauthorized
       content:
@@ -838,24 +824,35 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    ListCatalogServiceResourcesResponse:
-      description: A paginated list response for a collection of resources mapped to a service.
+    BadRequest:
+      description: Bad Request
       content:
-        application/json:
+        application/problem+json:
           schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CatalogResource'
-            additionalProperties: false
-            required:
-            - meta
-            - data
+            $ref: '#/components/schemas/BadRequestError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
   parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
     CatalogResourceRefFilter:
       name: filter
       description: Filters a collection of resources.
@@ -874,21 +871,37 @@ components:
         type: integer
         example: 10
       x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com

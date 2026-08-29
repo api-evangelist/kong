@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK Networks API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs Networks API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: Networks
 paths:
@@ -215,6 +202,69 @@ paths:
       x-speakeasy-group: CloudGateways
 components:
   schemas:
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -252,22 +302,11 @@ components:
       - reason
       - rule
       - minimum
-    NetworkProviderMetadata:
-      description: Metadata describing attributes returned by cloud-provider for the network.
-      type: object
-      properties:
-        vpc_id:
-          type: string
-          title: VPC ID
-        subnet_ids:
-          type: array
-          items:
-            type: string
-          title: Subnet IDs
-      additionalProperties: false
+    ConfigurationId:
+      type: string
+      format: uuid
+      example: edaf40f9-9fb0-4ffe-bb74-4e763a6bd471
       readOnly: true
-      title: Network Provider Metadata
-      x-speakeasy-param-suppress-computed-diff: true
     ConfigurationDataPlaneGroupAutoscaleAutopilot:
       description: Object that describes the autopilot autoscaling strategy. For serverless.v1 kind of cloud gateways, this field should be omitted.
       type: object
@@ -291,6 +330,32 @@ components:
       - kind
       - base_rps
       title: Configuration Autoscale Autopilot
+    NetworkProviderMetadata:
+      description: Metadata describing attributes returned by cloud-provider for the network.
+      type: object
+      properties:
+        vpc_id:
+          type: string
+          title: VPC ID
+        subnet_ids:
+          type: array
+          items:
+            type: string
+          title: Subnet IDs
+      additionalProperties: false
+      readOnly: true
+      title: Network Provider Metadata
+      x-speakeasy-param-suppress-computed-diff: true
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     ControlPlaneGeo:
       description: Set of control-plane geos supported for deploying cloud-gateways configurations.
       type: string
@@ -303,145 +368,83 @@ components:
       - sg
       title: Control-Plane Geo
       x-speakeasy-unknown-values: allow
-    ConfigurationId:
+    ConfigurationKind:
+      description: '**Pre-release Feature**
+
+        This feature is currently in beta and is subject to change.
+
+
+        Kind of the Cloud Gateway deployment. If serverless.v1 is specified, the following fields
+
+        should be omitted (will be ignored if provided): autoscale, cloud_gateway_network_id, version.'
       type: string
-      format: uuid
-      example: edaf40f9-9fb0-4ffe-bb74-4e763a6bd471
+      default: dedicated.v0
+      enum:
+      - dedicated.v0
+      - serverless.v1
+      title: ConfigurationKind
+      x-speakeasy-unknown-values: allow
+    NetworkStateMetadata:
+      description: 'Metadata describing the backing state of the network and why it may be in an erroneous state.
+
+        '
+      type: object
+      properties:
+        reported_status:
+          description: Reported status of the network from backing infrastructure.
+          type: string
+          example: INVALID
+        reason:
+          description: 'Reason why the network may be in an erroneous state, reported from backing infrastructure.
+
+            '
+          type: string
+          example: 'Network could not be deployed due to insufficient cloud provider compute instances.
+
+            '
+      additionalProperties: false
       readOnly: true
-    ControlPlaneId:
-      type: string
-      format: uuid
-      example: 0949471e-b759-45ba-87ab-ee63fb781388
-    NetworkConfigurationReference:
-      $ref: '#/components/schemas/ConfigurationManifest'
-    ConflictError:
+      title: Network State Metadata
+      x-speakeasy-terraform-ignore: true
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 409
+            example: 401
           title:
-            example: Conflict
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/409
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Conflict
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    ConfigurationDataPlaneGroupConfig:
-      description: Object that describes where a data-plane group will be deployed to, along with how many instances.
-      type: object
-      properties:
-        provider:
-          $ref: '#/components/schemas/ProviderName'
-        region:
-          $ref: '#/components/schemas/ProviderRegionId'
-        cloud_gateway_network_id:
-          $ref: '#/components/schemas/NetworkId'
-        autoscale:
-          $ref: '#/components/schemas/ConfigurationDataPlaneGroupAutoscale'
-        environment:
-          $ref: '#/components/schemas/ConfigurationDataPlaneGroupEnvironment'
-      additionalProperties: false
-      required:
-      - provider
-      - region
-      title: Configuration Data-Plane Group Config Item
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    NetworkCreateState:
-      description: Initial state for creating a network.
+            example: Invalid credentials
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    NetworkName:
+      description: Human-readable name of the network.
       type: string
-      default: initializing
-      enum:
-      - initializing
-      - offline
-      title: Network Create State
-      x-speakeasy-unknown-values: allow
-    NetworkState:
-      description: State of the network.
-      enum:
-      - created
-      - initializing
-      - offline
-      - ready
-      - terminating
-      - terminated
-      readOnly: true
-      title: Network State
-      x-speakeasy-terraform-ignore: true
-      x-speakeasy-unknown-values: allow
-    GatewayVersion:
-      description: Supported gateway version. For serverless.v1 kind of cloud gateways, this field should be omitted.
-      type: string
-      example: '3.2'
-      title: Gateway Version
+      example: us-east-2 network
+      title: Network Name
+    ConfigurationDataPlaneGroupAutoscale:
+      oneOf:
+      - $ref: '#/components/schemas/ConfigurationDataPlaneGroupAutoscaleStatic'
+      - $ref: '#/components/schemas/ConfigurationDataPlaneGroupAutoscaleAutopilot'
     ConfigurationManifest:
       x-speakeasy-entity: CloudGatewayConfiguration
       description: Object containing information about a control-plane's cloud-gateways configuration.
@@ -505,141 +508,31 @@ components:
       - created_at
       - updated_at
       title: Configuration
-    NetworkStateMetadata:
-      description: 'Metadata describing the backing state of the network and why it may be in an erroneous state.
-
-        '
-      type: object
-      properties:
-        reported_status:
-          description: Reported status of the network from backing infrastructure.
-          type: string
-          example: INVALID
-        reason:
-          description: 'Reason why the network may be in an erroneous state, reported from backing infrastructure.
-
-            '
-          type: string
-          example: 'Network could not be deployed due to insufficient cloud provider compute instances.
-
-            '
-      additionalProperties: false
-      readOnly: true
-      title: Network State Metadata
-      x-speakeasy-terraform-ignore: true
-    ConfigurationDataPlaneGroupEnvironmentField:
-      description: Environment variable name and value to set for a data-plane group.
-      type: object
-      properties:
-        name:
-          description: 'Name of the environment variable field to set for the data-plane group. Must be prefixed by KONG_.
-
-            '
-          type: string
-          format: ^KONG_[a-zA-Z_]+[a-zA-Z0-9_]*
-          example: KONG_LOG_LEVEL
-          maxLength: 120
-          minLength: 6
-        value:
-          description: Value assigned to the environment variable field for the data-plane group.
-          type: string
-          example: info
-          maxLength: 120
-          minLength: 1
-      required:
-      - name
-      - value
-      title: Configuration Data-Plane Group Environment Field
-    CloudGatewaysStringFieldFilterOverride:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+    NetworkStateFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
       properties:
         eq:
           description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
+          $ref: '#/components/schemas/NetworkState'
         neq:
           description: The field does not match the provided value.
-          type: string
+          $ref: '#/components/schemas/NetworkState'
         oeq:
           description: The field matches any of the provided values.
           type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-      additionalProperties: false
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ConfigurationDataPlaneGroupEnvironment:
-      description: Array of environment variables to set for a data-plane group.
-      type: array
-      items:
-        $ref: '#/components/schemas/ConfigurationDataPlaneGroupEnvironmentField'
-      title: Configuration Data-Plane Group Environment
-    ConfigurationKind:
-      description: '**Pre-release Feature**
-
-        This feature is currently in beta and is subject to change.
-
-
-        Kind of the Cloud Gateway deployment. If serverless.v1 is specified, the following fields
-
-        should be omitted (will be ignored if provided): autoscale, cloud_gateway_network_id, version.'
+    ProviderAccountId:
       type: string
-      default: dedicated.v0
+      format: uuid
+      example: 929b2449-c69f-44c4-b6ad-9ecec6f811ae
+    InstanceTypeName:
+      description: Instance type name to indicate capacity.
+      type: string
       enum:
-      - dedicated.v0
-      - serverless.v1
-      title: ConfigurationKind
+      - small
+      - medium
+      - large
       x-speakeasy-unknown-values: allow
-    NetworksFilterParameters:
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
-        state:
-          $ref: '#/components/schemas/NetworkStateFieldFilter'
-      additionalProperties: false
-      title: NetworksFilterParameters
-    PatchNetworkRequest:
-      x-speakeasy-entity: CloudGatewayNetwork
-      description: Request schema for updating a network.
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/NetworkName'
-      additionalProperties: false
-      title: PatchNetworkRequest
     CreateNetworkRequest:
       x-speakeasy-entity: CloudGatewayNetwork
       description: Request schema for creating a network.
@@ -665,16 +558,147 @@ components:
       - availability_zones
       - cidr_block
       title: CreateNetworkRequest
-    PaginatedMeta:
-      description: returns the pagination information
+    DataPlaneGroupId:
+      description: ID of the data-plane group that represents a deployment target for a set of data-planes.
+      type: string
+      format: uuid
+      example: cbb8872a-1f83-4806-bf69-fdf0b4783c7e
+      readOnly: true
+    NetworkCreateState:
+      description: Initial state for creating a network.
+      type: string
+      default: initializing
+      enum:
+      - initializing
+      - offline
+      title: Network Create State
+      x-speakeasy-unknown-values: allow
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
       type: object
       properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
       required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
+      - number
+      - size
+      - total
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    NetworkCIDRBlock:
+      description: CIDR block configuration for the network.
+      type: string
+      example: 10.0.0.0/8
+      title: Network CIDR Block
+    ConfigurationDataPlaneGroupConfig:
+      description: Object that describes where a data-plane group will be deployed to, along with how many instances.
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/ProviderName'
+        region:
+          $ref: '#/components/schemas/ProviderRegionId'
+        cloud_gateway_network_id:
+          $ref: '#/components/schemas/NetworkId'
+        autoscale:
+          $ref: '#/components/schemas/ConfigurationDataPlaneGroupAutoscale'
+        environment:
+          $ref: '#/components/schemas/ConfigurationDataPlaneGroupEnvironment'
+      additionalProperties: false
+      required:
+      - provider
+      - region
+      title: Configuration Data-Plane Group Config Item
     ConfigurationDataPlaneGroupAutoscaleStatic:
       description: Object that describes the static autoscaling strategy. Deprecated in favor of the autopilot autoscaling strategy. Static autoscaling will be removed in a future version. For serverless.v1 kind of cloud gateways, this field should be omitted.
       type: object
@@ -696,27 +720,96 @@ components:
       - instance_type
       - requested_instances
       title: Configuration Autoscale Static
-    ProviderName:
-      description: Name of cloud provider.
-      type: string
-      example: aws
-      enum:
-      - aws
-      - azure
-      - gcp
-      title: Provider Name
-      x-speakeasy-unknown-values: allow
-    ApiAccess:
-      description: Type of API access data-plane groups will support for a configuration.
-      type: string
-      example: private+public
-      default: private+public
-      enum:
-      - private
-      - public
-      - private+public
-      x-speakeasy-param-computed: true
-      x-speakeasy-unknown-values: allow
+    PatchNetworkRequest:
+      x-speakeasy-entity: CloudGatewayNetwork
+      description: Request schema for updating a network.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/NetworkName'
+      additionalProperties: false
+      title: PatchNetworkRequest
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    ConfigurationDataPlaneGroupEnvironmentField:
+      description: Environment variable name and value to set for a data-plane group.
+      type: object
+      properties:
+        name:
+          description: 'Name of the environment variable field to set for the data-plane group. Must be prefixed by KONG_.
+
+            '
+          type: string
+          format: ^KONG_[a-zA-Z_]+[a-zA-Z0-9_]*
+          example: KONG_LOG_LEVEL
+          maxLength: 120
+          minLength: 6
+        value:
+          description: Value assigned to the environment variable field for the data-plane group.
+          type: string
+          example: info
+          maxLength: 120
+          minLength: 1
+      required:
+      - name
+      - value
+      title: Configuration Data-Plane Group Environment Field
+    NetworkAvailabilityZones:
+      description: List of availability zones that the network is attached to.
+      type: array
+      items:
+        type: string
+      example:
+      - use2-az1
+      - use2-az2
+      - use2-az3
+    NetworkConfigurationReference:
+      $ref: '#/components/schemas/ConfigurationManifest'
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     Network:
       x-speakeasy-entity: CloudGatewayNetwork
       description: Object containing information about a network to be used in configurations.
@@ -799,73 +892,76 @@ components:
       - created_at
       - updated_at
       title: Network
-    NetworkStateFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+    ApiAccess:
+      description: Type of API access data-plane groups will support for a configuration.
+      type: string
+      example: private+public
+      default: private+public
+      enum:
+      - private
+      - public
+      - private+public
+      x-speakeasy-param-computed: true
+      x-speakeasy-unknown-values: allow
+    NetworksFilterParameters:
       type: object
       properties:
-        eq:
-          description: The field exactly matches the provided value.
-          $ref: '#/components/schemas/NetworkState'
-        neq:
-          description: The field does not match the provided value.
-          $ref: '#/components/schemas/NetworkState'
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
+        name:
+          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
+        state:
+          $ref: '#/components/schemas/NetworkStateFieldFilter'
+      additionalProperties: false
+      title: NetworksFilterParameters
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    ProviderName:
+      description: Name of cloud provider.
+      type: string
+      example: aws
+      enum:
+      - aws
+      - azure
+      - gcp
+      title: Provider Name
+      x-speakeasy-unknown-values: allow
+    GatewayVersion:
+      description: Supported gateway version. For serverless.v1 kind of cloud gateways, this field should be omitted.
+      type: string
+      example: '3.2'
+      title: Gateway Version
+    ProviderRegionId:
+      description: Region ID for cloud provider region.
+      type: string
+      example: us-east-2
+      title: Provider Region ID
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -899,12 +995,19 @@ components:
       - rule
       - reason
       - dependents
-    DataPlaneGroupId:
-      description: ID of the data-plane group that represents a deployment target for a set of data-planes.
-      type: string
-      format: uuid
-      example: cbb8872a-1f83-4806-bf69-fdf0b4783c7e
+    NetworkState:
+      description: State of the network.
+      enum:
+      - created
+      - initializing
+      - offline
+      - ready
+      - terminating
+      - terminated
       readOnly: true
+      title: Network State
+      x-speakeasy-terraform-ignore: true
+      x-speakeasy-unknown-values: allow
     ConfigurationDataPlaneGroup:
       description: Object that describes the set of data-plane groups currently pointed to this configuration.
       type: object
@@ -993,158 +1096,42 @@ components:
       - created_at
       - updated_at
       title: Cloud Gateway Configuration Data-Plane Group
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    NetworkName:
-      description: Human-readable name of the network.
-      type: string
-      example: us-east-2 network
-      title: Network Name
-    InstanceTypeName:
-      description: Instance type name to indicate capacity.
-      type: string
-      enum:
-      - small
-      - medium
-      - large
-      x-speakeasy-unknown-values: allow
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    ProviderRegionId:
-      description: Region ID for cloud provider region.
-      type: string
-      example: us-east-2
-      title: Provider Region ID
-    NetworkAvailabilityZones:
-      description: List of availability zones that the network is attached to.
-      type: array
-      items:
-        type: string
-      example:
-      - use2-az1
-      - use2-az2
-      - use2-az3
-    ProviderAccountId:
+    ControlPlaneId:
       type: string
       format: uuid
-      example: 929b2449-c69f-44c4-b6ad-9ecec6f811ae
+      example: 0949471e-b759-45ba-87ab-ee63fb781388
+    CloudGatewaysStringFieldFilterOverride:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+      additionalProperties: false
+    ConfigurationDataPlaneGroupEnvironment:
+      description: Array of environment variables to set for a data-plane group.
+      type: array
+      items:
+        $ref: '#/components/schemas/ConfigurationDataPlaneGroupEnvironmentField'
+      title: Configuration Data-Plane Group Environment
     NetworkId:
       description: The network ID to operate on. For serverless.v1 kind of cloud gateways, this field should be omitted.
       type: string
       format: uuid
       example: 36ae63d3-efd1-4bec-b246-62aa5d3f5695
       x-speakeasy-param-suppress-computed-diff: true
-    NetworkCIDRBlock:
-      description: CIDR block configuration for the network.
-      type: string
-      example: 10.0.0.0/8
-      title: Network CIDR Block
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ConfigurationDataPlaneGroupAutoscale:
-      oneOf:
-      - $ref: '#/components/schemas/ConfigurationDataPlaneGroupAutoscaleStatic'
-      - $ref: '#/components/schemas/ConfigurationDataPlaneGroupAutoscaleAutopilot'
   responses:
     PatchNetworkResponse:
       description: Response format for patching a network.
@@ -1169,36 +1156,6 @@ components:
             - meta
             - data
             title: ListNetworkConfigurationReferencesResponse
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    CloudGatewaysBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    CloudGatewaysForbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    RetrieveNetworkResponse:
-      description: Response format for retrieving a network.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Network'
     Unauthorized:
       description: Unauthorized
       content:
@@ -1225,6 +1182,42 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    CloudGatewaysBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    CreateNetworkResponse:
+      description: Response format for creating a network.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Network'
+    CloudGatewaysForbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     ListNetworksResponse:
       description: A paginated list for a collection of networks.
       content:
@@ -1242,19 +1235,33 @@ components:
             - meta
             - data
             title: ListNetworksResponse
-    CreateNetworkResponse:
-      description: Response format for creating a network.
+    RetrieveNetworkResponse:
+      description: Response format for retrieving a network.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Network'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
   parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
     NetworksFilter:
       name: filter
       description: Filters supported for networks.
@@ -1271,31 +1278,37 @@ components:
       schema:
         $ref: '#/components/schemas/NetworkId'
       x-speakeasy-match: id
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com

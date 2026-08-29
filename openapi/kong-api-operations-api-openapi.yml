@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK API Operations API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs API Operations API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: API Operations
 paths:
@@ -89,205 +76,7 @@ paths:
       tags:
       - API Operations
 components:
-  responses:
-    ApiUnauthorized:
-      description: ApiUnauthorized
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    ApiNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListApiOperationResponse:
-      description: Paginated list of API operations
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiOperation'
-            additionalProperties: false
-            required:
-            - data
-            - meta
-            title: ListApiOperations
-    ApiOperationResponse:
-      description: An API operation
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiOperation'
-  parameters:
-    ApiId:
-      schema:
-        type: string
-        format: uuid
-        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-      name: apiId
-      in: path
-      required: true
-      description: The UUID API identifier
-    ApiOperationFilters:
-      name: filter
-      description: Filters API Operations in the response.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ApiOperationFilterParameters'
-      style: deepObject
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    OperationId:
-      schema:
-        type: string
-        format: uuid
-        example: b42d905a-ed33-46a3-a093-d8f536af9a8a
-      name: operationId
-      in: path
-      required: true
-      description: The API operation identifier
-      x-speakeasy-match: id
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
   schemas:
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    ApiOperationFilterParameters:
-      type: object
-      properties:
-        method:
-          $ref: '#/components/schemas/StringFieldFilter'
-        path:
-          $ref: '#/components/schemas/StringFieldFilter'
-      title: API Operation Filter Parameters
-    Method:
-      description: The HTTP method of an API Operation.
-      type: string
-      enum:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
-      - OPTIONS
-      - HEAD
-      - CONNECT
-      - TRACE
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    ApiOperation:
-      description: An operation linked to an API
-      type: object
-      properties:
-        id:
-          description: The API operation identifier.
-          type: string
-          format: uuid
-          example: b42d905a-ed33-46a3-a093-d8f536af9a8a
-          readOnly: true
-        method:
-          $ref: '#/components/schemas/Method'
-        path:
-          description: The path of the operation.
-          type: string
-          example: /users/*
-        implementation_status:
-          $ref: '#/components/schemas/ApiOperationImplementationStatus'
-      additionalProperties: false
-      required:
-      - id
-      - method
-      - path
-      title: API Operation
     BaseError:
       description: standard error
       type: object
@@ -342,6 +131,74 @@ components:
       - instance
       - detail
       title: Error
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    ApiOperationFilterParameters:
+      type: object
+      properties:
+        method:
+          $ref: '#/components/schemas/StringFieldFilter'
+        path:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: API Operation Filter Parameters
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     ApiOperationImplementationStatus:
       description: The implementation status of the operation.
       type: object
@@ -408,26 +265,182 @@ components:
       - number
       - size
       - total
-    NotFoundError:
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 403
           title:
-            example: Not Found
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
+            example: Forbidden
+    ApiOperation:
+      description: An operation linked to an API
+      type: object
+      properties:
+        id:
+          description: The API operation identifier.
+          type: string
+          format: uuid
+          example: b42d905a-ed33-46a3-a093-d8f536af9a8a
+          readOnly: true
+        method:
+          $ref: '#/components/schemas/Method'
+        path:
+          description: The path of the operation.
+          type: string
+          example: /users/*
+        implementation_status:
+          $ref: '#/components/schemas/ApiOperationImplementationStatus'
+      additionalProperties: false
+      required:
+      - id
+      - method
+      - path
+      title: API Operation
+    Method:
+      description: The HTTP method of an API Operation.
+      type: string
+      enum:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+      - HEAD
+      - CONNECT
+      - TRACE
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+  responses:
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ListApiOperationResponse:
+      description: Paginated list of API operations
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiOperation'
+            additionalProperties: false
+            required:
+            - data
+            - meta
+            title: ListApiOperations
+    ApiOperationResponse:
+      description: An API operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiOperation'
+  parameters:
+    OperationId:
+      schema:
+        type: string
+        format: uuid
+        example: b42d905a-ed33-46a3-a093-d8f536af9a8a
+      name: operationId
+      in: path
+      required: true
+      description: The API operation identifier
+      x-speakeasy-match: id
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    ApiId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiId
+      in: path
+      required: true
+      description: The UUID API identifier
+    ApiOperationFilters:
+      name: filter
+      description: Filters API Operations in the response.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApiOperationFilterParameters'
+      style: deepObject
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com

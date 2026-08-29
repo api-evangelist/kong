@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK App Auth Strategies API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs App Auth Strategies API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: App Auth Strategies
   description: "Application Auth Strategies are sets of plugin configurations that represent how the gateway will perform authentication and authorization for a Product Version. \nCalled “Auth Strategy” for short in the context of portals/applications. \nThe plugins are synced to any Gateway Service that is currently linked or becomes linked to the Product Version.\n"
@@ -182,460 +169,15 @@ paths:
       - App Auth Strategies
 components:
   schemas:
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UpdateAppAuthStrategyRequest:
-      x-speakeasy-entity: ApplicationAuthStrategy
-      description: Request body for updating an Application Auth Strategy
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/AuthStrategyName'
-        display_name:
-          $ref: '#/components/schemas/AuthStrategyDisplayName'
-        labels:
-          $ref: '#/components/schemas/LabelsUpdate'
-        dcr_provider_id:
-          type: string
-          format: uuid
-          nullable: true
-        configs:
-          description: JSON-B object containing the configuration for the OIDC strategy under the key 'openid-connect' or the configuration for the Key Auth strategy under the key 'key-auth'
-          type: object
-          oneOf:
-          - $ref: '#/components/schemas/UpdateAppAuthStrategyRequestOpenIdConnect'
-          - $ref: '#/components/schemas/UpdateAppAuthStrategyRequestKeyAuth'
-      additionalProperties: false
-      title: UpdateAppAuthStrategyRequest
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    AuthStrategyName:
-      description: 'The name of the auth strategy. This is used to identify the auth strategy in the Konnect UI.
-
-        '
-      type: string
-      maxLength: 256
-      minLength: 1
-    ConflictError:
+    BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
+        required:
+        - invalid_parameters
         properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    AppAuthStrategyKeyAuthRequest:
-      description: Request for creating a Key Auth Application Auth Strategy
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/AuthStrategyName'
-        display_name:
-          $ref: '#/components/schemas/AuthStrategyDisplayName'
-        strategy_type:
-          type: string
-          enum:
-          - key_auth
-        configs:
-          description: JSON-B object containing the configuration for the Key Auth strategy
-          type: object
-          additionalProperties: false
-          properties:
-            key-auth:
-              $ref: '#/components/schemas/AppAuthStrategyConfigKeyAuth'
-          required:
-          - key-auth
-        labels:
-          $ref: '#/components/schemas/Labels'
-      additionalProperties: false
-      required:
-      - name
-      - display_name
-      - strategy_type
-      - configs
-      title: AppAuthStrategyKeyAuthRequest
-    AppAuthStrategyConfigKeyAuth:
-      description: "The most basic mode to configure an Application Auth Strategy for an API Product Version. \nUsing this mode will allow developers to generate API keys that will authenticate their application requests. \nOnce authenticated, an application will be granted access to any Product Version it is registered for that is configured for Key Auth.\n"
-      type: object
-      properties:
-        key_names:
-          description: The names of the headers containing the API key. You can specify multiple header names.
-          type: array
-          items:
-            type: string
-            maxLength: 256
-          maxItems: 10
-          minItems: 1
-        ttl:
-          description: Default maximum Time-To-Live for keys created under this strategy.
-          type: object
-          properties:
-            value:
-              type: integer
-              minimum: 1
-            unit:
-              type: string
-              enum:
-              - days
-              - weeks
-              - years
-              x-speakeasy-unknown-values: allow
-          required:
-          - value
-          - unit
-      additionalProperties: false
-      title: AppAuthStrategyConfigKeyAuth
-    ListAppAuthStrategiesResponse:
-      description: A paginated list response for a collection of Application Auth Strategies
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/AppAuthStrategy'
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-      additionalProperties: false
-      required:
-      - data
-      - meta
-      title: ListAppAuthStrategiesResponse
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    AuthStrategyDisplayName:
-      description: 'The display name of the Auth strategy. This is used to identify the Auth strategy in the Portal UI.
-
-        '
-      type: string
-      maxLength: 256
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    AppAuthStrategy:
-      x-speakeasy-entity: ApplicationAuthStrategy
-      description: A set of plugin configurations that represent how the gateway will perform authentication and authorization for a Product Version. Called “Auth Strategy” for short in the context of portals/applications. The plugins are synced to any Gateway Service that is currently linked or becomes linked to the Product Version.
-      type: object
-      discriminator:
-        propertyName: strategy_type
-        mapping:
-          key_auth: '#/components/schemas/AppAuthStrategyKeyAuthResponse'
-          openid_connect: '#/components/schemas/AppAuthStrategyOpenIDConnectResponse'
-      oneOf:
-      - $ref: '#/components/schemas/AppAuthStrategyKeyAuthResponse'
-      - $ref: '#/components/schemas/AppAuthStrategyOpenIDConnectResponse'
-      required:
-      - strategy_type
-      title: AppAuthStrategy
-    PartialAppAuthStrategyConfigKeyAuth:
-      description: 'Key Auth configuration for updating an Application Auth Strategy.
-
-        The ttl field can be set to null to unset the Time-To-Live.
-
-        '
-      type: object
-      properties:
-        key_names:
-          description: The names of the headers containing the API key. You can specify multiple header names.
-          type: array
-          items:
-            type: string
-            maxLength: 256
-          maxItems: 10
-          minItems: 1
-        ttl:
-          description: Default maximum Time-To-Live for keys created under this strategy. Set to null to unset.
-          type: object
-          nullable: true
-          properties:
-            value:
-              type: integer
-              minimum: 1
-            unit:
-              type: string
-              enum:
-              - days
-              - weeks
-              - years
-              x-speakeasy-unknown-values: allow
-          required:
-          - value
-          - unit
-      additionalProperties: false
-      title: PartialAppAuthStrategyConfigKeyAuth
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    PartialAppAuthStrategyConfigOpenIDConnect:
-      description: "A more advanced mode to configure an API Product Version’s Application Auth Strategy. \nUsing this mode will allow developers to use API credentials issued from an external IdP that will authenticate their application requests. \nOnce authenticated, an application will be granted access to any Product Version it is registered for that is configured for the same Auth Strategy. \nAn OIDC strategy may be used in conjunction with a DCR provider to automatically create the IdP application.\n"
-      type: object
-      properties:
-        issuer:
-          type: string
-          format: url
-          maxLength: 256
-        credential_claim:
-          type: array
-          items:
-            type: string
-            maxLength: 128
-          maxItems: 10
-        scopes:
-          type: array
-          items:
-            type: string
-            maxLength: 128
-          maxItems: 50
-        auth_methods:
-          type: array
-          items:
-            type: string
-            maxLength: 64
-          maxItems: 10
-      additionalProperties: true
-      title: PartialAppAuthStrategyConfigOpenIDConnect
-    LabelsUpdate:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-        nullable: true
-      maxProperties: 50
-      nullable: true
-      writeOnly: true
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    GetAppAuthStrategyResponse:
-      $ref: '#/components/schemas/AppAuthStrategy'
-    CreateAppAuthStrategyRequest:
-      x-speakeasy-entity: ApplicationAuthStrategy
-      description: Request body for creating an Application Auth Strategy
-      type: object
-      discriminator:
-        propertyName: strategy_type
-        mapping:
-          key_auth: '#/components/schemas/AppAuthStrategyKeyAuthRequest'
-          openid_connect: '#/components/schemas/AppAuthStrategyOpenIDConnectRequest'
-      oneOf:
-      - $ref: '#/components/schemas/AppAuthStrategyKeyAuthRequest'
-      - $ref: '#/components/schemas/AppAuthStrategyOpenIDConnectRequest'
-      required:
-      - strategy_type
-      title: CreateAppAuthStrategyRequest
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    DcrProviderDisplayName:
-      description: 'The display name of the DCR provider. This is used to identify the DCR provider in the Portal UI.
-
-        '
-      type: string
-      maxLength: 256
-      minLength: 1
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     BaseError:
       description: standard error
       type: object
@@ -690,6 +232,367 @@ components:
       - instance
       - detail
       title: Error
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    AppAuthStrategy:
+      x-speakeasy-entity: ApplicationAuthStrategy
+      description: A set of plugin configurations that represent how the gateway will perform authentication and authorization for a Product Version. Called “Auth Strategy” for short in the context of portals/applications. The plugins are synced to any Gateway Service that is currently linked or becomes linked to the Product Version.
+      type: object
+      discriminator:
+        propertyName: strategy_type
+        mapping:
+          key_auth: '#/components/schemas/AppAuthStrategyKeyAuthResponse'
+          openid_connect: '#/components/schemas/AppAuthStrategyOpenIDConnectResponse'
+      oneOf:
+      - $ref: '#/components/schemas/AppAuthStrategyKeyAuthResponse'
+      - $ref: '#/components/schemas/AppAuthStrategyOpenIDConnectResponse'
+      required:
+      - strategy_type
+      title: AppAuthStrategy
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CreateAppAuthStrategyResponse:
+      $ref: '#/components/schemas/AppAuthStrategy'
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    AppAuthStrategyKeyAuthRequest:
+      description: Request for creating a Key Auth Application Auth Strategy
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/AuthStrategyName'
+        display_name:
+          $ref: '#/components/schemas/AuthStrategyDisplayName'
+        strategy_type:
+          type: string
+          enum:
+          - key_auth
+        configs:
+          description: JSON-B object containing the configuration for the Key Auth strategy
+          type: object
+          additionalProperties: false
+          properties:
+            key-auth:
+              $ref: '#/components/schemas/AppAuthStrategyConfigKeyAuth'
+          required:
+          - key-auth
+        labels:
+          $ref: '#/components/schemas/Labels'
+      additionalProperties: false
+      required:
+      - name
+      - display_name
+      - strategy_type
+      - configs
+      title: AppAuthStrategyKeyAuthRequest
+    AppAuthStrategyOpenIDConnectRequest:
+      description: Payload for creating an OIDC Application Auth Strategy
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/AuthStrategyName'
+        display_name:
+          $ref: '#/components/schemas/AuthStrategyDisplayName'
+        strategy_type:
+          type: string
+          enum:
+          - openid_connect
+        configs:
+          description: JSON-B object containing the configuration for the OIDC strategy
+          type: object
+          additionalProperties: false
+          properties:
+            openid-connect:
+              $ref: '#/components/schemas/AppAuthStrategyConfigOpenIDConnect'
+          required:
+          - openid-connect
+        dcr_provider_id:
+          type: string
+          format: uuid
+          nullable: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+      additionalProperties: false
+      required:
+      - name
+      - display_name
+      - strategy_type
+      - configs
+      title: AppAuthStrategyOpenIDConnectRequest
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    GetAppAuthStrategyResponse:
+      $ref: '#/components/schemas/AppAuthStrategy'
+    UpdateAppAuthStrategyRequestOpenIdConnect:
+      type: object
+      properties:
+        openid-connect:
+          $ref: '#/components/schemas/PartialAppAuthStrategyConfigOpenIDConnect'
+      additionalProperties: false
+      required:
+      - openid-connect
+    AppAuthStrategyConfigOpenIDConnect:
+      description: "A more advanced mode to configure an API Product Version’s Application Auth Strategy. \nUsing this mode will allow developers to use API credentials issued from an external IdP that will authenticate their application requests. \nOnce authenticated, an application will be granted access to any Product Version it is registered for that is configured for the same Auth Strategy. \nAn OIDC strategy may be used in conjunction with a DCR provider to automatically create the IdP application.\n"
+      type: object
+      properties:
+        issuer:
+          type: string
+          format: url
+          maxLength: 256
+        credential_claim:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+          maxItems: 10
+        scopes:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+          maxItems: 50
+        auth_methods:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          maxItems: 10
+      additionalProperties: true
+      required:
+      - issuer
+      - credential_claim
+      - scopes
+      - auth_methods
+      title: AppAuthStrategyConfigOpenIDConnect
+    LabelsUpdate:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+        nullable: true
+      maxProperties: 50
+      nullable: true
+      writeOnly: true
+    UpdateAppAuthStrategyRequestKeyAuth:
+      type: object
+      properties:
+        key-auth:
+          $ref: '#/components/schemas/PartialAppAuthStrategyConfigKeyAuth'
+      additionalProperties: false
+      required:
+      - key-auth
+    AppAuthStrategyConfigKeyAuth:
+      description: "The most basic mode to configure an Application Auth Strategy for an API Product Version. \nUsing this mode will allow developers to generate API keys that will authenticate their application requests. \nOnce authenticated, an application will be granted access to any Product Version it is registered for that is configured for Key Auth.\n"
+      type: object
+      properties:
+        key_names:
+          description: The names of the headers containing the API key. You can specify multiple header names.
+          type: array
+          items:
+            type: string
+            maxLength: 256
+          maxItems: 10
+          minItems: 1
+        ttl:
+          description: Default maximum Time-To-Live for keys created under this strategy.
+          type: object
+          properties:
+            value:
+              type: integer
+              minimum: 1
+            unit:
+              type: string
+              enum:
+              - days
+              - weeks
+              - years
+              x-speakeasy-unknown-values: allow
+          required:
+          - value
+          - unit
+      additionalProperties: false
+      title: AppAuthStrategyConfigKeyAuth
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     AppAuthStrategyKeyAuthResponse:
       description: Response payload from creating or updating a Key Auth Application Auth Strategy
       type: object
@@ -769,6 +672,231 @@ components:
       - created_at
       - updated_at
       title: AppAuthStrategyKeyAuthResponse
+    PartialAppAuthStrategyConfigKeyAuth:
+      description: 'Key Auth configuration for updating an Application Auth Strategy.
+
+        The ttl field can be set to null to unset the Time-To-Live.
+
+        '
+      type: object
+      properties:
+        key_names:
+          description: The names of the headers containing the API key. You can specify multiple header names.
+          type: array
+          items:
+            type: string
+            maxLength: 256
+          maxItems: 10
+          minItems: 1
+        ttl:
+          description: Default maximum Time-To-Live for keys created under this strategy. Set to null to unset.
+          type: object
+          nullable: true
+          properties:
+            value:
+              type: integer
+              minimum: 1
+            unit:
+              type: string
+              enum:
+              - days
+              - weeks
+              - years
+              x-speakeasy-unknown-values: allow
+          required:
+          - value
+          - unit
+      additionalProperties: false
+      title: PartialAppAuthStrategyConfigKeyAuth
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    AuthStrategyName:
+      description: 'The name of the auth strategy. This is used to identify the auth strategy in the Konnect UI.
+
+        '
+      type: string
+      maxLength: 256
+      minLength: 1
+    UpdateAppAuthStrategyResponse:
+      $ref: '#/components/schemas/AppAuthStrategy'
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    DcrProviderDisplayName:
+      description: 'The display name of the DCR provider. This is used to identify the DCR provider in the Portal UI.
+
+        '
+      type: string
+      maxLength: 256
+      minLength: 1
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CreateAppAuthStrategyRequest:
+      x-speakeasy-entity: ApplicationAuthStrategy
+      description: Request body for creating an Application Auth Strategy
+      type: object
+      discriminator:
+        propertyName: strategy_type
+        mapping:
+          key_auth: '#/components/schemas/AppAuthStrategyKeyAuthRequest'
+          openid_connect: '#/components/schemas/AppAuthStrategyOpenIDConnectRequest'
+      oneOf:
+      - $ref: '#/components/schemas/AppAuthStrategyKeyAuthRequest'
+      - $ref: '#/components/schemas/AppAuthStrategyOpenIDConnectRequest'
+      required:
+      - strategy_type
+      title: CreateAppAuthStrategyRequest
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    PartialAppAuthStrategyConfigOpenIDConnect:
+      description: "A more advanced mode to configure an API Product Version’s Application Auth Strategy. \nUsing this mode will allow developers to use API credentials issued from an external IdP that will authenticate their application requests. \nOnce authenticated, an application will be granted access to any Product Version it is registered for that is configured for the same Auth Strategy. \nAn OIDC strategy may be used in conjunction with a DCR provider to automatically create the IdP application.\n"
+      type: object
+      properties:
+        issuer:
+          type: string
+          format: url
+          maxLength: 256
+        credential_claim:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+          maxItems: 10
+        scopes:
+          type: array
+          items:
+            type: string
+            maxLength: 128
+          maxItems: 50
+        auth_methods:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          maxItems: 10
+      additionalProperties: true
+      title: PartialAppAuthStrategyConfigOpenIDConnect
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    AuthStrategyDisplayName:
+      description: 'The display name of the Auth strategy. This is used to identify the Auth strategy in the Portal UI.
+
+        '
+      type: string
+      maxLength: 256
+    ListAppAuthStrategiesResponse:
+      description: A paginated list response for a collection of Application Auth Strategies
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppAuthStrategy'
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+      additionalProperties: false
+      required:
+      - data
+      - meta
+      title: ListAppAuthStrategiesResponse
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -802,131 +930,29 @@ components:
       - rule
       - reason
       - dependents
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    UpdateAppAuthStrategyRequestOpenIdConnect:
-      type: object
-      properties:
-        openid-connect:
-          $ref: '#/components/schemas/PartialAppAuthStrategyConfigOpenIDConnect'
-      additionalProperties: false
-      required:
-      - openid-connect
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    UpdateAppAuthStrategyRequestKeyAuth:
-      type: object
-      properties:
-        key-auth:
-          $ref: '#/components/schemas/PartialAppAuthStrategyConfigKeyAuth'
-      additionalProperties: false
-      required:
-      - key-auth
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    CreateAppAuthStrategyResponse:
-      $ref: '#/components/schemas/AppAuthStrategy'
-    UpdateAppAuthStrategyResponse:
-      $ref: '#/components/schemas/AppAuthStrategy'
-    AppAuthStrategyOpenIDConnectRequest:
-      description: Payload for creating an OIDC Application Auth Strategy
+    UpdateAppAuthStrategyRequest:
+      x-speakeasy-entity: ApplicationAuthStrategy
+      description: Request body for updating an Application Auth Strategy
       type: object
       properties:
         name:
           $ref: '#/components/schemas/AuthStrategyName'
         display_name:
           $ref: '#/components/schemas/AuthStrategyDisplayName'
-        strategy_type:
-          type: string
-          enum:
-          - openid_connect
-        configs:
-          description: JSON-B object containing the configuration for the OIDC strategy
-          type: object
-          additionalProperties: false
-          properties:
-            openid-connect:
-              $ref: '#/components/schemas/AppAuthStrategyConfigOpenIDConnect'
-          required:
-          - openid-connect
+        labels:
+          $ref: '#/components/schemas/LabelsUpdate'
         dcr_provider_id:
           type: string
           format: uuid
           nullable: true
-        labels:
-          $ref: '#/components/schemas/Labels'
+        configs:
+          description: JSON-B object containing the configuration for the OIDC strategy under the key 'openid-connect' or the configuration for the Key Auth strategy under the key 'key-auth'
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/UpdateAppAuthStrategyRequestOpenIdConnect'
+          - $ref: '#/components/schemas/UpdateAppAuthStrategyRequestKeyAuth'
       additionalProperties: false
-      required:
-      - name
-      - display_name
-      - strategy_type
-      - configs
-      title: AppAuthStrategyOpenIDConnectRequest
+      title: UpdateAppAuthStrategyRequest
     AppAuthStrategyOpenIDConnectResponse:
       description: Response payload from creating an OIDC Application Auth Strategy
       type: object
@@ -1007,99 +1033,49 @@ components:
       - created_at
       - updated_at
       title: AppAuthStrategyOpenIDConnectResponse
-    AppAuthStrategyConfigOpenIDConnect:
-      description: "A more advanced mode to configure an API Product Version’s Application Auth Strategy. \nUsing this mode will allow developers to use API credentials issued from an external IdP that will authenticate their application requests. \nOnce authenticated, an application will be granted access to any Product Version it is registered for that is configured for the same Auth Strategy. \nAn OIDC strategy may be used in conjunction with a DCR provider to automatically create the IdP application.\n"
-      type: object
-      properties:
-        issuer:
-          type: string
-          format: url
-          maxLength: 256
-        credential_claim:
-          type: array
-          items:
-            type: string
-            maxLength: 128
-          maxItems: 10
-        scopes:
-          type: array
-          items:
-            type: string
-            maxLength: 128
-          maxItems: 50
-        auth_methods:
-          type: array
-          items:
-            type: string
-            maxLength: 64
-          maxItems: 10
-      additionalProperties: true
-      required:
-      - issuer
-      - credential_claim
-      - scopes
-      - auth_methods
-      title: AppAuthStrategyConfigOpenIDConnect
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-  responses:
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    ListAppAuthStrategies:
-      description: A paginated list response for a collection of application auth strategies.
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+  requestBodies:
+    UpdateAppAuthStrategy:
+      required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ListAppAuthStrategiesResponse'
+            $ref: '#/components/schemas/UpdateAppAuthStrategyRequest'
+    CreateAppAuthStrategy:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateAppAuthStrategyRequest'
+  responses:
     Unauthorized:
       description: Unauthorized
       content:
@@ -1126,61 +1102,55 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    CreateAppAuthStrategy:
-      description: A response containing the newly created application auth strategy object.
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    ListAppAuthStrategies:
+      description: A paginated list response for a collection of application auth strategies.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreateAppAuthStrategyResponse'
-    GetAppAuthStrategy:
-      description: A response containing a single application auth strategy object.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GetAppAuthStrategyResponse'
+            $ref: '#/components/schemas/ListAppAuthStrategiesResponse'
     Forbidden:
       description: Forbidden
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
+    GetAppAuthStrategy:
+      description: A response containing a single application auth strategy object.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GetAppAuthStrategyResponse'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
     UpdateAppAuthStrategy:
       description: A response containing a single updated application auth strategy object.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/UpdateAppAuthStrategyResponse'
-  requestBodies:
-    UpdateAppAuthStrategy:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/UpdateAppAuthStrategyRequest'
     CreateAppAuthStrategy:
-      required: true
+      description: A response containing the newly created application auth strategy object.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreateAppAuthStrategyRequest'
+            $ref: '#/components/schemas/CreateAppAuthStrategyResponse'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    SortAppAuthStrategies:
-      name: sort
-      description: "Sorts a collection of application auth strategies. Supported sort attributes are:\n\n\n  - created_at\n  - updated_at\n  - strategy_type\n  - name\n  - display_name\n  - dcr_provider_id\n  - dcr_provider_name\n  - dcr_provider_type\n"
-      in: query
-      required: false
-      schema:
-        type: string
     PageNumber:
       name: page[number]
       description: Determines which page of the entities to retrieve.
@@ -1191,6 +1161,13 @@ components:
         type: integer
         example: 1
       x-speakeasy-terraform-ignore: true
+    SortAppAuthStrategies:
+      name: sort
+      description: "Sorts a collection of application auth strategies. Supported sort attributes are:\n\n\n  - created_at\n  - updated_at\n  - strategy_type\n  - name\n  - display_name\n  - dcr_provider_id\n  - dcr_provider_name\n  - dcr_provider_type\n"
+      in: query
+      required: false
+      schema:
+        type: string
     AuthStrategyId:
       name: authStrategyId
       description: Application auth strategy identifier
@@ -1199,11 +1176,47 @@ components:
       schema:
         $ref: '#/components/schemas/UUID'
       x-speakeasy-match: id
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com

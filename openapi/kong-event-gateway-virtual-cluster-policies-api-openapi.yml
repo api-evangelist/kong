@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK Event Gateway Virtual Cluster Policies API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs Event Gateway Virtual Cluster Policies API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: Event Gateway Virtual Cluster Policies
   description: 'Policies control how Kafka protocol traffic is modified between the client and the backend cluster.
@@ -259,343 +246,77 @@ paths:
       tags:
       - Event Gateway Virtual Cluster Policies
 components:
-  schemas:
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    EventGatewayACLRuleResourceNamesStaticArray:
-      description: A static list of resource name globs to match against resources when applying an ACL policy.
-      type: array
-      items:
-        $ref: '#/components/schemas/EventGatewayACLResourceName'
-      example:
-      - match: orders-*
-      - match: payments-*
-      maxItems: 50
-    EventGatewayPolicyPatch:
-      description: The schema of the policy to patch it.
-      properties:
-        name:
-          description: A unique user-defined name of the policy.
-          type: string
-          maxLength: 255
-          minLength: 1
-          nullable: true
-          pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the policy.
-          type: string
-          maxLength: 512
-          nullable: true
-        enabled:
-          description: Whether the policy is enabled.
-          type: boolean
-        condition:
-          description: A string containing the boolean expression that determines whether the policy is applied.
-          type: string
-          example: context.topic.name.endsWith('my_suffix')
-          maxLength: 1000
-          nullable: true
-          x-expression:
-            type: boolean
-        labels:
-          $ref: '#/components/schemas/Labels'
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
+  parameters:
+    EventGatewayPolicyListFilter:
+      schema:
+        type: object
+        properties:
+          parent_policy_id:
+            description: The ID of the parent policy.
+            type: string
+      in: query
+      name: filter
+      description: Filter policies returned in the response.
+      required: false
+      style: deepObject
+    gatewayId:
+      name: gatewayId
+      in: path
+      required: true
+      schema:
         type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    ForbiddenError:
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your Gateway.
+    policyId:
+      name: policyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of the policy.
+    virtualClusterId:
+      schema:
+        type: string
+        format: uuid
+      name: virtualClusterId
+      in: path
+      required: true
+      description: The ID of the Virtual Cluster.
+    EventGatewayPolicyAfter:
+      schema:
+        type: string
+        format: uuid
+      in: query
+      name: after
+      x-speakeasy-terraform-ignore: true
+      description: 'Determines the id of the existing policy the new policy should be inserted after. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
+
+        '
+      required: false
+    EventGatewayPolicyBefore:
+      schema:
+        type: string
+        format: uuid
+      in: query
+      name: before
+      x-speakeasy-terraform-ignore: true
+      description: 'Determines the id of the existing policy the new policy should be inserted before. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
+
+        '
+      required: false
+  schemas:
+    BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
+        required:
+        - invalid_parameters
         properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    EventGatewayPolicyReference:
-      description: The unique identifier of the policy.
-      type: string
-      format: uuid
-    EventGatewayACLRule:
-      description: A Kafka ACL rule to apply to virtual cluster traffic
-      type: object
-      properties:
-        resource_type:
-          description: This rule applies to access only for type of resource
-          type: string
-          enum:
-          - topic
-          - group
-          - transactional_id
-          - cluster
-          x-speakeasy-unknown-values: allow
-        action:
-          description: How to handle the request if the rule matches
-          type: string
-          enum:
-          - allow
-          - deny
-          x-speakeasy-unknown-values: allow
-        operations:
-          description: Types of Kafka operations to match against. Note that not every operation can apply to every resource type.
-          type: array
-          items:
-            $ref: '#/components/schemas/EventGatewayACLOperation'
-        resource_names:
-          description: If any of these entries match, the resource name matches for this rule. A maximum of 50 entries are allowed.
-          oneOf:
-          - $ref: '#/components/schemas/EventGatewayACLRuleResourceNamesStaticArray'
-          - $ref: '#/components/schemas/EventGatewayACLRuleResourceNamesDynamicArray'
-      required:
-      - resource_type
-      - action
-      - operations
-      - resource_names
-    EventGatewayACLOperation:
-      description: An Event Gateway operation to match against in an ACL rule.
-      type: object
-      properties:
-        name:
-          type: string
-          enum:
-          - all
-          - alter
-          - alter_configs
-          - create
-          - delete
-          - describe
-          - describe_configs
-          - idempotent_write
-          - read
-          - write
-          x-speakeasy-unknown-values: allow
-      required:
-      - name
-    EventGatewayACLRuleResourceNamesDynamicArray:
-      description: 'This expression should evaluate to an array of glob patterns,
-
-        equivalent to the `match` values in the static array form of `resource_names`.
-
-
-        **Requires a minimum runtime version of `1.1`**.'
-      type: string
-      example: context.auth.token.claims["topics"]
-      x-expression:
-        type: array
-        items:
-          type: string
-        fields:
-        - name: context.auth.principal.name
-          type: string
-          description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
-        - name: context.auth.type
-          type: string
-          description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
-
-            '
-        - name: context.auth.token.claims
-          type: object
-          description: All claims from the JWT token. Only populated for sasl_oauth_bearer authentication. Claims can be strings, numbers, booleans, arrays or nested JSON objects.
-      x-min-runtime-version: '1.1'
-    EventGatewayPolicy:
-      description: A policy associated with an Event Gateway.
-      type: object
-      properties:
-        type:
-          description: The type name of the policy.
-          type: string
-          maxLength: 255
-          minLength: 1
-        name:
-          description: A unique user-defined name of the policy.
-          type: string
-          maxLength: 255
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the policy.
-          type: string
-          default: ''
-          maxLength: 512
-        enabled:
-          description: Whether the policy is enabled.
-          type: boolean
-          default: true
-        labels:
-          $ref: '#/components/schemas/Labels'
-        id:
-          description: The unique identifier of the policy.
-          type: string
-          format: uuid
-        config:
-          description: The configuration of the policy.
-          type: object
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        parent_policy_id:
-          description: The unique identifier of the parent policy, if any.
-          type: string
-          format: uuid
-          nullable: true
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        condition:
-          description: A string containing the boolean expression that determines whether the policy is applied.
-          type: string
-          default: ''
-          maxLength: 1000
-          x-expression:
-            type: boolean
-            fields: []
-      required:
-      - type
-      - id
-      - created_at
-      - updated_at
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     BaseError:
       description: standard error
       type: object
@@ -650,7 +371,7 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameterDependentItem:
+    InvalidParameterMinimumLength:
       type: object
       properties:
         field:
@@ -661,121 +382,55 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - dependent_fields
-          nullable: true
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
           readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
       additionalProperties: false
       required:
       - field
-      - rule
       - reason
-      - dependents
-    InvalidRules:
-      description: invalid parameters rules
+      - rule
+      - minimum
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
       type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
       readOnly: true
-      x-speakeasy-unknown-values: allow
-    InvalidParameters:
-      description: invalid parameters
+      x-speakeasy-param-suppress-computed-diff: true
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    EventGatewayACLRuleResourceNamesStaticArray:
+      description: A static list of resource name globs to match against resources when applying an ACL policy.
       type: array
       items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    EventGatewayACLResourceName:
-      description: An Event Gateway resource name to match against in an ACL rule.
-      type: object
-      properties:
-        match:
-          description: 'Currently supported are exact matches and globs.
-
-            All `*` characters are interpreted as globs, i.e. they match zero or more of any character.
-
-            '
-          type: string
-          format: glob
-      required:
-      - match
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    EventGatewayClusterPolicyModify:
-      description: The typed schema of the cluster policy to modify it.
-      discriminator:
-        propertyName: type
-        mapping:
-          acls: '#/components/schemas/EventGatewayACLsPolicy'
-      oneOf:
-      - $ref: '#/components/schemas/EventGatewayACLsPolicy'
+        $ref: '#/components/schemas/EventGatewayACLResourceName'
+      example:
+      - match: orders-*
+      - match: payments-*
+      maxItems: 50
     EventGatewayACLsPolicy:
       description: Apply Kafka ACLs to virtual cluster traffic.
       type: object
@@ -827,29 +482,75 @@ components:
       - type
       - config
       title: ACL
-    EventGatewayACLPolicyConfig:
-      description: Apply ACLs to virtual cluster traffic.
+    EventGatewayPolicy:
+      description: A policy associated with an Event Gateway.
       type: object
       properties:
-        rules:
-          description: Every ACL rule in this list applies independently.
-          type: array
-          items:
-            $ref: '#/components/schemas/EventGatewayACLRule'
-          minItems: 1
+        type:
+          description: The type name of the policy.
+          type: string
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        id:
+          description: The unique identifier of the policy.
+          type: string
+          format: uuid
+        config:
+          description: The configuration of the policy.
+          type: object
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        parent_policy_id:
+          description: The unique identifier of the parent policy, if any.
+          type: string
+          format: uuid
+          nullable: true
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        condition:
+          description: A string containing the boolean expression that determines whether the policy is applied.
+          type: string
+          default: ''
+          maxLength: 1000
+          x-expression:
+            type: boolean
+            fields: []
       required:
-      - rules
-    MoveEventGatewayPolicy:
-      description: Defines the position of a policy relative to the policy chain.
-      type: object
-      properties:
-        index:
-          description: The position of the policy relative to the policy chain.
-          type: integer
-          example: 2
-          minimum: 0
-      required:
-      - index
+      - type
+      - id
+      - created_at
+      - updated_at
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -865,38 +566,354 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
+    EventGatewayACLOperation:
+      description: An Event Gateway operation to match against in an ACL rule.
+      type: object
+      properties:
+        name:
+          type: string
+          enum:
+          - all
+          - alter
+          - alter_configs
+          - create
+          - delete
+          - describe
+          - describe_configs
+          - idempotent_write
+          - read
+          - write
+          x-speakeasy-unknown-values: allow
+      required:
+      - name
+    EventGatewayACLRuleResourceNamesDynamicArray:
+      description: 'This expression should evaluate to an array of glob patterns,
+
+        equivalent to the `match` values in the static array form of `resource_names`.
+
+
+        **Requires a minimum runtime version of `1.1`**.'
+      type: string
+      example: context.auth.token.claims["topics"]
+      x-expression:
+        type: array
+        items:
+          type: string
+        fields:
+        - name: context.auth.principal.name
+          type: string
+          description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
+        - name: context.auth.type
+          type: string
+          description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
+
+            '
+        - name: context.auth.token.claims
+          type: object
+          description: All claims from the JWT token. Only populated for sasl_oauth_bearer authentication. Claims can be strings, numbers, booleans, arrays or nested JSON objects.
+      x-min-runtime-version: '1.1'
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    EventGatewayPolicyPatch:
+      description: The schema of the policy to patch it.
+      properties:
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          minLength: 1
+          nullable: true
+          pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          maxLength: 512
+          nullable: true
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+        condition:
+          description: A string containing the boolean expression that determines whether the policy is applied.
+          type: string
+          example: context.topic.name.endsWith('my_suffix')
+          maxLength: 1000
+          nullable: true
+          x-expression:
+            type: boolean
+        labels:
+          $ref: '#/components/schemas/Labels'
+    MoveEventGatewayPolicy:
+      description: Defines the position of a policy relative to the policy chain.
+      type: object
+      properties:
+        index:
+          description: The position of the policy relative to the policy chain.
+          type: integer
+          example: 2
+          minimum: 0
+      required:
+      - index
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    EventGatewayClusterPolicyModify:
+      description: The typed schema of the cluster policy to modify it.
+      discriminator:
+        propertyName: type
+        mapping:
+          acls: '#/components/schemas/EventGatewayACLsPolicy'
+      oneOf:
+      - $ref: '#/components/schemas/EventGatewayACLsPolicy'
+    EventGatewayPolicyReference:
+      description: The unique identifier of the policy.
+      type: string
+      format: uuid
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    EventGatewayACLPolicyConfig:
+      description: Apply ACLs to virtual cluster traffic.
+      type: object
+      properties:
+        rules:
+          description: Every ACL rule in this list applies independently.
+          type: array
+          items:
+            $ref: '#/components/schemas/EventGatewayACLRule'
+          minItems: 1
+      required:
+      - rules
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    EventGatewayACLResourceName:
+      description: An Event Gateway resource name to match against in an ACL rule.
+      type: object
+      properties:
+        match:
+          description: 'Currently supported are exact matches and globs.
+
+            All `*` characters are interpreted as globs, i.e. they match zero or more of any character.
+
+            '
+          type: string
+          format: glob
+      required:
+      - match
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    EventGatewayACLRule:
+      description: A Kafka ACL rule to apply to virtual cluster traffic
+      type: object
+      properties:
+        resource_type:
+          description: This rule applies to access only for type of resource
+          type: string
+          enum:
+          - topic
+          - group
+          - transactional_id
+          - cluster
+          x-speakeasy-unknown-values: allow
+        action:
+          description: How to handle the request if the rule matches
+          type: string
+          enum:
+          - allow
+          - deny
+          x-speakeasy-unknown-values: allow
+        operations:
+          description: Types of Kafka operations to match against. Note that not every operation can apply to every resource type.
+          type: array
+          items:
+            $ref: '#/components/schemas/EventGatewayACLOperation'
+        resource_names:
+          description: If any of these entries match, the resource name matches for this rule. A maximum of 50 entries are allowed.
+          oneOf:
+          - $ref: '#/components/schemas/EventGatewayACLRuleResourceNamesStaticArray'
+          - $ref: '#/components/schemas/EventGatewayACLRuleResourceNamesDynamicArray'
+      required:
+      - resource_type
+      - action
+      - operations
+      - resource_names
   responses:
-    EventGatewayPolicyChainResponse:
-      description: A response containing the list of policies in order of execution.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              policies:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayPolicyReference'
-            required:
-            - policies
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -923,6 +940,18 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     ListClusterPoliciesResponse:
       description: 'A paginated list response for a collection of cluster-level policies associated with an Event Gateway virtual
 
@@ -935,80 +964,26 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/EventGatewayPolicy'
-  parameters:
-    EventGatewayPolicyBefore:
-      schema:
-        type: string
-        format: uuid
-      in: query
-      name: before
-      x-speakeasy-terraform-ignore: true
-      description: 'Determines the id of the existing policy the new policy should be inserted before. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
-
-        '
-      required: false
-    gatewayId:
-      name: gatewayId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your Gateway.
-    EventGatewayPolicyListFilter:
-      schema:
-        type: object
-        properties:
-          parent_policy_id:
-            description: The ID of the parent policy.
-            type: string
-      in: query
-      name: filter
-      description: Filter policies returned in the response.
-      required: false
-      style: deepObject
-    policyId:
-      name: policyId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of the policy.
-    EventGatewayPolicyAfter:
-      schema:
-        type: string
-        format: uuid
-      in: query
-      name: after
-      x-speakeasy-terraform-ignore: true
-      description: 'Determines the id of the existing policy the new policy should be inserted after. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
-
-        '
-      required: false
-    virtualClusterId:
-      schema:
-        type: string
-        format: uuid
-      name: virtualClusterId
-      in: path
-      required: true
-      description: The ID of the Virtual Cluster.
+    EventGatewayPolicyChainResponse:
+      description: A response containing the list of policies in order of execution.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              policies:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayPolicyReference'
+            required:
+            - policies
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
   requestBodies:
-    PatchEventGatewayPolicyRequest:
-      description: The request schema for patching a policy.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EventGatewayPolicyPatch'
-    UpdateEventGatewayClusterPolicyRequest:
-      description: The request schema for updating a cluster-level policy.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EventGatewayClusterPolicyModify'
     UpdateEventGatewayPolicyChainRequest:
       description: The request schema for updating the policy chain.
       content:
@@ -1028,11 +1003,49 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/EventGatewayClusterPolicyModify'
+    PatchEventGatewayPolicyRequest:
+      description: The request schema for patching a policy.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayPolicyPatch'
+    UpdateEventGatewayClusterPolicyRequest:
+      description: The request schema for updating a cluster-level policy.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayClusterPolicyModify'
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com

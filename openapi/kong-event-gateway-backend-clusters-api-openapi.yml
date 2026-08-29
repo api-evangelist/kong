@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK Event Gateway Backend Clusters API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs Event Gateway Backend Clusters API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: Event Gateway Backend Clusters
   description: 'A backend cluster is an abstraction of a real Kafka cluster. It stores the connection and configuration details required for Kong Event Gateway to proxy traffic to Kafka.
@@ -166,347 +153,15 @@ paths:
       - Event Gateway Backend Clusters
 components:
   schemas:
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    GatewaySecretReferenceOrLiteral:
-      description: 'A literal value or a reference to an existing secret as a template string expression.
-
-        The value is stored and returned by the API as-is, not treated as sensitive information.
-
-        '
-      type: string
-      minLength: 1
-      x-expression:
-        type: string
-        fields:
-        - vault
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    ForbiddenError:
+    BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
+        required:
+        - invalid_parameters
         properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    BackendClusterAuthenticationScheme:
-      discriminator:
-        propertyName: type
-        mapping:
-          anonymous: '#/components/schemas/BackendClusterAuthenticationAnonymous'
-          sasl_plain: '#/components/schemas/BackendClusterAuthenticationSaslPlain'
-          sasl_scram: '#/components/schemas/BackendClusterAuthenticationSaslScram'
-      oneOf:
-      - $ref: '#/components/schemas/BackendClusterAuthenticationAnonymous'
-      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslPlain'
-      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslScram'
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    BackendClusterAuthenticationAnonymous:
-      description: Anonymous authentication scheme for the backend cluster.
-      type: object
-      properties:
-        type:
-          description: The type of authentication scheme.
-          type: string
-          const: anonymous
-      additionalProperties: false
-      required:
-      - type
-    BackendCluster:
-      description: The Kafka cluster.
-      type: object
-      properties:
-        id:
-          description: The unique identifier of the backend cluster.
-          type: string
-          format: uuid
-          readOnly: true
-          x-speakeasy-param-suppress-computed-diff: true
-        name:
-          $ref: '#/components/schemas/BackendClusterName'
-        description:
-          description: A human-readable description of the backend cluster.
-          type: string
-          default: ''
-          maxLength: 512
-        authentication:
-          $ref: '#/components/schemas/BackendClusterAuthenticationSensitiveDataAwareScheme'
-        insecure_allow_anonymous_virtual_cluster_auth:
-          description: 'If true, virtual clusters can have allow anonymous authentication and use this backend cluster.
-
-            This setting is not recommended for production use as it may create privilege escalation vulnerabilities.
-
-            '
-          type: boolean
-          default: false
-        bootstrap_servers:
-          $ref: '#/components/schemas/BootstrapServers'
-        tls:
-          $ref: '#/components/schemas/BackendClusterTLS'
-        metadata_update_interval_seconds:
-          $ref: '#/components/schemas/BackendMetadataUpdateIntervalSeconds'
-        labels:
-          $ref: '#/components/schemas/Labels'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      required:
-      - id
-      - name
-      - authentication
-      - bootstrap_servers
-      - tls
-      - created_at
-      - updated_at
-    BackendClusterAuthenticationSensitiveDataAwareScheme:
-      discriminator:
-        propertyName: type
-        mapping:
-          anonymous: '#/components/schemas/BackendClusterAuthenticationAnonymous'
-          sasl_plain: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
-          sasl_scram: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
-      oneOf:
-      - $ref: '#/components/schemas/BackendClusterAuthenticationAnonymous'
-      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
-      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
-    BackendClusterAuthenticationSaslScram:
-      description: SASL/SCRAM authentication scheme for the backend cluster.
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_scram
-        algorithm:
-          description: The algorithm used for SASL/SCRAM authentication.
-          type: string
-          enum:
-          - sha256
-          - sha512
-          x-speakeasy-unknown-values: allow
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      additionalProperties: false
-      required:
-      - type
-      - username
-      - algorithm
-      - password
-    BackendClusterAuthenticationSaslPlainSensitiveDataAware:
-      description: 'SASL/PLAIN authentication scheme for the backend cluster without requiring sensitive password data.
-
-        '
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_plain
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      additionalProperties: false
-      required:
-      - type
-      - username
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     BaseError:
       description: standard error
       type: object
@@ -561,6 +216,467 @@ components:
       - instance
       - detail
       title: Error
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BackendCluster:
+      description: The Kafka cluster.
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the backend cluster.
+          type: string
+          format: uuid
+          readOnly: true
+          x-speakeasy-param-suppress-computed-diff: true
+        name:
+          $ref: '#/components/schemas/BackendClusterName'
+        description:
+          description: A human-readable description of the backend cluster.
+          type: string
+          default: ''
+          maxLength: 512
+        authentication:
+          $ref: '#/components/schemas/BackendClusterAuthenticationSensitiveDataAwareScheme'
+        insecure_allow_anonymous_virtual_cluster_auth:
+          description: 'If true, virtual clusters can have allow anonymous authentication and use this backend cluster.
+
+            This setting is not recommended for production use as it may create privilege escalation vulnerabilities.
+
+            '
+          type: boolean
+          default: false
+        bootstrap_servers:
+          $ref: '#/components/schemas/BootstrapServers'
+        tls:
+          $ref: '#/components/schemas/BackendClusterTLS'
+        metadata_update_interval_seconds:
+          $ref: '#/components/schemas/BackendMetadataUpdateIntervalSeconds'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - authentication
+      - bootstrap_servers
+      - tls
+      - created_at
+      - updated_at
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    GatewaySecret:
+      description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
+
+        If the value is provided as plain text, it is encrypted at rest and omitted from API responses.
+
+        If provided as an expression, the expression itself is stored and returned by the API.
+
+        '
+      type: string
+      example: ${vault.env['MY_ENV_VAR']}
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+      x-sensitive: true
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    BackendClusterAuthenticationSaslPlain:
+      description: SASL/PLAIN authentication scheme for the backend cluster.
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_plain
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      additionalProperties: false
+      required:
+      - type
+      - username
+      - password
+    BackendClusterTLS:
+      type: object
+      properties:
+        enabled:
+          description: If true, TLS is enabled for connections to this backend cluster. If false, TLS is explicitly disabled.
+          type: boolean
+        insecure_skip_verify:
+          description: If true, skip certificate verification. It's not secure to use for production.
+          type: boolean
+          default: false
+        ca_bundle:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        tls_versions:
+          description: List of supported TLS versions.
+          type: array
+          items:
+            type: string
+            enum:
+            - tls12
+            - tls13
+            x-speakeasy-unknown-values: allow
+          default:
+          - tls12
+          - tls13
+        client_identity:
+          description: 'Client mTLS configuration.
+
+
+            **Requires a minimum runtime version of `1.1`**.'
+          type: object
+          properties:
+            certificate:
+              $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+            key:
+              $ref: '#/components/schemas/GatewaySecret'
+          required:
+          - certificate
+          - key
+          x-min-runtime-version: '1.1'
+          x-speakeasy-param-computed: false
+      required:
+      - enabled
+    BackendClusterAuthenticationSensitiveDataAwareScheme:
+      discriminator:
+        propertyName: type
+        mapping:
+          anonymous: '#/components/schemas/BackendClusterAuthenticationAnonymous'
+          sasl_plain: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
+          sasl_scram: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
+      oneOf:
+      - $ref: '#/components/schemas/BackendClusterAuthenticationAnonymous'
+      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
+      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
+      type: object
+      properties:
+        contains:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      title: StringFieldContainsFilter
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    BackendClusterAuthenticationSaslPlainSensitiveDataAware:
+      description: 'SASL/PLAIN authentication scheme for the backend cluster without requiring sensitive password data.
+
+        '
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_plain
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      additionalProperties: false
+      required:
+      - type
+      - username
+    BackendClusterName:
+      description: The unique name of the backend cluster.
+      type: string
+      maxLength: 255
+      minLength: 1
+      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    BootstrapServers:
+      description: A list of cluster bootstrap servers in the format address:port.
+      type: array
+      items:
+        type: string
+        description: Endpoint in address:port format.
+        pattern: ^(([a-zA-Z0-9\.\-]+)|\[([a-fA-F0-9:]+)\]):\d+$
+        minLength: 1
+      minItems: 1
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    BackendMetadataUpdateIntervalSeconds:
+      description: The interval at which metadata is updated in seconds.
+      type: integer
+      default: 60
+      maximum: 43200
+      minimum: 1
+    BackendClusterAuthenticationSaslScram:
+      description: SASL/SCRAM authentication scheme for the backend cluster.
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_scram
+        algorithm:
+          description: The algorithm used for SASL/SCRAM authentication.
+          type: string
+          enum:
+          - sha256
+          - sha512
+          x-speakeasy-unknown-values: allow
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      additionalProperties: false
+      required:
+      - type
+      - username
+      - algorithm
+      - password
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    BackendClusterAuthenticationScheme:
+      discriminator:
+        propertyName: type
+        mapping:
+          anonymous: '#/components/schemas/BackendClusterAuthenticationAnonymous'
+          sasl_plain: '#/components/schemas/BackendClusterAuthenticationSaslPlain'
+          sasl_scram: '#/components/schemas/BackendClusterAuthenticationSaslScram'
+      oneOf:
+      - $ref: '#/components/schemas/BackendClusterAuthenticationAnonymous'
+      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslPlain'
+      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslScram'
     BackendClusterAuthenticationSaslScramSensitiveDataAware:
       description: 'SASL/SCRAM authentication scheme for the backend cluster without requiring sensitive password data.
 
@@ -619,12 +735,29 @@ components:
       - rule
       - reason
       - dependents
-    BackendClusterName:
-      description: The unique name of the backend cluster.
+    BackendClusterAuthenticationAnonymous:
+      description: Anonymous authentication scheme for the backend cluster.
+      type: object
+      properties:
+        type:
+          description: The type of authentication scheme.
+          type: string
+          const: anonymous
+      additionalProperties: false
+      required:
+      - type
+    GatewaySecretReferenceOrLiteral:
+      description: 'A literal value or a reference to an existing secret as a template string expression.
+
+        The value is stored and returned by the API as-is, not treated as sensitive information.
+
+        '
       type: string
-      maxLength: 255
       minLength: 1
-      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+      x-expression:
+        type: string
+        fields:
+        - vault
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -654,155 +787,67 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    BackendClusterTLS:
-      type: object
-      properties:
-        enabled:
-          description: If true, TLS is enabled for connections to this backend cluster. If false, TLS is explicitly disabled.
-          type: boolean
-        insecure_skip_verify:
-          description: If true, skip certificate verification. It's not secure to use for production.
-          type: boolean
-          default: false
-        ca_bundle:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        tls_versions:
-          description: List of supported TLS versions.
-          type: array
-          items:
-            type: string
-            enum:
-            - tls12
-            - tls13
-            x-speakeasy-unknown-values: allow
-          default:
-          - tls12
-          - tls13
-        client_identity:
-          description: 'Client mTLS configuration.
-
-
-            **Requires a minimum runtime version of `1.1`**.'
-          type: object
-          properties:
-            certificate:
-              $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-            key:
-              $ref: '#/components/schemas/GatewaySecret'
-          required:
-          - certificate
-          - key
-          x-min-runtime-version: '1.1'
-          x-speakeasy-param-computed: false
-      required:
-      - enabled
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    BackendClusterAuthenticationSaslPlain:
-      description: SASL/PLAIN authentication scheme for the backend cluster.
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_plain
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      additionalProperties: false
-      required:
-      - type
-      - username
-      - password
-    GatewaySecret:
-      description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
-
-        If the value is provided as plain text, it is encrypted at rest and omitted from API responses.
-
-        If provided as an expression, the expression itself is stored and returned by the API.
-
-        '
-      type: string
-      example: ${vault.env['MY_ENV_VAR']}
-      minLength: 1
-      x-expression:
-        type: string
-        fields:
-        - vault
-      x-sensitive: true
-    BootstrapServers:
-      description: A list of cluster bootstrap servers in the format address:port.
-      type: array
-      items:
-        type: string
-        description: Endpoint in address:port format.
-        pattern: ^(([a-zA-Z0-9\.\-]+)|\[([a-fA-F0-9:]+)\]):\d+$
-        minLength: 1
-      minItems: 1
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    BackendMetadataUpdateIntervalSeconds:
-      description: The interval at which metadata is updated in seconds.
-      type: integer
-      default: 60
-      maximum: 43200
-      minimum: 1
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ListBackendClustersResponse:
+      description: A paginated list response for a collection of backend clusters.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BackendCluster'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
   requestBodies:
-    UpdateBackendClusterRequest:
-      description: The request schema for updating a backend cluster.
+    CreateBackendClusterRequest:
+      description: The request schema for creating a backend cluster.
       content:
         application/json:
           schema:
@@ -816,7 +861,7 @@ components:
                 default: ''
                 maxLength: 512
               authentication:
-                $ref: '#/components/schemas/BackendClusterAuthenticationSensitiveDataAwareScheme'
+                $ref: '#/components/schemas/BackendClusterAuthenticationScheme'
               insecure_allow_anonymous_virtual_cluster_auth:
                 description: 'If true, virtual clusters can have allow anonymous authentication and use this backend cluster.
 
@@ -839,8 +884,8 @@ components:
             - authentication
             - bootstrap_servers
             - tls
-    CreateBackendClusterRequest:
-      description: The request schema for creating a backend cluster.
+    UpdateBackendClusterRequest:
+      description: The request schema for updating a backend cluster.
       content:
         application/json:
           schema:
@@ -854,7 +899,7 @@ components:
                 default: ''
                 maxLength: 512
               authentication:
-                $ref: '#/components/schemas/BackendClusterAuthenticationScheme'
+                $ref: '#/components/schemas/BackendClusterAuthenticationSensitiveDataAwareScheme'
               insecure_allow_anonymous_virtual_cluster_auth:
                 description: 'If true, virtual clusters can have allow anonymous authentication and use this backend cluster.
 
@@ -917,69 +962,37 @@ components:
         type: integer
         example: 10
       x-speakeasy-terraform-ignore: true
-  responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    ListBackendClustersResponse:
-      description: A paginated list response for a collection of backend clusters.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/BackendCluster'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com

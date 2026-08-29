@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK Resource Availability API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs Resource Availability API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: Resource Availability
 paths:
@@ -59,6 +46,43 @@ paths:
       x-speakeasy-group: CloudGateways
 components:
   schemas:
+    Providers:
+      description: List of supported cloud providers that run cloud gateway instances.
+      type: array
+      items:
+        $ref: '#/components/schemas/Provider'
+      title: Providers
+    ServerlessV1Provider:
+      description: Description of cloud provider that runs serverless v1 cloud gateway instances.
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/ServerlessV1ProviderName'
+        regions:
+          $ref: '#/components/schemas/ServerlessV1ProviderRegions'
+      additionalProperties: false
+      required:
+      - provider
+      - regions
+      title: Serverless V1 Provider
+    ServerlessV1ProviderRegions:
+      description: List of available regions to run serverless v1 cloud gateway instances on for a given cloud provider.
+      type: array
+      items:
+        $ref: '#/components/schemas/ServerlessV1ProviderRegion'
+      title: Serverless V1 Provider Regions
+    ProviderRegions:
+      description: List of available regions to run cloud gateway instances on for a given cloud provider.
+      type: array
+      items:
+        $ref: '#/components/schemas/ProviderRegion'
+      title: Provider Regions
+    ServerlessV1ProviderName:
+      description: Name of cloud provider.
+      type: string
+      example: aws
+      enum:
+      - aws
     Provider:
       description: Description of cloud provider that runs cloud gateway instances.
       type: object
@@ -72,26 +96,37 @@ components:
       - provider
       - regions
       title: Provider
-    ServerlessV1ProviderName:
-      description: Name of cloud provider.
+    VersionList:
+      description: List of supported gateway versions for cloud gateways.
+      type: array
+      items:
+        $ref: '#/components/schemas/GatewayVersion'
+      readOnly: true
+      title: Version List
+    InstanceTypeName:
+      description: Instance type name to indicate capacity.
       type: string
-      example: aws
       enum:
-      - aws
-    ProviderRegionName:
-      description: 'Human-readable name for cloud provider region. The list of available provider regions can be retrieved via the
-
-        availability endpoint `/v2/cloud-gateways/availability.json`.
-
-        '
-      type: string
-      example: N. Virginia
-      title: Provider Region Name
-    GatewayVersion:
-      description: Supported gateway version. For serverless.v1 kind of cloud gateways, this field should be omitted.
-      type: string
-      example: '3.2'
-      title: Gateway Version
+      - small
+      - medium
+      - large
+      x-speakeasy-unknown-values: allow
+    ServerlessV1Providers:
+      description: List of supported cloud providers that run serverless v1 cloud gateway instances.
+      type: array
+      items:
+        $ref: '#/components/schemas/ServerlessV1Provider'
+      title: Serverless V1 Providers
+    ServerlessV1ProviderRegion:
+      description: Region ID and human-readable name for a cloud provider region.
+      type: object
+      properties:
+        region:
+          $ref: '#/components/schemas/ServerlessV1ProviderRegionId'
+      additionalProperties: false
+      required:
+      - region
+      title: Serverless V1 Provider Region
     ServerlessV1ProviderRegionId:
       description: Region ID for serverless v1 cloud provider region.
       type: string
@@ -126,12 +161,21 @@ components:
       - v_cpu
       - gb_memory
       title: Instance Type
-    ServerlessV1ProviderRegions:
-      description: List of available regions to run serverless v1 cloud gateway instances on for a given cloud provider.
-      type: array
-      items:
-        $ref: '#/components/schemas/ServerlessV1ProviderRegion'
-      title: Serverless V1 Provider Regions
+    ProviderName:
+      description: Name of cloud provider.
+      type: string
+      example: aws
+      enum:
+      - aws
+      - azure
+      - gcp
+      title: Provider Name
+      x-speakeasy-unknown-values: allow
+    GatewayVersion:
+      description: Supported gateway version. For serverless.v1 kind of cloud gateways, this field should be omitted.
+      type: string
+      example: '3.2'
+      title: Gateway Version
     ProviderRegion:
       description: Region ID and human-readable name for a cloud provider region.
       type: object
@@ -184,29 +228,20 @@ components:
       - cidr_blocks
       - reserved_cidr_blocks
       title: Provider Region
-    ProviderRegions:
-      description: List of available regions to run cloud gateway instances on for a given cloud provider.
-      type: array
-      items:
-        $ref: '#/components/schemas/ProviderRegion'
-      title: Provider Regions
-    ProviderName:
-      description: Name of cloud provider.
+    ProviderRegionId:
+      description: Region ID for cloud provider region.
       type: string
-      example: aws
-      enum:
-      - aws
-      - azure
-      - gcp
-      title: Provider Name
-      x-speakeasy-unknown-values: allow
-    VersionList:
-      description: List of supported gateway versions for cloud gateways.
-      type: array
-      items:
-        $ref: '#/components/schemas/GatewayVersion'
-      readOnly: true
-      title: Version List
+      example: us-east-2
+      title: Provider Region ID
+    ProviderRegionName:
+      description: 'Human-readable name for cloud provider region. The list of available provider regions can be retrieved via the
+
+        availability endpoint `/v2/cloud-gateways/availability.json`.
+
+        '
+      type: string
+      example: N. Virginia
+      title: Provider Region Name
     AvailabilityDocument:
       description: Document containing availability information for configurations.
       type: object
@@ -226,60 +261,12 @@ components:
       - providers
       - serverless_v1_providers
       title: Availability Document
-    ServerlessV1Providers:
-      description: List of supported cloud providers that run serverless v1 cloud gateway instances.
-      type: array
-      items:
-        $ref: '#/components/schemas/ServerlessV1Provider'
-      title: Serverless V1 Providers
-    Providers:
-      description: List of supported cloud providers that run cloud gateway instances.
-      type: array
-      items:
-        $ref: '#/components/schemas/Provider'
-      title: Providers
-    ServerlessV1ProviderRegion:
-      description: Region ID and human-readable name for a cloud provider region.
-      type: object
-      properties:
-        region:
-          $ref: '#/components/schemas/ServerlessV1ProviderRegionId'
-      additionalProperties: false
-      required:
-      - region
-      title: Serverless V1 Provider Region
-    ServerlessV1Provider:
-      description: Description of cloud provider that runs serverless v1 cloud gateway instances.
-      type: object
-      properties:
-        provider:
-          $ref: '#/components/schemas/ServerlessV1ProviderName'
-        regions:
-          $ref: '#/components/schemas/ServerlessV1ProviderRegions'
-      additionalProperties: false
-      required:
-      - provider
-      - regions
-      title: Serverless V1 Provider
-    ProviderRegionId:
-      description: Region ID for cloud provider region.
-      type: string
-      example: us-east-2
-      title: Provider Region ID
     InstanceTypes:
       description: List of supported instance types, along with their associated resource parameters and pricing.
       type: array
       items:
         $ref: '#/components/schemas/InstanceType'
       title: Instance Types
-    InstanceTypeName:
-      description: Instance type name to indicate capacity.
-      type: string
-      enum:
-      - small
-      - medium
-      - large
-      x-speakeasy-unknown-values: allow
   responses:
     RetrieveCloudGatewaysAvailabilityDocumentResponse:
       description: Response format for retrieving the cloud gateways availability JSON document.
@@ -288,10 +275,36 @@ components:
           schema:
             $ref: '#/components/schemas/AvailabilityDocument'
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com

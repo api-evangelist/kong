@@ -1,41 +1,28 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
+  title: Konnect API - Go SDK Event Gateways API
+  version: 3.14.0
+  description: The Konnect platform API
   contact:
-    email: support@konghq.com
     name: Kong Inc
     url: https://konghq.com
-  description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
-
-
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
-
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    email: support@konghq.com
+  x-extensions-note: "This API uses the `x-expression` vendor extension to indicate that a string property is a DSL expression.\nSupported types:\n\n\n  - `boolean`: An expression evaluates to boolean. For example, `context.topic.name == 'my-topic'`\n  - `string`: A template string expression that evaluates to a string or a literal string value. For example,\n    `${context.topic.name.substring(0, context.topic.name.length-4)}` or `my-literal-value`\n\nAdditionally, `x-sensitive` flag indicates that a field contains sensitive information. When the value\nof the field is provided in plain text, it's encrypted at rest and it's never returned in API responses.\nWhen the value is an expression, the expression itself is stored and returned in API responses.\n\n`x-min-runtime-version` indicates the minimum Event Gateway runtime version required to use a certain policy or\npolicy feature. The runtime version can be configured at the Event Gateway entity level. It must be a string\ncontaining a semantic version in the `MAJOR.MINOR` format, e.g., `\"1.1\"`.\n"
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-  title: Kong Enterprise Admin ACLs Event Gateways API
-  version: 3.14.0
+  x-oas-source: kong/platform-api@
+  x-oas-source-link: https://github.com/Kong/platform-api/commit/
 servers:
-- description: Default Admin API URL
-  url: '{protocol}://{hostname}:{port}{path}'
-  variables:
-    hostname:
-      default: localhost
-      description: Hostname for Kong's Admin API
-    path:
-      default: /
-      description: Base path for Kong's Admin API
-    port:
-      default: '8001'
-      description: Port for Kong's Admin API
-    protocol:
-      default: http
-      description: Protocol for requests to Kong's Admin API
-      enum:
-      - http
-      - https
+- url: https://global.api.konghq.com
+- url: https://us.api.konghq.com
+- url: https://eu.api.konghq.com
+- url: https://au.api.konghq.com
 security:
-- adminToken: []
+- personalAccessToken: []
+- systemAccountAccessToken: []
+- konnectAccessToken: []
+- serviceAccessToken: []
 tags:
 - name: Event Gateways
   description: 'Create an Event Gateway Control Plane, used to store Event Gateway configuration
@@ -214,17 +201,73 @@ paths:
       - Event Gateways
 components:
   schemas:
-    MinRuntimeVersion:
-      description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
 
-        release that can be used with the entity model.
+            body to child properties in a frontend UI. Must be returned as an integer.
 
-        When not specified, the minimum runtime version will be pinned to the latest available release.
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
 
-        '
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    GatewayDescription:
+      description: A human-readable description of the Gateway.
       type: string
-      example: '1.1'
-      pattern: ^\d+\.\d+$
+      maxLength: 512
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -262,27 +305,150 @@ components:
       - reason
       - rule
       - minimum
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     GatewayName:
       description: The name of the Gateway.
       type: string
       maxLength: 255
       minLength: 1
       x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
+      type: object
+      properties:
+        contains:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      title: StringFieldContainsFilter
+    CreateGatewayRequest:
+      description: The request schema for the create gateway request.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/GatewayName'
+        description:
+          $ref: '#/components/schemas/GatewayDescription'
+        min_runtime_version:
+          $ref: '#/components/schemas/MinRuntimeVersion'
+        labels:
+          $ref: '#/components/schemas/Labels'
+      additionalProperties: false
+      required:
+      - name
+      title: CreateGatewayRequest
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     InvalidParameterChoiceItem:
       type: object
       properties:
@@ -317,91 +483,6 @@ components:
       - reason
       - rule
       - choices
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    PatchGatewayRequest:
-      description: The request schema for the patch gateway request.
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/GatewayName'
-        description:
-          description: A human-readable description of the Gateway.
-          type: string
-          maxLength: 512
-          nullable: true
-        min_runtime_version:
-          description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
-
-            release that can be used with the entity model.
-
-            When not specified, the minimum runtime version will not be updated.
-
-            '
-          type: string
-          example: '1.1'
-          nullable: true
-          pattern: ^\d+\.\d+$
-        labels:
-          description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-          type: object
-          example:
-            env: test
-          additionalProperties:
-            type: string
-            pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-            minLength: 1
-            maxLength: 63
-          maxProperties: 50
-          nullable: true
-          title: Labels
-      additionalProperties: false
-      title: PatchGatewayRequest
-    UpdateGatewayRequest:
-      description: The request schema for the update gateway request.
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/GatewayName'
-        description:
-          $ref: '#/components/schemas/GatewayDescription'
-        min_runtime_version:
-          $ref: '#/components/schemas/MinRuntimeVersionUpdate'
-        labels:
-          $ref: '#/components/schemas/Labels'
-      additionalProperties: false
-      title: UpdateGatewayRequest
     Labels:
       description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
       type: object
@@ -414,69 +495,19 @@ components:
         maxLength: 63
       maxProperties: 50
       title: Labels
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    GatewayDescription:
-      description: A human-readable description of the Gateway.
-      type: string
-      maxLength: 512
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     CursorMeta:
       description: Pagination metadata.
       type: object
@@ -485,22 +516,6 @@ components:
           $ref: '#/components/schemas/CursorMetaPage'
       required:
       - page
-    CreateGatewayRequest:
-      description: The request schema for the create gateway request.
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/GatewayName'
-        description:
-          $ref: '#/components/schemas/GatewayDescription'
-        min_runtime_version:
-          $ref: '#/components/schemas/MinRuntimeVersion'
-        labels:
-          $ref: '#/components/schemas/Labels'
-      additionalProperties: false
-      required:
-      - name
-      title: CreateGatewayRequest
     EventGatewayInfo:
       description: The gateway object contains information about a Konnect gateway.
       type: object
@@ -558,71 +573,47 @@ components:
       - virtual_clusters_total
       - min_runtime_version
       - version
-    MinRuntimeVersionUpdate:
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    MinRuntimeVersion:
       description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
 
         release that can be used with the entity model.
 
-        When not specified, the minimum runtime version will not be updated.
+        When not specified, the minimum runtime version will be pinned to the latest available release.
 
         '
       type: string
       example: '1.1'
       pattern: ^\d+\.\d+$
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -656,6 +647,55 @@ components:
       - rule
       - reason
       - dependents
+    PatchGatewayRequest:
+      description: The request schema for the patch gateway request.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/GatewayName'
+        description:
+          description: A human-readable description of the Gateway.
+          type: string
+          maxLength: 512
+          nullable: true
+        min_runtime_version:
+          description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
+
+            release that can be used with the entity model.
+
+            When not specified, the minimum runtime version will not be updated.
+
+            '
+          type: string
+          example: '1.1'
+          nullable: true
+          pattern: ^\d+\.\d+$
+        labels:
+          description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+          type: object
+          example:
+            env: test
+          additionalProperties:
+            type: string
+            pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+            minLength: 1
+            maxLength: 63
+          maxProperties: 50
+          nullable: true
+          title: Labels
+      additionalProperties: false
+      title: PatchGatewayRequest
+    MinRuntimeVersionUpdate:
+      description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
+
+        release that can be used with the entity model.
+
+        When not specified, the minimum runtime version will not be updated.
+
+        '
+      type: string
+      example: '1.1'
+      pattern: ^\d+\.\d+$
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -685,128 +725,27 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterStandard:
+    UpdateGatewayRequest:
+      description: The request schema for the update gateway request.
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
+        name:
+          $ref: '#/components/schemas/GatewayName'
+        description:
+          $ref: '#/components/schemas/GatewayDescription'
+        min_runtime_version:
+          $ref: '#/components/schemas/MinRuntimeVersionUpdate'
+        labels:
+          $ref: '#/components/schemas/Labels'
       additionalProperties: false
-      required:
-      - field
-      - reason
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
+      title: UpdateGatewayRequest
   responses:
-    CreateGatewayResponse:
-      description: A response to creating a gateway.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EventGatewayInfo'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
     UpdateGatewayResponse:
       description: A response to updating a gateway.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/EventGatewayInfo'
-    NotAvailable:
-      description: Service not available
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BaseError'
-    ListEventGatewaysResponse:
-      description: A paginated list response for a collection of gateways.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayInfo'
-            additionalProperties: false
-            required:
-            - meta
-            - data
-            title: ListEventGatewaysResponse
     Unauthorized:
       description: Unauthorized
       content:
@@ -833,8 +772,20 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     Internal:
       description: Internal
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BaseError'
+    NotAvailable:
+      description: Service not available
       content:
         application/problem+json:
           schema:
@@ -845,6 +796,42 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
+    ListEventGatewaysResponse:
+      description: A paginated list response for a collection of gateways.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayInfo'
+            additionalProperties: false
+            required:
+            - meta
+            - data
+            title: ListEventGatewaysResponse
+    CreateGatewayResponse:
+      description: A response to creating a gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayInfo'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
   parameters:
     EventGatewayCommonFilter:
       schema:
@@ -877,10 +864,36 @@ components:
         example: 10
       x-speakeasy-terraform-ignore: true
   securitySchemes:
-    adminToken:
-      in: header
-      name: Kong-Admin-Token
-      type: apiKey
+    personalAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: The personal access token is meant to be used as an alternative to basic-auth when accessing Konnect via APIs. You can generate a Personal Access Token (PAT) from the personal access token page in the Konnect dashboard.
+    systemAccountAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: 'The system account access token is meant for automations and integrations that are not directly associated with a human identity.
+
+        You can generate a system account Access Token by creating a system account and then obtaining a system account access token for that account.
+
+        The access token must be passed in the header of a request, for example:
+
+        `curl -X GET ''https://global.api.konghq.com/v2/users/'' --header ''Authorization: Bearer spat_i2Ej...''`
+
+        '
+    konnectAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The Konnect access token is meant to be used by the Konnect dashboard and the decK CLI to authenticate with.
+    serviceAccessToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'The Service access token is meant to be used between internal services.
+
+        '
 externalDocs:
   description: Documentation for Kong Gateway and its APIs
   url: https://developer.konghq.com
