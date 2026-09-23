@@ -33,9 +33,7 @@ paths:
     post:
       operationId: create-portal-ip-allow-list
       summary: Create an IP allow list for a portal
-      description: 'Create an IP allow list for a portal.
-
-        '
+      description: Create an IP allow list for a portal.
       requestBody:
         $ref: '#/components/requestBodies/CreatePortalSourceIPRestriction'
       responses:
@@ -52,9 +50,7 @@ paths:
     get:
       operationId: list-portal-ip-allow-list
       summary: List the IP allow list for portal
-      description: 'Lists the IP allow list configuration for a portal.
-
-        '
+      description: Lists the IP allow list configuration for a portal.
       parameters:
       - $ref: '#/components/parameters/PageSize'
       - $ref: '#/components/parameters/PageBefore'
@@ -83,9 +79,7 @@ paths:
     put:
       operationId: put-portal-ip-allow-list
       summary: Replace an IP allow list for a portal
-      description: 'Replace an IP allow list for a portal.
-
-        '
+      description: Replace an IP allow list for a portal.
       requestBody:
         $ref: '#/components/requestBodies/CreatePortalSourceIPRestriction'
       responses:
@@ -104,9 +98,7 @@ paths:
     patch:
       operationId: update-portal-ip-allow-list
       summary: Update an IP allow list for a portal
-      description: 'Update an IP allow list for a portal.
-
-        '
+      description: Update an IP allow list for a portal.
       requestBody:
         $ref: '#/components/requestBodies/UpdatePortalSourceIPRestriction'
       responses:
@@ -125,9 +117,7 @@ paths:
     delete:
       operationId: delete-portal-ip-allow-list
       summary: Delete an IP allow list from a portal
-      description: 'Delete the IP allow list for a portal.
-
-        '
+      description: Delete the IP allow list for a portal.
       responses:
         '204':
           description: No Content
@@ -141,6 +131,48 @@ paths:
       - Portals IP Allow List
 components:
   schemas:
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -150,6 +182,156 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    IPEntries:
+      description: The list of allowed ips for the portal.
+      type: array
+      items:
+        $ref: '#/components/schemas/IPEntry'
+      example:
+      - id: 660e8400-e29b-41d4-a716-446655440000
+        allowed_ips:
+        - 192.168.1.1
+      - id: 550e8400-e29b-41d4-a716-446655440000
+        allowed_ips:
+        - 192.168.1.0/22
+        - 192.168.1.52
+      maxItems: 1000
+      uniqueItems: true
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    PortalAllowedIPs:
+      description: The list of allowed ips for the portal.
+      type: array
+      items:
+        type: string
+      example:
+      - 192.168.1.1
+      - 192.168.1.0/22
+      maxItems: 25
+      minItems: 1
+      uniqueItems: true
     BaseError:
       description: standard error
       type: object
@@ -204,103 +386,6 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    IPEntry:
-      description: An entry representing a collection of allowed IP addresses or CIDR blocks.
-      type: object
-      properties:
-        id:
-          description: Contains a unique identifier used for this resource.
-          type: string
-          format: uuid
-          example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: false
-        allowed_ips:
-          $ref: '#/components/schemas/PortalAllowedIPs'
-      additionalProperties: false
-      required:
-      - id
-      - allowed_ips
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -316,17 +401,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
-    PortalAllowedIPs:
-      description: The list of allowed ips for the portal.
-      type: array
-      items:
-        type: string
-      example:
-      - 192.168.1.1
-      - 192.168.1.0/22
-      maxItems: 25
-      minItems: 1
-      uniqueItems: true
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -360,73 +434,37 @@ components:
       - reason
       - rule
       - maximum
-    InvalidParameterStandard:
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    IPEntry:
+      description: An entry representing a collection of allowed IP addresses or CIDR blocks.
       type: object
       properties:
-        field:
+        id:
+          description: Contains a unique identifier used for this resource.
           type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
+          format: uuid
+          example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: false
+        allowed_ips:
+          $ref: '#/components/schemas/PortalAllowedIPs'
       additionalProperties: false
       required:
-      - field
-      - reason
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
+      - id
+      - allowed_ips
     ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -442,54 +480,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Forbidden
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    IPEntries:
-      description: The list of allowed ips for the portal.
-      type: array
-      items:
-        $ref: '#/components/schemas/IPEntry'
-      example:
-      - id: 660e8400-e29b-41d4-a716-446655440000
-        allowed_ips:
-        - 192.168.1.1
-      - id: 550e8400-e29b-41d4-a716-446655440000
-        allowed_ips:
-        - 192.168.1.0/22
-        - 192.168.1.52
-      maxItems: 1000
-      uniqueItems: true
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -520,21 +510,6 @@ components:
       readOnly: true
       x-speakeasy-unknown-values: allow
   responses:
-    PortalSourceIPRestrictionPaginatedResponse:
-      description: The portal's IP allow list configuration.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMetaPage'
-              data:
-                $ref: '#/components/schemas/IPEntries'
-            additionalProperties: false
-            required:
-            - data
-            - meta
     Unauthorized:
       description: Unauthorized
       content:
@@ -567,34 +542,40 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/BadRequestError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     PortalSourceIPRestriction:
       description: The portal's IP allow list configuration.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/IPEntry'
+    PortalSourceIPRestrictionPaginatedResponse:
+      description: The portal's IP allow list configuration.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMetaPage'
+              data:
+                $ref: '#/components/schemas/IPEntries'
+            additionalProperties: false
+            required:
+            - data
+            - meta
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   parameters:
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
     PageSize:
       name: page[size]
       description: The maximum number of items to include per page. The last page of a collection may include fewer items.
@@ -617,6 +598,15 @@ components:
     PageBefore:
       name: page[before]
       description: Request the next page of data, starting with the item before this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
       required: false
       in: query
       allowEmptyValue: true

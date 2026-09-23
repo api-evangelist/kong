@@ -7,9 +7,9 @@ info:
   description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
 
 
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+    You can learn more about Kong Gateway at developer.konghq.com.
 
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    Give Kong a star at the Kong/kong repository.'
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
@@ -47,7 +47,6 @@ paths:
         terraform-resource: RbacUser#create
       operationId: create-rbac_user
       summary: Create a new RBAC User
-      description: Create a new RBAC User
       parameters:
       - $ref: '#/components/parameters/Workspace'
       requestBody:
@@ -77,7 +76,6 @@ paths:
         terraform-resource: RbacUser#delete
       operationId: delete-rbac_user
       summary: Delete a RBAC User
-      description: Delete a RBAC User
       parameters:
       - $ref: '#/components/parameters/RBACUserId'
       - $ref: '#/components/parameters/Workspace'
@@ -111,6 +109,58 @@ paths:
       tags:
       - RBACUsers
 components:
+  schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+    RBACUser:
+      x-speakeasy-entity: RbacUser
+      type: object
+      properties:
+        comment:
+          description: Any comments associated with the user.
+          type: string
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        enabled:
+          description: Wether or not the user has RBAC enabled.
+          type: boolean
+          default: true
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the user.
+          type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+        user_token:
+          type: string
+          nullable: true
+          writeOnly: true
+        user_token_ident:
+          description: The user token.
+          type: string
+          nullable: true
+      additionalProperties: false
+      required:
+      - name
+      - user_token
   parameters:
     RBACUserId:
       description: ID of the RBAC User to lookup
@@ -153,58 +203,6 @@ components:
                 status: 401
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  schemas:
-    RBACUser:
-      x-speakeasy-entity: RbacUser
-      type: object
-      properties:
-        comment:
-          description: Any comments associated with the user.
-          type: string
-          nullable: true
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        enabled:
-          description: Wether or not the user has RBAC enabled.
-          type: boolean
-          default: true
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        name:
-          description: The name of the user.
-          type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-        user_token:
-          type: string
-          nullable: true
-          writeOnly: true
-        user_token_ident:
-          description: The user token.
-          type: string
-          nullable: true
-      additionalProperties: false
-      required:
-      - name
-      - user_token
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
   securitySchemes:
     adminToken:
       in: header

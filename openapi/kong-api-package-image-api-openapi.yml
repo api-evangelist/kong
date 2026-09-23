@@ -123,6 +123,85 @@ paths:
       - API Package Image
 components:
   schemas:
+    ImageTypeSchema:
+      description: The type of the image.
+      type: string
+      example: icon
+      enum:
+      - icon
+    ImagePNGDataUri:
+      description: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/png,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/png(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImagePNGDataUri
+      x-validation-message: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
+    ImageJPGDataUri:
+      description: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/jpeg,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/jpeg(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImageJPGDataUri
+      x-validation-message: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    APIPackageImage:
+      type: object
+      properties:
+        error:
+          description: An error related to the image invalid status.
+          type: string
+          example: null
+          nullable: true
+          readOnly: true
+        status:
+          description: The status of the image.
+          type: string
+          example: valid
+          enum:
+          - uploading
+          - validating
+          - valid
+          - invalid
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        api_package_id:
+          description: The API identifier which the image belongs to.
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+          readOnly: true
+        image_type:
+          allOf:
+          - $ref: '#/components/schemas/ImageTypeSchema'
+          - readOnly: true
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      required:
+      - status
+      - error
+      - api_package_id
+      - image_type
+      - created_at
+      - updated_at
+      title: Image Status
+    ImageDataUri:
+      example: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA
+      oneOf:
+      - $ref: '#/components/schemas/ImagePNGDataUri'
+      - $ref: '#/components/schemas/ImageJPGDataUri'
+      - $ref: '#/components/schemas/ImageSVGDataUri'
+      title: ImageDataUri
     BaseError:
       description: standard error
       type: object
@@ -177,13 +256,6 @@ components:
       - instance
       - detail
       title: Error
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
     CreatedAt:
       description: An ISO-8601 timestamp representation of entity creation date.
       type: string
@@ -191,64 +263,6 @@ components:
       example: '2022-11-04T20:10:06.927Z'
       readOnly: true
       x-speakeasy-param-suppress-computed-diff: true
-    APIPackageImage:
-      type: object
-      properties:
-        error:
-          description: An error related to the image invalid status.
-          type: string
-          example: null
-          nullable: true
-          readOnly: true
-        status:
-          description: The status of the image.
-          type: string
-          example: valid
-          enum:
-          - uploading
-          - validating
-          - valid
-          - invalid
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        api_package_id:
-          description: The API identifier which the image belongs to.
-          type: string
-          format: uuid
-          example: 123e4567-e89b-12d3-a456-426614174000
-          readOnly: true
-        image_type:
-          allOf:
-          - $ref: '#/components/schemas/ImageTypeSchema'
-          - readOnly: true
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      required:
-      - status
-      - error
-      - api_package_id
-      - image_type
-      - created_at
-      - updated_at
-      title: Image Status
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -264,21 +278,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
     ReplaceImageRequestSchema:
       type: object
       properties:
@@ -288,6 +287,21 @@ components:
       required:
       - data
       title: Replace Image Payload
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -303,6 +317,21 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Conflict
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
     ImageSVGDataUri:
       description: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
       type: string
@@ -311,48 +340,25 @@ components:
       pattern: ^data:image/svg\+xml(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
       title: ImageSVGDataUri
       x-validation-message: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
-    ImagePNGDataUri:
-      description: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
-      type: string
-      format: uri
-      example: data:image/png,YW5faW1hZ2VfZmlsZQ==
-      pattern: ^data:image/png(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-      title: ImagePNGDataUri
-      x-validation-message: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
-    ImageJPGDataUri:
-      description: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
-      type: string
-      format: uri
-      example: data:image/jpeg,YW5faW1hZ2VfZmlsZQ==
-      pattern: ^data:image/jpeg(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-      title: ImageJPGDataUri
-      x-validation-message: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
-    ImageDataUri:
-      example: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA
-      oneOf:
-      - $ref: '#/components/schemas/ImagePNGDataUri'
-      - $ref: '#/components/schemas/ImageJPGDataUri'
-      - $ref: '#/components/schemas/ImageSVGDataUri'
-      title: ImageDataUri
-    ImageTypeSchema:
-      description: The type of the image.
-      type: string
-      example: icon
-      enum:
-      - icon
   responses:
-    ApiPackageImageForbidden:
-      description: ApiImageForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     ApiPackageImageConflict:
       description: Conflict - The image is currently being updated by another request
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ConflictError'
+    ApiPackageImageForbidden:
+      description: ApiImageForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiPackageImageResponse:
+      description: ApiPackageImageResponse
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIPackageImage'
     ApiPackageImageNotFound:
       description: Not Found
       content:
@@ -365,12 +371,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/UnauthorizedError'
-    ApiPackageImageResponse:
-      description: ApiPackageImageResponse
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/APIPackageImage'
   requestBodies:
     ReplaceApiPackageImageRequest:
       required: true

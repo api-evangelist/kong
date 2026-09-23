@@ -38,17 +38,7 @@ servers:
 - url: https://eu.api.konghq.com
 - url: https://au.api.konghq.com
 tags:
-- description: 'A certificate object represents a public certificate, and can be optionally paired with the corresponding private key. These objects are used by Kong Gateway to handle SSL/TLS termination for encrypted requests, or for use as a trusted CA store when validating peer certificate of client/service.
-
-    <br><br>
-
-    Certificates are optionally associated with SNI objects to tie a cert/key pair to one or more hostnames.
-
-    <br><br>
-
-    If intermediate certificates are required in addition to the main certificate, they should be concatenated together into one string.
-
-    '
+- description: A certificate object represents a public certificate, and can be optionally paired with the corresponding private key.
   name: Certificates
 paths:
   /{workspace}/certificates:
@@ -58,7 +48,6 @@ paths:
         terraform-resource: Certificate#create
       operationId: create-certificate
       summary: Create a new Certificate
-      description: Create a new Certificate
       parameters:
       - $ref: '#/components/parameters/Workspace'
       requestBody:
@@ -109,7 +98,6 @@ paths:
         terraform-resource: Certificate#delete
       operationId: delete-certificate
       summary: Delete a Certificate
-      description: Delete a Certificate
       parameters:
       - $ref: '#/components/parameters/CertificateId'
       - $ref: '#/components/parameters/Workspace'
@@ -200,7 +188,6 @@ paths:
     get:
       operationId: list-certificate
       summary: List all Certificates
-      description: List all Certificates
       parameters:
       - $ref: '#/components/parameters/PaginationSize'
       - $ref: '#/components/parameters/PaginationOffset'
@@ -233,7 +220,6 @@ paths:
     post:
       operationId: create-certificate
       summary: Create a new Certificate
-      description: Create a new Certificate
       requestBody:
         description: Description of the new Certificate for creation
         required: true
@@ -269,7 +255,6 @@ paths:
     delete:
       operationId: delete-certificate
       summary: Delete a Certificate
-      description: Delete a Certificate
       parameters:
       - $ref: '#/components/parameters/CertificateId_2'
       responses:
@@ -340,6 +325,16 @@ paths:
     - url: https://au.api.konghq.com
 components:
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     Certificate:
       x-speakeasy-entity: Certificate
       description: 'A certificate object represents a public certificate, and can be optionally paired with the corresponding private key. These objects are used by Kong to handle SSL/TLS termination for encrypted requests, or for use as a trusted CA store when validating peer certificate of client/service. Certificates are optionally associated with SNI objects to tie a cert/key pair to one or more hostnames. If intermediate certificates are required in addition to the main certificate, they should be concatenated together into one string according to the following order: main certificate on the top, followed by any intermediates.'
@@ -406,16 +401,6 @@ components:
       required:
       - cert
       - key
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
     Certificate_2:
       description: 'A certificate object represents a public certificate, and can be optionally paired with the corresponding private key. These objects are used by Kong to handle SSL/TLS termination for encrypted requests, or for use as a trusted CA store when validating peer certificate of client/service. Certificates are optionally associated with SNI objects to tie a cert/key pair to one or more hostnames. If intermediate certificates are required in addition to the main certificate, they should be concatenated together into one string according to the following order: main certificate on the top, followed by any intermediates.'
       type: object
@@ -535,15 +520,14 @@ components:
         type: string
         example: team-payments
         default: default
-    PaginationSize:
-      description: Number of resources to be returned.
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
       in: query
-      name: size
+      name: tags
       schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
+        type: string
     controlPlaneId:
       name: controlPlaneId
       in: path
@@ -554,6 +538,13 @@ components:
         example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
       description: The UUID of your control plane. This variable is available in the Konnect manager.
       x-speakeasy-param-force-new: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
     CertificateId_2:
       description: ID of the Certificate to lookup
       example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
@@ -562,21 +553,15 @@ components:
       required: true
       schema:
         type: string
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+    PaginationSize:
+      description: Number of resources to be returned.
       in: query
-      name: offset
+      name: size
       schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
   securitySchemes:
     adminToken:
       in: header

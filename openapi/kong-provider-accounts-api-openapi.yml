@@ -84,7 +84,319 @@ paths:
       - Provider Accounts
       x-speakeasy-group: CloudGateways
 components:
+  responses:
+    ListProviderAccountsResponse:
+      description: A paginated list for a collection of provider accounts.
+      content:
+        application/json:
+          schema:
+            x-speakeasy-entity: CloudGatewayProviderAccountList
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProviderAccount'
+            required:
+            - meta
+            - data
+            title: ListCloudGatewayProviderAccountsResponse
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    RetrieveProviderAccountResponse:
+      description: Response format for retrieving a provider account.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProviderAccount'
+    CloudGatewaysBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    ProviderAccountId:
+      name: providerAccountId
+      in: path
+      description: The ID of the provider account to operate on.
+      required: true
+      schema:
+        $ref: '#/components/schemas/ProviderAccountId'
+    ProviderAccountsFilter:
+      name: filter
+      description: Filters supported for provider accounts.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ProviderAccountsFilterParameters'
+      style: deepObject
   schemas:
+    ProviderAccountsFilterParameters:
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
+      additionalProperties: false
+      title: ProviderAccountsFilterParameters
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    ProviderAccountId:
+      type: string
+      format: uuid
+      example: 929b2449-c69f-44c4-b6ad-9ecec6f811ae
+    CloudGatewaysStringFieldFilterOverride:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+      additionalProperties: false
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    ProviderName:
+      description: Name of cloud provider.
+      type: string
+      example: aws
+      enum:
+      - aws
+      - azure
+      - gcp
+      title: Provider Name
+      x-speakeasy-unknown-values: allow
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     BaseError:
       description: standard error
       type: object
@@ -139,84 +451,37 @@ components:
       - instance
       - detail
       title: Error
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterMinimumLength:
+    ProviderAccount:
+      description: Object containing mapping for organization and cloud provider to account ID.
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    ProviderAccountsFilterParameters:
-      type: object
-      properties:
+        id:
+          $ref: '#/components/schemas/ProviderAccountId'
         provider:
-          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
-      additionalProperties: false
-      title: ProviderAccountsFilterParameters
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
+          $ref: '#/components/schemas/ProviderName'
+        provider_account_id:
+          description: ID of the cloud provider account.
+          type: string
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of provider account creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of provider account update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
       required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+      - id
+      - provider
+      - provider_account_id
+      - created_at
+      - updated_at
+      title: Cloud Gateway Provider Account
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -232,10 +497,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
-    ProviderAccountId:
-      type: string
-      format: uuid
-      example: 929b2449-c69f-44c4-b6ad-9ecec6f811ae
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -269,46 +530,46 @@ components:
       - reason
       - rule
       - maximum
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    PaginatedMeta:
+      description: returns the pagination information
       type: object
       properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
+        page:
+          $ref: '#/components/schemas/PageMeta'
       required:
-      - number
-      - size
-      - total
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -338,267 +599,6 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    ProviderAccount:
-      description: Object containing mapping for organization and cloud provider to account ID.
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/ProviderAccountId'
-        provider:
-          $ref: '#/components/schemas/ProviderName'
-        provider_account_id:
-          description: ID of the cloud provider account.
-          type: string
-          readOnly: true
-        created_at:
-          description: An RFC-3339 timestamp representation of provider account creation date.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-        updated_at:
-          description: An RFC-3339 timestamp representation of provider account update date.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-      required:
-      - id
-      - provider
-      - provider_account_id
-      - created_at
-      - updated_at
-      title: Cloud Gateway Provider Account
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ProviderName:
-      description: Name of cloud provider.
-      type: string
-      example: aws
-      enum:
-      - aws
-      - azure
-      - gcp
-      title: Provider Name
-      x-speakeasy-unknown-values: allow
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    CloudGatewaysStringFieldFilterOverride:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-      additionalProperties: false
-  responses:
-    RetrieveProviderAccountResponse:
-      description: Response format for retrieving a provider account.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ProviderAccount'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListProviderAccountsResponse:
-      description: A paginated list for a collection of provider accounts.
-      content:
-        application/json:
-          schema:
-            x-speakeasy-entity: CloudGatewayProviderAccountList
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProviderAccount'
-            required:
-            - meta
-            - data
-            title: ListCloudGatewayProviderAccountsResponse
-    CloudGatewaysBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-  parameters:
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    ProviderAccountsFilter:
-      name: filter
-      description: Filters supported for provider accounts.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ProviderAccountsFilterParameters'
-      style: deepObject
-    ProviderAccountId:
-      name: providerAccountId
-      in: path
-      description: The ID of the provider account to operate on.
-      required: true
-      schema:
-        $ref: '#/components/schemas/ProviderAccountId'
   securitySchemes:
     personalAccessToken:
       type: http

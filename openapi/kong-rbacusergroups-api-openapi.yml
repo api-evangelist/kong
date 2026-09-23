@@ -7,9 +7,9 @@ info:
   description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
 
 
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+    You can learn more about Kong Gateway at developer.konghq.com.
 
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    Give Kong a star at the Kong/kong repository.'
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
@@ -48,7 +48,6 @@ paths:
         terraform-resource: RbacUserGroup#create
       operationId: create-rbac_user_group
       summary: Create a new RBAC User Group
-      description: Create a new RBAC User Group
       parameters:
       - $ref: '#/components/parameters/Workspace'
       requestBody:
@@ -79,7 +78,6 @@ paths:
         terraform-resource: RbacUserGroup#delete
       operationId: delete-rbac_user_group
       summary: Delete a RBAC User Group
-      description: Delete a RBAC User Group
       parameters:
       - $ref: '#/components/parameters/RBACUserGroupId'
       - $ref: '#/components/parameters/Workspace'
@@ -91,30 +89,17 @@ paths:
       tags:
       - RBACUserGroups
 components:
-  responses:
-    HTTP401Error:
-      description: Unauthorized
-      content:
-        application/json:
-          examples:
-            DuplicateApiKey:
-              summary: Duplicate API key found
-              value:
-                message: Duplicate API key found
-                status: 401
-            InvalidAuthCred:
-              summary: Invalid authentication credentials
-              value:
-                message: Unauthorized
-                status: 401
-            NoAPIKey:
-              summary: No API key found
-              value:
-                message: No API key found in request
-                status: 401
-          schema:
-            $ref: '#/components/schemas/GatewayUnauthorizedError'
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     RBACUserGroup:
       x-speakeasy-entity: RbacUserGroup
       type: object
@@ -164,16 +149,29 @@ components:
           | del(.group_id, .user_id)
 
           '
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
   parameters:
     RBACUserIdForNestedEntities:
       description: ID of the RBAC User to lookup
@@ -184,15 +182,6 @@ components:
       schema:
         type: string
       x-speakeasy-match: user_id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
     RBACUserGroupId:
       description: ID of the RBAC User Group to lookup
       example: ''
@@ -202,6 +191,15 @@ components:
       schema:
         type: string
       x-speakeasy-match: group_id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
   securitySchemes:
     adminToken:
       in: header

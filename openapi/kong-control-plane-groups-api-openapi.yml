@@ -209,60 +209,6 @@ paths:
       - Control Plane Groups
 components:
   schemas:
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
     CursorPaginatedMetaWithSizeAndTotal:
       description: returns the pagination information
       type: object
@@ -272,86 +218,40 @@ components:
       required:
       - page
       title: CursorPaginatedMetaWithSizeAndTotal
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterMinimumLength:
+    GroupConflict:
+      description: The Group Conflict object contains information about a conflict in a control plane group.
       type: object
       properties:
-        field:
+        cluster_id:
+          description: The ID of a control plane member of a control plane group.
           type: string
-          example: name
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
           readOnly: true
-        rule:
-          description: invalid parameters rules
+        description:
+          description: The description of the conflict.
           type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
+          example: 'conflicting entity found: ID=38d790ad-8b08-4ff5-a074-2e1e9e64d8bd, Name=foo'
           readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
+        resource:
+          $ref: '#/components/schemas/GroupConflictResource'
       required:
-      - field
-      - reason
-      - rule
-      - minimum
-    CursorMetaWithSizeAndTotal:
+      - cluster_id
+      - description
+      - resource
+      title: GroupConflict
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
       type: object
-      properties:
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-        total:
-          description: Total number of objects in the collection; will only be present on the first page
-          type: number
-          example: 974
-      required:
-      - size
-      - next
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
     ProxyURL:
       description: Proxy URL associated with reaching the data-planes connected to a control-plane.
       type: object
@@ -375,226 +275,25 @@ components:
       - port
       - protocol
       title: ProxyURL
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    GroupConflict:
-      description: The Group Conflict object contains information about a conflict in a control plane group.
-      type: object
-      properties:
-        cluster_id:
-          description: The ID of a control plane member of a control plane group.
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: true
-        description:
-          description: The description of the conflict.
-          type: string
-          example: 'conflicting entity found: ID=38d790ad-8b08-4ff5-a074-2e1e9e64d8bd, Name=foo'
-          readOnly: true
-        resource:
-          $ref: '#/components/schemas/GroupConflictResource'
-      required:
-      - cluster_id
-      - description
-      - resource
-      title: GroupConflict
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    GroupStatus:
-      description: The Group Status object contains information about the status of a control plane group.
+    GroupConflictResource:
+      description: A resource causing a conflict in a control plane group.
       type: object
       properties:
         id:
-          description: The control plane group ID.
+          description: The ID of the resource.
           type: string
           format: uuid
           example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
           readOnly: true
-        created_at:
-          description: An ISO-8604 timestamp representation of control plane group status creation date.
+        type:
+          description: The type of the resource.
           type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
+          example: service
           readOnly: true
-        updated_at:
-          description: An ISO-8604 timestamp representation of control plane group status update date.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-        conflicts:
-          type: array
-          items:
-            $ref: '#/components/schemas/GroupConflict'
-          maxItems: 256
-        state:
-          description: The state of the control plane group.
-          type: string
-          example: CONFLICT
-          enum:
-          - OK
-          - CONFLICT
-          - UNKNOWN
-          readOnly: true
-          x-speakeasy-unknown-values: allow
       required:
       - id
-      - created_at
-      - updated_at
-      - state
-      title: GroupStatus
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    GroupMemberStatus:
-      description: Object with information determining the group membership status of a control plane.
-      type: object
-      properties:
-        is_member:
-          description: Boolean indicating if a control plane is a member of a control plane group.
-          type: boolean
-          example: true
-          readOnly: true
-      required:
-      - is_member
-      title: GroupMemberStatus
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
+      - type
+      title: GroupConflictResource
     InvalidParameters:
       description: invalid parameters
       type: array
@@ -608,54 +307,27 @@ components:
       minItems: 1
       nullable: false
       uniqueItems: true
-    ForbiddenError:
+    BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
+        required:
+        - invalid_parameters
         properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameterDependentItem:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    GroupMemberStatus:
+      description: Object with information determining the group membership status of a control plane.
       type: object
       properties:
-        field:
-          type: string
-          example: name
+        is_member:
+          description: Boolean indicating if a control plane is a member of a control plane group.
+          type: boolean
+          example: true
           readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
       required:
-      - field
-      - rule
-      - reason
-      - dependents
+      - is_member
+      title: GroupMemberStatus
     ControlPlane:
       x-speakeasy-entity: GatewayControlPlane
       description: The control plane object contains information about a Kong control plane.
@@ -755,25 +427,6 @@ components:
       - updated_at
       - description
       - labels
-    GroupConflictResource:
-      description: A resource causing a conflict in a control plane group.
-      type: object
-      properties:
-        id:
-          description: The ID of the resource.
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: true
-        type:
-          description: The type of the resource.
-          type: string
-          example: service
-          readOnly: true
-      required:
-      - id
-      - type
-      title: GroupConflictResource
     ProxyURLs:
       description: Array of proxy URLs associated with reaching the data-planes connected to a control-plane.
       type: array
@@ -785,6 +438,232 @@ components:
         port: 443
         protocol: https
       title: ProxyURLs
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
     GroupMembership:
       x-speakeasy-entity: GatewayControlPlaneMembership
       type: object
@@ -800,16 +679,128 @@ components:
                 type: string
       required:
       - members
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    CursorMetaWithSizeAndTotal:
+      type: object
+      properties:
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+        total:
+          description: Total number of objects in the collection; will only be present on the first page
+          type: number
+          example: 974
+      required:
+      - size
+      - next
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    GroupStatus:
+      description: The Group Status object contains information about the status of a control plane group.
+      type: object
+      properties:
+        id:
+          description: The control plane group ID.
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: true
+        created_at:
+          description: An ISO-8604 timestamp representation of control plane group status creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An ISO-8604 timestamp representation of control plane group status update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupConflict'
+          maxItems: 256
+        state:
+          description: The state of the control plane group.
+          type: string
+          example: CONFLICT
+          enum:
+          - OK
+          - CONFLICT
+          - UNKNOWN
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+      required:
+      - id
+      - created_at
+      - updated_at
+      - state
+      title: GroupStatus
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
   responses:
-    GetGroupStatus:
-      description: Status of a control plane group, including existing conflicts.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              item:
-                $ref: '#/components/schemas/GroupStatus'
     Unauthorized:
       description: Unauthorized
       content:
@@ -842,18 +833,15 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/BadRequestError'
-    Internal:
-      description: Internal
+    GetGroupStatus:
+      description: Status of a control plane group, including existing conflicts.
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/BaseError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
+            type: object
+            properties:
+              item:
+                $ref: '#/components/schemas/GroupStatus'
     ListGroupMemberships:
       description: A paginated list response for a collection of control plane group memberships.
       content:
@@ -871,6 +859,12 @@ components:
             required:
             - meta
             - data
+    Internal:
+      description: Internal
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BaseError'
     ServiceUnavailable:
       description: Service Unavailable
       content:
@@ -916,16 +910,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GroupMemberStatus'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   parameters:
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
     PageSize:
       name: page[size]
       description: The maximum number of items to include per page. The last page of a collection may include fewer items.
@@ -936,6 +927,15 @@ components:
         type: integer
         example: 10
       x-speakeasy-terraform-ignore: true
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   requestBodies:
     GroupMembershipUpsert:
       content:
@@ -943,18 +943,18 @@ components:
           schema:
             $ref: '#/components/schemas/GroupMembership'
       description: Request body for upserting a list of child control planes to a control plane group membership.
-    GroupMembershipRemove:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupMembership'
-      description: Request body for removing a list of child control planes from a control plane group membership.
     GroupMembershipAdd:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/GroupMembership'
       description: Request body for adding a list of child control planes to a control plane group membership.
+    GroupMembershipRemove:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GroupMembership'
+      description: Request body for removing a list of child control planes from a control plane group membership.
   securitySchemes:
     personalAccessToken:
       type: http

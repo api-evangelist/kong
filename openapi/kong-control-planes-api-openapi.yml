@@ -188,6 +188,141 @@ paths:
       - Control Planes
 components:
   schemas:
+    UpdateControlPlaneRequest:
+      description: The request schema for the update control plane request.
+      type: object
+      properties:
+        name:
+          description: The name of the control plane.
+          type: string
+          example: Test Control Plane
+        description:
+          description: The description of the control plane in Konnect.
+          type: string
+          example: A test control plane for exploration.
+          nullable: false
+        auth_type:
+          description: The auth type value of the cluster associated with the Runtime Group.
+          type: string
+          example: pinned_client_certs
+          enum:
+          - pinned_client_certs
+          - pki_client_certs
+          x-speakeasy-unknown-values: allow
+        proxy_urls:
+          $ref: '#/components/schemas/ProxyURLs'
+        labels:
+          $ref: '#/components/schemas/Labels'
+      additionalProperties: false
+      title: UpdateControlPlaneRequest
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    BooleanFieldFilter:
+      description: Filter by a boolean value (true/false).
+      type: boolean
+      title: BooleanFieldFilter
+    ControlPlaneFilterParameters:
+      type: object
+      properties:
+        id:
+          description: 'Filter using **one** of the following operators: `eq`, `oeq`'
+          type: object
+          additionalProperties: false
+          properties:
+            eq:
+              description: The field exactly matches the provided value.
+              type: string
+            oeq:
+              description: The field matches any of the provided values.
+              type: string
+        name:
+          description: 'Filter using **one** of the following operators: `eq`, `neq`, `contains`'
+          type: object
+          additionalProperties: false
+          properties:
+            eq:
+              description: The field exactly matches the provided value.
+              type: string
+            contains:
+              description: The field contains the provided value.
+              type: string
+            neq:
+              description: The field does not match the provided value.
+              type: string
+        cluster_type:
+          description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+          type: object
+          additionalProperties: false
+          properties:
+            eq:
+              description: The field exactly matches the provided value.
+              type: string
+            neq:
+              description: The field does not match the provided value.
+              type: string
+            oeq:
+              description: The field matches any of the provided values.
+              type: string
+        cloud_gateway:
+          $ref: '#/components/schemas/BooleanFieldFilter'
+      additionalProperties: false
+      title: ControlPlaneFilterParameters
+    ProxyURL:
+      description: Proxy URL associated with reaching the data-planes connected to a control-plane.
+      type: object
+      properties:
+        host:
+          description: Hostname of the proxy URL.
+          type: string
+        port:
+          description: Port of the proxy URL.
+          type: integer
+        protocol:
+          description: Protocol of the proxy URL.
+          type: string
+      example:
+        host: example.com
+        port: 443
+        protocol: https
+      additionalProperties: false
+      required:
+      - host
+      - port
+      - protocol
+      title: ProxyURL
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -197,6 +332,221 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
+    ProxyURLs:
+      description: Array of proxy URLs associated with reaching the data-planes connected to a control-plane.
+      type: array
+      items:
+        $ref: '#/components/schemas/ProxyURL'
+      format: set
+      example:
+      - host: example.com
+        port: 443
+        protocol: https
+      title: ProxyURLs
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    CreateControlPlaneRequest:
+      x-speakeasy-entity: GatewayControlPlane
+      description: The request schema for the create control plane request.
+      type: object
+      properties:
+        name:
+          description: The name of the control plane.
+          type: string
+          example: Test Control Plane
+        description:
+          description: The description of the control plane in Konnect.
+          type: string
+          example: A test control plane for exploration.
+          nullable: false
+        cluster_type:
+          description: The ClusterType value of the cluster associated with the Control Plane.
+          type: string
+          example: CLUSTER_TYPE_CONTROL_PLANE
+          enum:
+          - CLUSTER_TYPE_CONTROL_PLANE
+          - CLUSTER_TYPE_K8S_INGRESS_CONTROLLER
+          - CLUSTER_TYPE_CONTROL_PLANE_GROUP
+          - CLUSTER_TYPE_SERVERLESS
+          - CLUSTER_TYPE_KAFKA_NATIVE_EVENT_PROXY
+          - CLUSTER_TYPE_SERVERLESS_V1
+          x-speakeasy-unknown-values: allow
+        auth_type:
+          description: The auth type value of the cluster associated with the Runtime Group.
+          type: string
+          example: pinned_client_certs
+          enum:
+          - pinned_client_certs
+          - pki_client_certs
+          x-speakeasy-unknown-values: allow
+        cloud_gateway:
+          description: Whether this control-plane can be used for cloud-gateways.
+          type: boolean
+          example: false
+          nullable: false
+        proxy_urls:
+          $ref: '#/components/schemas/ProxyURLs'
+        labels:
+          $ref: '#/components/schemas/Labels'
+      additionalProperties: false
+      required:
+      - name
+      title: CreateControlPlaneRequest
     BaseError:
       description: standard error
       type: object
@@ -251,68 +601,6 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -328,29 +616,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
-    ProxyURL:
-      description: Proxy URL associated with reaching the data-planes connected to a control-plane.
-      type: object
-      properties:
-        host:
-          description: Hostname of the proxy URL.
-          type: string
-        port:
-          description: Port of the proxy URL.
-          type: integer
-        protocol:
-          description: Protocol of the proxy URL.
-          type: string
-      example:
-        host: example.com
-        port: 443
-        protocol: https
-      additionalProperties: false
-      required:
-      - host
-      - port
-      - protocol
-      title: ProxyURL
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -384,124 +649,6 @@ components:
       - reason
       - rule
       - maximum
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    BooleanFieldFilter:
-      description: Filter by a boolean value (true/false).
-      type: boolean
-      title: BooleanFieldFilter
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
     ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -517,79 +664,65 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Conflict
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      example: created_at desc
-      title: SortQuery
-    UpdateControlPlaneRequest:
-      description: The request schema for the update control plane request.
-      type: object
-      properties:
-        name:
-          description: The name of the control plane.
-          type: string
-          example: Test Control Plane
-        description:
-          description: The description of the control plane in Konnect.
-          type: string
-          example: A test control plane for exploration.
-          nullable: false
-        auth_type:
-          description: The auth type value of the cluster associated with the Runtime Group.
-          type: string
-          example: pinned_client_certs
-          enum:
-          - pinned_client_certs
-          - pki_client_certs
-          x-speakeasy-unknown-values: allow
-        proxy_urls:
-          $ref: '#/components/schemas/ProxyURLs'
-        labels:
-          $ref: '#/components/schemas/Labels'
-      additionalProperties: false
-      title: UpdateControlPlaneRequest
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
     ControlPlane:
       x-speakeasy-entity: GatewayControlPlane
       description: The control plane object contains information about a Kong control plane.
@@ -689,140 +822,64 @@ components:
       - updated_at
       - description
       - labels
-    ControlPlaneFilterParameters:
-      type: object
-      properties:
-        id:
-          description: 'Filter using **one** of the following operators: `eq`, `oeq`'
-          type: object
-          additionalProperties: false
-          properties:
-            eq:
-              description: The field exactly matches the provided value.
-              type: string
-            oeq:
-              description: The field matches any of the provided values.
-              type: string
-        name:
-          description: 'Filter using **one** of the following operators: `eq`, `neq`, `contains`'
-          type: object
-          additionalProperties: false
-          properties:
-            eq:
-              description: The field exactly matches the provided value.
-              type: string
-            contains:
-              description: The field contains the provided value.
-              type: string
-            neq:
-              description: The field does not match the provided value.
-              type: string
-        cluster_type:
-          description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-          type: object
-          additionalProperties: false
-          properties:
-            eq:
-              description: The field exactly matches the provided value.
-              type: string
-            neq:
-              description: The field does not match the provided value.
-              type: string
-            oeq:
-              description: The field matches any of the provided values.
-              type: string
-        cloud_gateway:
-          $ref: '#/components/schemas/BooleanFieldFilter'
-      additionalProperties: false
-      title: ControlPlaneFilterParameters
-    ProxyURLs:
-      description: Array of proxy URLs associated with reaching the data-planes connected to a control-plane.
-      type: array
-      items:
-        $ref: '#/components/schemas/ProxyURL'
-      format: set
-      example:
-      - host: example.com
-        port: 443
-        protocol: https
-      title: ProxyURLs
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    CreateControlPlaneRequest:
-      x-speakeasy-entity: GatewayControlPlane
-      description: The request schema for the create control plane request.
-      type: object
-      properties:
-        name:
-          description: The name of the control plane.
-          type: string
-          example: Test Control Plane
-        description:
-          description: The description of the control plane in Konnect.
-          type: string
-          example: A test control plane for exploration.
-          nullable: false
-        cluster_type:
-          description: The ClusterType value of the cluster associated with the Control Plane.
-          type: string
-          example: CLUSTER_TYPE_CONTROL_PLANE
-          enum:
-          - CLUSTER_TYPE_CONTROL_PLANE
-          - CLUSTER_TYPE_K8S_INGRESS_CONTROLLER
-          - CLUSTER_TYPE_CONTROL_PLANE_GROUP
-          - CLUSTER_TYPE_SERVERLESS
-          - CLUSTER_TYPE_KAFKA_NATIVE_EVENT_PROXY
-          - CLUSTER_TYPE_SERVERLESS_V1
-          x-speakeasy-unknown-values: allow
-        auth_type:
-          description: The auth type value of the cluster associated with the Runtime Group.
-          type: string
-          example: pinned_client_certs
-          enum:
-          - pinned_client_certs
-          - pki_client_certs
-          x-speakeasy-unknown-values: allow
-        cloud_gateway:
-          description: Whether this control-plane can be used for cloud-gateways.
-          type: boolean
-          example: false
-          nullable: false
-        proxy_urls:
-          $ref: '#/components/schemas/ProxyURLs'
-        labels:
-          $ref: '#/components/schemas/Labels'
-      additionalProperties: false
-      required:
-      - name
-      title: CreateControlPlaneRequest
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    ControlPlaneSort:
+      name: sort
+      description: "Sorts a collection of control-planes. Supported sort attributes are:\n  - created_at\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
+    ControlPlaneFilter:
+      name: filter
+      description: Filters a collection of control-planes.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ControlPlaneFilterParameters'
+      style: deepObject
+    FilterByLabels:
+      x-speakeasy-name-override: filter_labels
+      name: labels
+      description: Filter control planes in the response by associated labels.
+      in: query
+      required: false
+      schema:
+        type: string
+        example: key:value,existCheck
   responses:
+    ControlPlaneUnauthenticated:
+      description: Unauthenticated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ControlPlanesBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     ListControlPlanesResponse:
       description: A paginated list response for a collection of control planes.
       content:
@@ -842,42 +899,36 @@ components:
             - meta
             - data
             title: ListControlPlanesResponse
-    Internal:
-      description: Internal
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BaseError'
-    ControlPlaneNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    RetrieveControlPlaneResponse:
-      description: A response to retrieving a single control plane.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ControlPlane'
     CreateControlPlaneResponse:
       description: A response to creating a control plane.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ControlPlane'
+    RetrieveControlPlaneResponse:
+      description: A response to retrieving a single control plane.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ControlPlane'
+    ControlPlaneNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
     UpdateControlPlaneResponse:
       description: A response to updating a control plane.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ControlPlane'
-    ControlPlaneUnauthenticated:
-      description: Unauthenticated
+    Internal:
+      description: Internal
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/UnauthorizedError'
+            $ref: '#/components/schemas/BaseError'
     ServiceUnavailable:
       description: Service Unavailable
       content:
@@ -911,6 +962,12 @@ components:
             - title
             - instance
             title: ServiceUnavailableError
+    ControlPlaneConflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
     InternalServerError:
       description: Internal Server Error
       content:
@@ -950,63 +1007,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
-    ControlPlaneConflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    ControlPlanesBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-  parameters:
-    FilterByLabels:
-      x-speakeasy-name-override: filter_labels
-      name: labels
-      description: Filter control planes in the response by associated labels.
-      in: query
-      required: false
-      schema:
-        type: string
-        example: key:value,existCheck
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    ControlPlaneFilter:
-      name: filter
-      description: Filters a collection of control-planes.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ControlPlaneFilterParameters'
-      style: deepObject
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    ControlPlaneSort:
-      name: sort
-      description: "Sorts a collection of control-planes. Supported sort attributes are:\n  - created_at\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
   securitySchemes:
     personalAccessToken:
       type: http

@@ -40,9 +40,7 @@ servers:
 tags:
 - description: 'The consumer object represents a consumer - or a user - of a service.
 
-    You can either rely on Kong Gateway as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong Gateway and your existing primary datastore.
-
-    '
+    You can either rely on Kong Gateway as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong Gateway and your existing primary datastore.'
   name: Consumers
 paths:
   /{workspace}/consumers:
@@ -52,7 +50,6 @@ paths:
         terraform-resource: Consumer#create
       operationId: create-consumer
       summary: Create a new Consumer
-      description: Create a new Consumer
       parameters:
       - $ref: '#/components/parameters/Workspace'
       requestBody:
@@ -103,7 +100,6 @@ paths:
         terraform-resource: Consumer#delete
       operationId: delete-consumer
       summary: Delete a Consumer
-      description: Delete a Consumer
       parameters:
       - $ref: '#/components/parameters/ConsumerIdOrUsername'
       - $ref: '#/components/parameters/Workspace'
@@ -194,7 +190,6 @@ paths:
     get:
       operationId: list-consumer
       summary: List all Consumers
-      description: List all Consumers
       parameters:
       - $ref: '#/components/parameters/PaginationSize'
       - $ref: '#/components/parameters/PaginationOffset'
@@ -230,7 +225,6 @@ paths:
     post:
       operationId: create-consumer
       summary: Create a new Consumer
-      description: Create a new Consumer
       requestBody:
         description: Description of the new Consumer for creation
         required: true
@@ -266,7 +260,6 @@ paths:
     delete:
       operationId: delete-consumer
       summary: Delete a Consumer
-      description: Delete a Consumer
       parameters:
       - $ref: '#/components/parameters/ConsumerId'
       responses:
@@ -359,7 +352,6 @@ paths:
     get:
       operationId: list-consumer-groups-for-consumer
       summary: List all Consumer Groups a Consumer belongs to
-      description: List all Consumer Groups a Consumer belongs to
       parameters:
       - $ref: '#/components/parameters/ConsumerId'
       - $ref: '#/components/parameters/PaginationSize'
@@ -475,27 +467,19 @@ components:
         type: string
         example: team-payments
         default: default
-    CustomId:
-      description: Filter consumers by their custom_id.
-      example: my-custom-id
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
       in: query
-      name: custom_id
+      name: tags
       schema:
         type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    ConsumerId:
-      description: ID of the Consumer to lookup
-      example: c1059869-6fa7-4329-a5f5-5946d14ca2c5
+    ConsumerGroupId:
+      description: ID of the Consumer Group to lookup
+      example: ''
       in: path
-      name: ConsumerId
+      name: ConsumerGroupId
       required: true
       schema:
         type: string
@@ -506,12 +490,26 @@ components:
       name: filter[name][eq]
       schema:
         type: string
-    ConsumerGroupId:
-      description: ID of the Consumer Group to lookup
-      example: ''
+    CustomId:
+      description: Filter consumers by their custom_id.
+      example: my-custom-id
+      in: query
+      name: custom_id
+      schema:
+        type: string
+    ConsumerId:
+      description: ID of the Consumer to lookup
+      example: c1059869-6fa7-4329-a5f5-5946d14ca2c5
       in: path
-      name: ConsumerGroupId
+      name: ConsumerId
       required: true
+      schema:
+        type: string
+    NameContainsFilter:
+      description: Filter routes by a substring of the name.
+      example: john
+      in: query
+      name: filter[name][contains]
       schema:
         type: string
     controlPlaneId:
@@ -524,13 +522,6 @@ components:
         example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
       description: The UUID of your control plane. This variable is available in the Konnect manager.
       x-speakeasy-param-force-new: true
-    NameContainsFilter:
-      description: Filter routes by a substring of the name.
-      example: john
-      in: query
-      name: filter[name][contains]
-      schema:
-        type: string
     PaginationOffset:
       allowEmptyValue: true
       description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
@@ -538,15 +529,26 @@ components:
       name: offset
       schema:
         type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
+    PaginationSize:
+      description: Number of resources to be returned.
       in: query
-      name: tags
+      name: size
       schema:
-        type: string
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     Consumer:
       x-speakeasy-entity: Consumer
       description: The Consumer object represents a consumer - or a user - of a Service. You can either rely on Kong as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong and your existing primary datastore.
@@ -586,16 +588,6 @@ components:
         - silver-tier
         username: bob-the-builder
       additionalProperties: false
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
     Consumer_2:
       description: The Consumer object represents a consumer - or a user - of a Service. You can either rely on Kong as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong and your existing primary datastore.
       type: object
@@ -634,12 +626,6 @@ components:
         - silver-tier
         username: bob-the-builder
       additionalProperties: false
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
-      type: string
     ConsumerGroup:
       type: object
       properties:
@@ -668,6 +654,12 @@ components:
       additionalProperties: false
       required:
       - name
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
   responses:
     HTTP401Error:
       description: Unauthorized

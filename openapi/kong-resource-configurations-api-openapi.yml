@@ -36,9 +36,7 @@ paths:
 
         Resource configurations are settings that are applied to all cloud gateway resources in an organization.
 
-        For example, the "data-plane-group-idle-timeout-minutes" resource configuration sets the idle timeout for all data plane groups in an organization.
-
-        '
+        For example, the "data-plane-group-idle-timeout-minutes" resource configuration sets the idle timeout for all data plane groups in an organization.'
       parameters:
       - $ref: '#/components/parameters/PageSize'
       - $ref: '#/components/parameters/PageNumber'
@@ -64,9 +62,7 @@ paths:
 
         Resource configurations are settings that are applied to all cloud gateway resources in an organization.
 
-        For example, the "data-plane-group-idle-timeout-minutes" resource configuration sets the idle timeout for all data plane groups in an organization.
-
-        '
+        For example, the "data-plane-group-idle-timeout-minutes" resource configuration sets the idle timeout for all data plane groups in an organization.'
       parameters:
       - $ref: '#/components/parameters/PageSize'
       - $ref: '#/components/parameters/PageNumber'
@@ -107,6 +103,197 @@ paths:
       x-speakeasy-group: CloudGateways
 components:
   schemas:
+    ResourceConfigurationQualifier:
+      description: Enumeration of configuration qualifiers available for organization-wide configuration.
+      type: string
+      enum:
+      - data-plane-group-idle-timeout-minutes
+    ResourceConfigurationName:
+      description: The human-readable name of this resource configuration.
+      type: string
+      example: Data Plane Group Idle Timeout Minutes
+      readOnly: true
+    ResourceConfigurationId:
+      type: string
+      format: uuid
+      example: 9678f205-49a1-47bb-82d9-d01cafa42a0d
+      readOnly: true
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    DefaultResourceConfigurationId:
+      type: string
+      format: uuid
+      example: cc504063-f3bb-4e09-8e32-bbcdbc5cd618
+      readOnly: true
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    ResourceConfigurationDescription:
+      description: A more verbose description of what this resource configuration enforces.
+      type: string
+      example: The number of minutes that a data plane group can be idle before it is automatically scaled down to zero instances.
+      readOnly: true
     BaseError:
       description: standard error
       type: object
@@ -161,86 +348,25 @@ components:
       - instance
       - detail
       title: Error
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    ResourceConfigurationName:
-      description: The human-readable name of this resource configuration.
-      type: string
-      example: Data Plane Group Idle Timeout Minutes
-      readOnly: true
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     ResourceConfigurationValue:
       description: The value of this resource configuration.
       type: integer
       example: 45
+    ResourceConfiguration:
+      description: Object containing information about a resource configuration.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ResourceConfigurationId'
+        qualifier:
+          $ref: '#/components/schemas/ResourceConfigurationQualifier'
+        value:
+          $ref: '#/components/schemas/ResourceConfigurationValue'
+      required:
+      - id
+      - qualifier
+      - value
+      title: Resource Configuration
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -256,11 +382,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
-    ResourceConfigurationQualifier:
-      description: Enumeration of configuration qualifiers available for organization-wide configuration.
-      type: string
-      enum:
-      - data-plane-group-idle-timeout-minutes
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -294,133 +415,21 @@ components:
       - reason
       - rule
       - maximum
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    ResourceConfigurationDescription:
-      description: A more verbose description of what this resource configuration enforces.
-      type: string
-      example: The number of minutes that a data plane group can be idle before it is automatically scaled down to zero instances.
-      readOnly: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    ResourceConfigurationId:
-      type: string
-      format: uuid
-      example: 9678f205-49a1-47bb-82d9-d01cafa42a0d
-      readOnly: true
-    ResourceConfiguration:
-      description: Object containing information about a resource configuration.
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/ResourceConfigurationId'
-        qualifier:
-          $ref: '#/components/schemas/ResourceConfigurationQualifier'
-        value:
-          $ref: '#/components/schemas/ResourceConfigurationValue'
-      required:
-      - id
-      - qualifier
-      - value
-      title: Resource Configuration
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ForbiddenError:
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 403
+            example: 401
           title:
-            example: Forbidden
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/403
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Forbidden
+            example: Invalid credentials
     DefaultResourceConfiguration:
       description: Object containing information about a default resource configurations, and any organizational overrides.
       type: object
@@ -462,44 +471,31 @@ components:
       - created_at
       - updated_at
       title: Default Resource Configuration
-    InvalidParameterDependentItem:
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    PaginatedMeta:
+      description: returns the pagination information
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
+        page:
+          $ref: '#/components/schemas/PageMeta'
       required:
-      - field
-      - rule
-      - reason
-      - dependents
-    DefaultResourceConfigurationId:
-      type: string
-      format: uuid
-      example: cc504063-f3bb-4e09-8e32-bbcdbc5cd618
-      readOnly: true
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -529,6 +525,34 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    ResourceConfigurationId:
+      name: resourceConfigurationId
+      in: path
+      description: The ID of the resource configuration to operate on.
+      required: true
+      schema:
+        $ref: '#/components/schemas/ResourceConfigurationId'
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   responses:
     Unauthorized:
       description: Unauthorized
@@ -562,6 +586,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ResourceConfiguration'
+    CloudGatewaysBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     ListResourceConfigurationsResponse:
       description: A paginated list for a collection of resource configurations.
       content:
@@ -579,6 +609,12 @@ components:
             - meta
             - data
             title: ListResourceConfigurationsResponse
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
     ListDefaultResourceConfigurationsResponse:
       description: A paginated list for a collection of default resource configurations.
       content:
@@ -602,46 +638,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
-    CloudGatewaysBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-  parameters:
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    ResourceConfigurationId:
-      name: resourceConfigurationId
-      in: path
-      description: The ID of the resource configuration to operate on.
-      required: true
-      schema:
-        $ref: '#/components/schemas/ResourceConfigurationId'
   securitySchemes:
     personalAccessToken:
       type: http

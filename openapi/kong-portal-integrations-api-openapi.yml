@@ -97,106 +97,23 @@ paths:
       - Portal Integrations
 components:
   schemas:
-    BaseError:
-      description: standard error
+    UpdateGoogleTagManagerIntegration:
+      description: Partially update Google Tag Manager integration configuration
       type: object
       properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
+        enabled:
+          description: Whether the integration is enabled
+          type: boolean
         type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
+          description: The type of the integration for categorization
           type: string
           enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
+          - tracking
+        config_data:
+          type: object
+          $ref: '#/components/schemas/GoogleTagManagerIntegrationConfigProperties'
       additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
+      nullable: true
     GoogleAnalytics4Integration:
       description: Google Analytics integration configuration
       type: object
@@ -236,36 +153,23 @@ components:
       - enabled
       - type
       - config_data
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
+    UpdateGoogleAnalytics4Integration:
+      description: Partially update Google Analytics 4 integration configuration
+      type: object
+      properties:
+        enabled:
+          description: Whether the integration is enabled
+          type: boolean
+        type:
+          description: The type of the integration for categorization
+          type: string
+          enum:
+          - analytics
+        config_data:
+          type: object
+          $ref: '#/components/schemas/GoogleAnalytics4IntegrationConfigProperties'
+      additionalProperties: false
+      nullable: true
     GoogleAnalytics4IntegrationConfigProperties:
       description: Configuration data for the Google Analytics integration
       type: object
@@ -285,35 +189,29 @@ components:
           maxLength: 100
           nullable: true
       additionalProperties: false
-    PortalIntegrations:
-      description: Configuration data for Dev Portal integrations
-      type: object
-      properties:
-        google_tag_manager:
-          $ref: '#/components/schemas/GoogleTagManagerIntegration'
-        google_analytics_4:
-          $ref: '#/components/schemas/GoogleAnalytics4Integration'
-      default: {}
-      additionalProperties: false
-      title: Portal Integrations
-    UpdateGoogleTagManagerIntegration:
-      description: Partially update Google Tag Manager integration configuration
-      type: object
-      properties:
-        enabled:
-          description: Whether the integration is enabled
-          type: boolean
-        type:
-          description: The type of the integration for categorization
-          type: string
-          enum:
-          - tracking
-        config_data:
-          type: object
-          $ref: '#/components/schemas/GoogleTagManagerIntegrationConfigProperties'
-      additionalProperties: false
-      nullable: true
-    InvalidParameterMaximumLength:
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterChoiceItem:
       type: object
       properties:
         field:
@@ -324,29 +222,41 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - max_length
-          - max_items
-          - max
+          - enum
           nullable: false
           readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
         source:
           type: string
           example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
       - rule
-      - maximum
-    InvalidParameterStandard:
+      - choices
+    UpdatePortalIntegrations:
+      description: Partially update configuration data for Dev Portal integrations
+      type: object
+      properties:
+        google_tag_manager:
+          $ref: '#/components/schemas/UpdateGoogleTagManagerIntegration'
+        google_analytics_4:
+          $ref: '#/components/schemas/UpdateGoogleAnalytics4Integration'
+      default: {}
+      additionalProperties: false
+      title: Update Portal Integrations
+    InvalidParameterDependentItem:
       type: object
       properties:
         field:
@@ -354,18 +264,31 @@ components:
           example: name
           readOnly: true
         rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
+          description: invalid parameters rules
           type: string
-          example: body
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
         reason:
           type: string
           example: is a required field
           readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
       required:
       - field
+      - rule
       - reason
+      - dependents
     GoogleTagManagerIntegrationConfigProperties:
       description: Configuration data for the Google Tag Manager integration
       type: object
@@ -421,7 +344,27 @@ components:
           maxLength: 100
           nullable: true
       additionalProperties: false
-    InvalidParameterChoiceItem:
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
       type: object
       properties:
         field:
@@ -432,118 +375,86 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - enum
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
           nullable: false
           readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
       - rule
-      - choices
-    UpdateGoogleAnalytics4Integration:
-      description: Partially update Google Analytics 4 integration configuration
+      - minimum
+    BaseError:
+      description: standard error
       type: object
       properties:
-        enabled:
-          description: Whether the integration is enabled
-          type: boolean
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
         type:
-          description: The type of the integration for categorization
+          description: The error type.
           type: string
-          enum:
-          - analytics
-        config_data:
-          type: object
-          $ref: '#/components/schemas/GoogleAnalytics4IntegrationConfigProperties'
-      additionalProperties: false
-      nullable: true
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
           readOnly: true
-        rule:
-          description: invalid parameters rules
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
           type: string
-          enum:
-          - dependent_fields
-          nullable: true
           readOnly: true
-        reason:
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
           type: string
-          example: is a required field
           readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
       required:
-      - field
-      - rule
-      - reason
-      - dependents
-    UpdatePortalIntegrations:
-      description: Partially update configuration data for Dev Portal integrations
-      type: object
-      properties:
-        google_tag_manager:
-          $ref: '#/components/schemas/UpdateGoogleTagManagerIntegration'
-        google_analytics_4:
-          $ref: '#/components/schemas/UpdateGoogleAnalytics4Integration'
-      default: {}
-      additionalProperties: false
-      title: Update Portal Integrations
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
     GoogleTagManagerIntegration:
       description: Google Tag Manager integration configuration
       type: object
@@ -619,6 +530,84 @@ components:
       - enabled
       - type
       - config_data
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -648,13 +637,18 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
+    PortalIntegrations:
+      description: Configuration data for Dev Portal integrations
+      type: object
+      properties:
+        google_tag_manager:
+          $ref: '#/components/schemas/GoogleTagManagerIntegration'
+        google_analytics_4:
+          $ref: '#/components/schemas/GoogleAnalytics4Integration'
+      default: {}
+      additionalProperties: false
+      title: Portal Integrations
   responses:
-    PortalIntegrationsResponse:
-      description: The current integration configurations for a portal.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PortalIntegrations'
     Unauthorized:
       description: Unauthorized
       content:
@@ -681,18 +675,34 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
+    PortalIntegrationsResponse:
+      description: The current integration configurations for a portal.
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/ForbiddenError'
+            $ref: '#/components/schemas/PortalIntegrations'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
   requestBodies:
     UpdatePortalIntegrations:
       content:
@@ -704,16 +714,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/PortalIntegrations'
-  parameters:
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
   securitySchemes:
     personalAccessToken:
       type: http

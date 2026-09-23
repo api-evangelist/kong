@@ -40,7 +40,6 @@ servers:
 tags:
 - description: 'An SNI object represents a many-to-one mapping of hostnames to a certificate.
 
-    <br><br>
 
     A certificate object can have many hostnames associated with it. When Kong Gateway receives an SSL request, it uses the SNI field in the Client Hello to look up the certificate object based on the SNI associated with the certificate.'
   name: SNIs
@@ -52,7 +51,6 @@ paths:
         terraform-resource: SNI#create
       operationId: create-sni
       summary: Create a new SNI
-      description: Create a new SNI
       parameters:
       - $ref: '#/components/parameters/Workspace'
       requestBody:
@@ -103,7 +101,6 @@ paths:
         terraform-resource: SNI#delete
       operationId: delete-sni
       summary: Delete an SNI
-      description: Delete an SNI
       parameters:
       - $ref: '#/components/parameters/SNIIdOrName'
       - $ref: '#/components/parameters/Workspace'
@@ -194,7 +191,6 @@ paths:
     get:
       operationId: list-sni-with-certificate
       summary: List all SNIs associated with a Certificate
-      description: List all SNIs associated with a Certificate
       parameters:
       - $ref: '#/components/parameters/CertificateId'
       - $ref: '#/components/parameters/PaginationSize'
@@ -226,7 +222,6 @@ paths:
     post:
       operationId: create-sni-with-certificate
       summary: Create a new SNI associated with a Certificate
-      description: Create a new SNI associated with a Certificate
       parameters:
       - $ref: '#/components/parameters/CertificateId'
       requestBody:
@@ -337,7 +332,6 @@ paths:
     get:
       operationId: list-sni
       summary: List all SNIs
-      description: List all SNIs
       parameters:
       - $ref: '#/components/parameters/PaginationSize'
       - $ref: '#/components/parameters/PaginationOffset'
@@ -370,7 +364,6 @@ paths:
     post:
       operationId: create-sni
       summary: Create a new SNI
-      description: Create a new SNI
       requestBody:
         description: Description of the new SNI for creation
         required: true
@@ -406,7 +399,6 @@ paths:
     delete:
       operationId: delete-sni
       summary: Delete an SNI
-      description: Delete an SNI
       parameters:
       - $ref: '#/components/parameters/SNIId'
       responses:
@@ -476,7 +468,86 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
+  parameters:
+    SNIIdOrName:
+      description: ID or name of the SNI to lookup
+      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
+      in: path
+      name: SNIIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    SNIId:
+      description: ID of the SNI to lookup
+      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
+      in: path
+      name: SNIId
+      required: true
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    CertificateId:
+      description: ID of the Certificate to lookup
+      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
+      in: path
+      name: CertificateId
+      required: true
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     SNI:
       x-speakeasy-entity: SNI
       description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
@@ -520,16 +591,45 @@ components:
       required:
       - name
       - certificate
-    GatewayUnauthorizedError:
+    SNIWithoutParents:
+      description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
       type: object
       properties:
-        message:
-          type: string
-        status:
+        certificate:
+          description: The id (a UUID) of the certificate with which to associate the SNI hostname. The Certificate must have a valid private key associated with it to be used by the SNI object.
+          type: object
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        created_at:
+          description: Unix epoch when the resource was created.
           type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The SNI name to associate with the given certificate.
+          type: string
+        tags:
+          description: An optional set of strings associated with the SNIs for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        id: 36c4566c-14cc-4132-9011-4139fcbbe50a
+        name: some.example.org
+      additionalProperties: false
       required:
-      - message
-      - status
+      - name
     SNI_2:
       description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
       type: object
@@ -578,45 +678,6 @@ components:
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
-    SNIWithoutParents:
-      description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
-      type: object
-      properties:
-        certificate:
-          description: The id (a UUID) of the certificate with which to associate the SNI hostname. The Certificate must have a valid private key associated with it to be used by the SNI object.
-          type: object
-          properties:
-            id:
-              type: string
-          x-foreign: true
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        name:
-          description: The SNI name to associate with the given certificate.
-          type: string
-        tags:
-          description: An optional set of strings associated with the SNIs for grouping and filtering.
-          type: array
-          items:
-            description: A string representing a tag.
-            type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-      example:
-        id: 36c4566c-14cc-4132-9011-4139fcbbe50a
-        name: some.example.org
-      additionalProperties: false
-      required:
-      - name
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -646,75 +707,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    SNIIdOrName:
-      description: ID or name of the SNI to lookup
-      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
-      in: path
-      name: SNIIdOrName
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    CertificateId:
-      description: ID of the Certificate to lookup
-      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
-      in: path
-      name: CertificateId
-      required: true
-      schema:
-        type: string
-    SNIId:
-      description: ID of the SNI to lookup
-      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
-      in: path
-      name: SNIId
-      required: true
-      schema:
-        type: string
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
   securitySchemes:
     adminToken:
       in: header

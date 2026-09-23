@@ -38,9 +38,7 @@ paths:
       description: 'Publish a new document attached to an API.
 
 
-        All configuration options may be provided in the frontmatter section of `content`. If you set values in both the `POST` request _and_ in the frontmatter, the values in the `POST` request will take precedence.
-
-        '
+        All configuration options may be provided in the frontmatter section of `content`. If you set values in both the `POST` request _and_ in the frontmatter, the values in the `POST` request will take precedence.'
       requestBody:
         $ref: '#/components/requestBodies/CreateApiDocumentRequest'
       responses:
@@ -181,7 +179,361 @@ paths:
       tags:
       - API Documentation
 components:
+  responses:
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ApiSlugConflict:
+      description: Conflict - `slug` property must be unique
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: number
+              title:
+                type: string
+              type:
+                type: string
+              instance:
+                type: string
+            required:
+            - status
+            - title
+            - instance
+    UnsupportedMediaType:
+      description: Unsupported Media Type
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnsupportedMediaTypeError'
+    ListApiDocumentResponse:
+      description: List of API documents
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiDocumentSummaryWithChildren'
+            additionalProperties: false
+            required:
+            - data
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiDocumentResponse:
+      description: API document
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                $ref: '#/components/schemas/ApiDocumentId'
+              content:
+                $ref: '#/components/schemas/ApiDocumentContent'
+              title:
+                $ref: '#/components/schemas/ApiDocumentTitle'
+              slug:
+                $ref: '#/components/schemas/ApiDocumentSlug'
+              status:
+                $ref: '#/components/schemas/ApiDocumentStatus'
+              parent_document_id:
+                $ref: '#/components/schemas/ApiDocumentParentDocumentId'
+              created_at:
+                $ref: '#/components/schemas/CreatedAt'
+              updated_at:
+                $ref: '#/components/schemas/UpdatedAt'
+            additionalProperties: false
+            required:
+            - id
+            - parent_document_id
+            - title
+            - slug
+            - status
+            - content
+            - updated_at
+            - created_at
+            title: API Document
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
   schemas:
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    UnsupportedMediaTypeError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 415
+          title:
+            example: UnsupportedMediaType
+          type:
+            example: https://httpstatuses.com/415
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: UnsupportedMediaType
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    ApiDocumentParentDocumentId:
+      description: 'API Documents may be rendered as a tree of files.
+
+
+        Specify the `id` of another API Document as the `parent_document_id` to add some heirarchy do your documents.
+
+        '
+      type: string
+      format: uuid
+      example: null
+      nullable: true
+      title: API Document Parent Document ID
+    ApiDocumentSummaryWithChildren:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ApiDocumentId'
+        title:
+          $ref: '#/components/schemas/ApiDocumentTitle'
+        slug:
+          $ref: '#/components/schemas/ApiDocumentSlug'
+        status:
+          $ref: '#/components/schemas/ApiDocumentStatus'
+        parent_document_id:
+          $ref: '#/components/schemas/ApiDocumentParentDocumentId'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiDocumentSummaryWithChildren'
+      additionalProperties: false
+      required:
+      - id
+      - title
+      - slug
+      - status
+      - parent_document_id
+      - created_at
+      - updated_at
+      - children
+      title: API Document Summary
+    ApiDocumentTitle:
+      description: The title of the document. Used to populate the `<title>` tag for the page
+      type: string
+      example: API Document
+      title: API Document Title
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    ApiDocument:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/ApiDocumentId'
+        content:
+          $ref: '#/components/schemas/ApiDocumentContent'
+        title:
+          $ref: '#/components/schemas/ApiDocumentTitle'
+        slug:
+          $ref: '#/components/schemas/ApiDocumentSlug'
+        status:
+          $ref: '#/components/schemas/ApiDocumentStatus'
+        parent_document_id:
+          $ref: '#/components/schemas/ApiDocumentParentDocumentId'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      title: API Document
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    MoveDocumentRequestPayload:
+      description: move document request payload
+      type: object
+      properties:
+        parent_document_id:
+          description: parent document id
+          type: string
+          format: uuid
+          example: dd4e1b98-3629-4dd3-acc0-759a726ffee2
+        index:
+          description: index of the document in the parent document's children
+          type: integer
+          example: 1
+      title: Move document
+    ApiDocumentContent:
+      description: Raw markdown content to display in your Portal
+      type: string
+      title: API Document Content
     BaseError:
       description: standard error
       type: object
@@ -236,59 +588,6 @@ components:
       - instance
       - detail
       title: Error
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
     StringFieldFilter:
       description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
       type: object
@@ -316,42 +615,13 @@ components:
       example: '2022-11-04T20:10:06.927Z'
       readOnly: true
       x-speakeasy-param-suppress-computed-diff: true
-    ApiDocument:
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/ApiDocumentId'
-        content:
-          $ref: '#/components/schemas/ApiDocumentContent'
-        title:
-          $ref: '#/components/schemas/ApiDocumentTitle'
-        slug:
-          $ref: '#/components/schemas/ApiDocumentSlug'
-        status:
-          $ref: '#/components/schemas/ApiDocumentStatus'
-        parent_document_id:
-          $ref: '#/components/schemas/ApiDocumentParentDocumentId'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      title: API Document
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+    ApiDocumentId:
+      description: The API document identifier.
+      type: string
+      format: uuid
+      example: de5c9818-be5c-42e6-b514-e3d4bc30ddeb
+      readOnly: true
+      title: API Document ID
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -367,21 +637,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
-    ApiDocumentId:
-      description: The API document identifier.
-      type: string
-      format: uuid
-      example: de5c9818-be5c-42e6-b514-e3d4bc30ddeb
-      readOnly: true
-      title: API Document ID
-    ApiDocumentStatus:
-      description: If `status=published` the document will be visible in your live portal
-      type: string
-      default: unpublished
-      enum:
-      - published
-      - unpublished
-      x-speakeasy-unknown-values: allow
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -415,137 +670,6 @@ components:
       - reason
       - rule
       - maximum
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    ApiDocumentParentDocumentId:
-      description: 'API Documents may be rendered as a tree of files.
-
-
-        Specify the `id` of another API Document as the `parent_document_id` to add some heirarchy do your documents.
-
-        '
-      type: string
-      format: uuid
-      example: null
-      nullable: true
-      title: API Document Parent Document ID
-    ApiDocumentFilterParameters:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/StringFieldFilter'
-      title: API Document Filter Parameters
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ApiDocumentSummaryWithChildren:
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/ApiDocumentId'
-        title:
-          $ref: '#/components/schemas/ApiDocumentTitle'
-        slug:
-          $ref: '#/components/schemas/ApiDocumentSlug'
-        status:
-          $ref: '#/components/schemas/ApiDocumentStatus'
-        parent_document_id:
-          $ref: '#/components/schemas/ApiDocumentParentDocumentId'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        children:
-          type: array
-          items:
-            $ref: '#/components/schemas/ApiDocumentSummaryWithChildren'
-      additionalProperties: false
-      required:
-      - id
-      - title
-      - slug
-      - status
-      - parent_document_id
-      - created_at
-      - updated_at
-      - children
-      title: API Document Summary
-    MoveDocumentRequestPayload:
-      description: move document request payload
-      type: object
-      properties:
-        parent_document_id:
-          description: parent document id
-          type: string
-          format: uuid
-          example: dd4e1b98-3629-4dd3-acc0-759a726ffee2
-        index:
-          description: index of the document in the parent document's children
-          type: integer
-          example: 1
-      title: Move document
     ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -561,30 +685,32 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Conflict
-    ApiDocumentContent:
-      description: Raw markdown content to display in your Portal
+    ApiDocumentSlug:
+      description: 'The `slug` is used in generated URLs to provide human readable paths.
+
+
+        Defaults to `slugify(title)`
+
+        '
       type: string
-      title: API Document Content
-    UnsupportedMediaTypeError:
+      example: api-document
+      pattern: ^[\w-]+$
+      title: API Document Slug
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 415
+            example: 401
           title:
-            example: UnsupportedMediaType
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/415
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: UnsupportedMediaType
-    ApiDocumentTitle:
-      description: The title of the document. Used to populate the `<title>` tag for the page
-      type: string
-      example: API Document
-      title: API Document Title
+            example: Invalid credentials
     ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -600,50 +726,14 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Forbidden
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    ApiDocumentSlug:
-      description: 'The `slug` is used in generated URLs to provide human readable paths.
-
-
-        Defaults to `slugify(title)`
-
-        '
+    ApiDocumentStatus:
+      description: If `status=published` the document will be visible in your live portal
       type: string
-      example: api-document
-      pattern: ^[\w-]+$
-      title: API Document Slug
+      default: unpublished
+      enum:
+      - published
+      - unpublished
+      x-speakeasy-unknown-values: allow
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -673,105 +763,22 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-  responses:
-    ApiUnauthorized:
-      description: ApiUnauthorized
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    ApiDocumentResponse:
-      description: API document
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                $ref: '#/components/schemas/ApiDocumentId'
-              content:
-                $ref: '#/components/schemas/ApiDocumentContent'
-              title:
-                $ref: '#/components/schemas/ApiDocumentTitle'
-              slug:
-                $ref: '#/components/schemas/ApiDocumentSlug'
-              status:
-                $ref: '#/components/schemas/ApiDocumentStatus'
-              parent_document_id:
-                $ref: '#/components/schemas/ApiDocumentParentDocumentId'
-              created_at:
-                $ref: '#/components/schemas/CreatedAt'
-              updated_at:
-                $ref: '#/components/schemas/UpdatedAt'
-            additionalProperties: false
-            required:
-            - id
-            - parent_document_id
-            - title
-            - slug
-            - status
-            - content
-            - updated_at
-            - created_at
-            title: API Document
-    UnsupportedMediaType:
-      description: Unsupported Media Type
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnsupportedMediaTypeError'
-    ListApiDocumentResponse:
-      description: List of API documents
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiDocumentSummaryWithChildren'
-            additionalProperties: false
-            required:
-            - data
-    ApiSlugConflict:
-      description: Conflict - `slug` property must be unique
-      content:
-        application/problem+json:
-          schema:
-            type: object
-            properties:
-              status:
-                type: number
-              title:
-                type: string
-              type:
-                type: string
-              instance:
-                type: string
-            required:
-            - status
-            - title
-            - instance
-    ApiNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
+    ApiDocumentFilterParameters:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: API Document Filter Parameters
   parameters:
+    ApiId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiId
+      in: path
+      required: true
+      description: The UUID API identifier
     DocumentId:
       schema:
         type: string
@@ -782,15 +789,6 @@ components:
       in: path
       required: true
       x-speakeasy-match: id
-    ApiId:
-      schema:
-        type: string
-        format: uuid
-        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-      name: apiId
-      in: path
-      required: true
-      description: The UUID API identifier
     ApiDocumentFilters:
       name: filter
       description: Filters API Documents in the response.
@@ -800,6 +798,12 @@ components:
         $ref: '#/components/schemas/ApiDocumentFilterParameters'
       style: deepObject
   requestBodies:
+    UpdateApiDocumentRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiDocument'
     CreateApiDocumentRequest:
       required: true
       content:
@@ -834,12 +838,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/MoveDocumentRequestPayload'
-    UpdateApiDocumentRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiDocument'
   securitySchemes:
     personalAccessToken:
       type: http

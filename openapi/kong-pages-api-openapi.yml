@@ -205,107 +205,97 @@ paths:
       - Pages
       x-speakeasy-group: Portal Pages
 components:
+  requestBodies:
+    CreatePortalPage:
+      description: Create a page in a portal.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatePortalPageRequest'
+    UpdatePortalPage:
+      description: Update a page in a portal.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdatePortalPageRequest'
+    MovePage:
+      description: move page
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MovePageRequestPayload'
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    PortalPage:
+      description: Details about a page in a portal.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PortalPageResponse'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ListPortalPages:
+      description: Tree of custom pages in a portal (nested `children`). Not paginated.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ListPortalPagesResponse'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    DefaultContentResponse:
+      description: Summary of created default content
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultContent'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   schemas:
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
     PageTitle:
       description: The title of a page in a portal.
       type: string
@@ -319,281 +309,11 @@ components:
       example: '2022-11-04T20:10:06.927Z'
       readOnly: true
       x-speakeasy-param-suppress-computed-diff: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    PageSlug:
-      description: 'The slug of a page in a portal, used to compute its full URL path within the portal hierarchy.
-
-        When a page has a `parent_page_id`, its full path is built by joining the parent’s slug with its own.
-
-        For example, if a parent page has the slug `slug1` and this page’s slug is `slug2`, the resulting path will be `/slug1/slug2`.
-
-        This enables nested page structures like `/slug1/slug2/slug3`.
-
-        '
-      type: string
-      example: /my-page
-      maxLength: 512
-      title: PageSlug
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    PortalPageResponse:
-      description: Details about a page in a portal.
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        slug:
-          $ref: '#/components/schemas/PageSlug'
-        title:
-          $ref: '#/components/schemas/PageTitle'
-        content:
-          $ref: '#/components/schemas/PageContent'
-        visibility:
-          $ref: '#/components/schemas/VisibilityStatus'
-        status:
-          $ref: '#/components/schemas/PublishedStatus'
-        description:
-          $ref: '#/components/schemas/Description'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        parent_page_id:
-          $ref: '#/components/schemas/ParentPageId'
-      additionalProperties: false
-      required:
-      - id
-      - slug
-      - title
-      - content
-      - visibility
-      - status
-      - created_at
-      - updated_at
-      - parent_page_id
-      title: PortalPageResponse
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    ListPortalPagesResponse:
-      description: Tree of custom pages in a portal. Not paginated.
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/PortalPageInfo'
-      example:
-        data:
-        - id: 437c7192-fea0-4f35-8478-c8d57783f8c1
-          slug: /my-page
-          title: My Page
-          visibility: public
-          status: unpublished
-          description: A custom page
-          created_at: '2021-01-01T00:00:00Z'
-          updated_at: '2021-01-01T00:00:00Z'
-          parent_page_id: null
-          children: []
-      additionalProperties: false
-      required:
-      - data
-      title: ListPortalPagesResponse
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    VisibilityStatus:
-      description: Whether the resource is publicly accessible to non-authenticated users.
-      type: string
-      example: public
-      enum:
-      - public
-      - private
-      title: VisibilityStatus
-      x-speakeasy-unknown-values: allow
-    DefaultContent:
-      description: Summary of created default content
-      type: object
-      properties:
-        pages:
-          type: array
-          items:
-            type: string
-        snippets:
-          type: array
-          items:
-            type: string
-      additionalProperties: false
-      required:
-      - pages
-      - snippets
-      title: DefaultContent
     Description:
       type: string
       example: A custom page about developer portals
       maxLength: 160
       title: ResourceDescription
-    PageContent:
-      description: The renderable markdown content of a page in a portal.
-      type: string
-      example: '# Welcome to My Page'
-      maxLength: 1000000
-      title: PageContent
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
     DateTimeFieldFilter:
       description: Filters on the given datetime (RFC-3339) field value.
       oneOf:
@@ -653,6 +373,62 @@ components:
         required:
         - gte
       title: DateTimeFieldFilter
+    UpdatePortalPageRequest:
+      description: Update a page in a portal.
+      type: object
+      properties:
+        slug:
+          $ref: '#/components/schemas/PageSlug'
+        title:
+          $ref: '#/components/schemas/PageTitle'
+        content:
+          $ref: '#/components/schemas/PageContent'
+        visibility:
+          $ref: '#/components/schemas/VisibilityStatus'
+        status:
+          $ref: '#/components/schemas/PublishedStatus'
+        description:
+          $ref: '#/components/schemas/Description'
+        parent_page_id:
+          $ref: '#/components/schemas/ParentPageId'
+      additionalProperties: false
+      title: UpdatePortalPageRequest
+    PortalPageResponse:
+      description: Details about a page in a portal.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        slug:
+          $ref: '#/components/schemas/PageSlug'
+        title:
+          $ref: '#/components/schemas/PageTitle'
+        content:
+          $ref: '#/components/schemas/PageContent'
+        visibility:
+          $ref: '#/components/schemas/VisibilityStatus'
+        status:
+          $ref: '#/components/schemas/PublishedStatus'
+        description:
+          $ref: '#/components/schemas/Description'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        parent_page_id:
+          $ref: '#/components/schemas/ParentPageId'
+      additionalProperties: false
+      required:
+      - id
+      - slug
+      - title
+      - content
+      - visibility
+      - status
+      - created_at
+      - updated_at
+      - parent_page_id
+      title: PortalPageResponse
     PortalPageInfo:
       description: Information about a page in a portal.
       type: object
@@ -715,26 +491,24 @@ components:
       minItems: 1
       nullable: false
       uniqueItems: true
-    UpdatePortalPageRequest:
-      description: Update a page in a portal.
-      type: object
-      properties:
-        slug:
-          $ref: '#/components/schemas/PageSlug'
-        title:
-          $ref: '#/components/schemas/PageTitle'
-        content:
-          $ref: '#/components/schemas/PageContent'
-        visibility:
-          $ref: '#/components/schemas/VisibilityStatus'
-        status:
-          $ref: '#/components/schemas/PublishedStatus'
-        description:
-          $ref: '#/components/schemas/Description'
-        parent_page_id:
-          $ref: '#/components/schemas/ParentPageId'
-      additionalProperties: false
-      title: UpdatePortalPageRequest
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    PublishedStatus:
+      description: Whether the resource is visible on a given portal. Defaults to unpublished.
+      type: string
+      example: published
+      enum:
+      - published
+      - unpublished
+      title: PublishedStatus
+      x-speakeasy-unknown-values: allow
     PortalPagesFilterParameters:
       type: object
       properties:
@@ -752,97 +526,71 @@ components:
           $ref: '#/components/schemas/DateTimeFieldFilter'
       additionalProperties: false
       title: PortalPagesFilterParameters
-    ParentPageId:
-      description: 'Pages may be rendered as a tree of files.
-
-
-        Specify the `id` of another page as the `parent_page_id` to add some hierarchy to your pages.
-
-        '
-      type: string
-      format: uuid
-      example: null
-      nullable: true
-    PageVisibilityStatus:
-      description: 'Whether a page is publicly accessible to non-authenticated users.
-
-        If not provided, the default_page_visibility value of the portal will be used.
-
-        '
-      type: string
-      example: public
-      enum:
-      - public
-      - private
-      title: PageVisibilityStatus
-      x-speakeasy-unknown-values: allow
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    CreatePortalPageRequest:
-      description: Create a page in a portal.
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        slug:
-          $ref: '#/components/schemas/PageSlug'
-        title:
-          $ref: '#/components/schemas/PageTitle'
-        content:
-          $ref: '#/components/schemas/PageContent'
-        visibility:
-          $ref: '#/components/schemas/PageVisibilityStatus'
-        status:
-          $ref: '#/components/schemas/PublishedStatus'
-        description:
-          $ref: '#/components/schemas/Description'
-        parent_page_id:
-          $ref: '#/components/schemas/ParentPageId'
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
       required:
-      - slug
-      - content
-      title: CreatePortalPageRequest
-    MovePageRequestPayload:
-      description: move page request payload
+      - field
+      - reason
+      - rule
+      - choices
+    PageSlug:
+      description: 'The slug of a page in a portal, used to compute its full URL path within the portal hierarchy.
+
+        When a page has a `parent_page_id`, its full path is built by joining the parent’s slug with its own.
+
+        For example, if a parent page has the slug `slug1` and this page’s slug is `slug2`, the resulting path will be `/slug1/slug2`.
+
+        This enables nested page structures like `/slug1/slug2/slug3`.
+
+        '
+      type: string
+      example: /my-page
+      maxLength: 512
+      title: PageSlug
+    DefaultContent:
+      description: Summary of created default content
       type: object
       properties:
-        parent_page_id:
-          description: parent page id
-          type: string
-          format: uuid
-          example: dd4e1b98-3629-4dd3-acc0-759a726ffee2
-        index:
-          description: index of the document in the parent document's children
-          type: integer
-          example: 1
-      title: MovePage
+        pages:
+          type: array
+          items:
+            type: string
+        snippets:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+      required:
+      - pages
+      - snippets
+      title: DefaultContent
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -876,15 +624,357 @@ components:
       - rule
       - reason
       - dependents
-    PublishedStatus:
-      description: Whether the resource is visible on a given portal. Defaults to unpublished.
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    UUID:
+      description: Contains a unique identifier used for this resource.
       type: string
-      example: published
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    MovePageRequestPayload:
+      description: move page request payload
+      type: object
+      properties:
+        parent_page_id:
+          description: parent page id
+          type: string
+          format: uuid
+          example: dd4e1b98-3629-4dd3-acc0-759a726ffee2
+        index:
+          description: index of the document in the parent document's children
+          type: integer
+          example: 1
+      title: MovePage
+    PageVisibilityStatus:
+      description: 'Whether a page is publicly accessible to non-authenticated users.
+
+        If not provided, the default_page_visibility value of the portal will be used.
+
+        '
+      type: string
+      example: public
       enum:
-      - published
-      - unpublished
-      title: PublishedStatus
+      - public
+      - private
+      title: PageVisibilityStatus
       x-speakeasy-unknown-values: allow
+    PageContent:
+      description: The renderable markdown content of a page in a portal.
+      type: string
+      example: '# Welcome to My Page'
+      maxLength: 1000000
+      title: PageContent
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    ListPortalPagesResponse:
+      description: Tree of custom pages in a portal. Not paginated.
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalPageInfo'
+      example:
+        data:
+        - id: 437c7192-fea0-4f35-8478-c8d57783f8c1
+          slug: /my-page
+          title: My Page
+          visibility: public
+          status: unpublished
+          description: A custom page
+          created_at: '2021-01-01T00:00:00Z'
+          updated_at: '2021-01-01T00:00:00Z'
+          parent_page_id: null
+          children: []
+      additionalProperties: false
+      required:
+      - data
+      title: ListPortalPagesResponse
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    ParentPageId:
+      description: 'Pages may be rendered as a tree of files.
+
+
+        Specify the `id` of another page as the `parent_page_id` to add some hierarchy to your pages.
+
+        '
+      type: string
+      format: uuid
+      example: null
+      nullable: true
+    VisibilityStatus:
+      description: Whether the resource is publicly accessible to non-authenticated users.
+      type: string
+      example: public
+      enum:
+      - public
+      - private
+      title: VisibilityStatus
+      x-speakeasy-unknown-values: allow
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    CreatePortalPageRequest:
+      description: Create a page in a portal.
+      type: object
+      properties:
+        slug:
+          $ref: '#/components/schemas/PageSlug'
+        title:
+          $ref: '#/components/schemas/PageTitle'
+        content:
+          $ref: '#/components/schemas/PageContent'
+        visibility:
+          $ref: '#/components/schemas/PageVisibilityStatus'
+        status:
+          $ref: '#/components/schemas/PublishedStatus'
+        description:
+          $ref: '#/components/schemas/Description'
+        parent_page_id:
+          $ref: '#/components/schemas/ParentPageId'
+      additionalProperties: false
+      required:
+      - slug
+      - content
+      title: CreatePortalPageRequest
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -914,97 +1004,16 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-  responses:
-    PortalPage:
-      description: Details about a page in a portal.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PortalPageResponse'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    DefaultContentResponse:
-      description: Summary of created default content
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/DefaultContent'
-    ListPortalPages:
-      description: Tree of custom pages in a portal (nested `children`). Not paginated.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ListPortalPagesResponse'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-  requestBodies:
-    UpdatePortalPage:
-      description: Update a page in a portal.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/UpdatePortalPageRequest'
-    MovePage:
-      description: move page
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/MovePageRequestPayload'
-    CreatePortalPage:
-      description: Create a page in a portal.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CreatePortalPageRequest'
   parameters:
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
     SortPortalPages:
       name: sort
       description: "Sorts a collection of portal pages. Supported sort attributes are:\n  - created_at\n  - updated_at\n  - slug\n  - title\n  - visibility\n"
@@ -1022,15 +1031,6 @@ components:
       required: true
       description: ID of the page.
       x-speakeasy-match: id
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
   securitySchemes:
     personalAccessToken:
       type: http

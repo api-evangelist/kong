@@ -25,15 +25,7 @@ security:
 - serviceAccessToken: []
 tags:
 - name: Integration Instance Auth Config
-  description: 'A integration instance may need to be provided with an auth config before authorizing the instance.
-
-    Typically an auth config will be required when authorizing against a integration which is hosted within your organization.
-
-    The integration instance''s auth config will inform how the Service Catalog will authorize the integration instance.
-
-    Note that updating the auth config for an instance which is already authorized will **remove the existing credential**, requiring you to re-authorize the instance.
-
-    '
+  description: A integration instance may need to be provided with an auth config before authorizing the instance.
 paths:
   /v1/integration-instances/{integrationInstanceId}/auth-config:
     parameters:
@@ -100,6 +92,53 @@ paths:
       - Integration Instance Auth Config
 components:
   schemas:
+    IntegrationInstanceAuthConfig:
+      oneOf:
+      - $ref: '#/components/schemas/OAuthAuthConfig'
+      title: IntegrationInstanceAuthConfig
+    UpsertIntegrationInstanceAuthConfig:
+      oneOf:
+      - $ref: '#/components/schemas/UpsertOAuthAuthConfig'
+      title: UpsertIntegrationInstanceAuthConfig
+    OAuthAuthConfig:
+      type: object
+      properties:
+        type:
+          type: string
+          const: oauth
+        client_id:
+          description: The OAuth client identifier.
+          type: string
+          example: d745213a-b7e8-4998-abe3-41f164001970
+        authorization_endpoint:
+          description: The URL where users are redirected to authorize access.
+          type: string
+          format: uri
+          example: https://identity.service.com/oauth/authorize
+        token_endpoint:
+          description: The URL used to retrieve access tokens.
+          type: string
+          format: uri
+          example: https://identity.service.com/oauth/token
+      required:
+      - type
+      - client_id
+      - authorization_endpoint
+      - token_endpoint
+      x-speakeasy-name-override: OauthAuthConfig
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -109,6 +148,164 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    UpsertOAuthAuthConfig:
+      type: object
+      properties:
+        type:
+          type: string
+          const: oauth
+        client_id:
+          description: The OAuth client identifier.
+          type: string
+          example: d745213a-b7e8-4998-abe3-41f164001970
+        client_secret:
+          description: The OAuth client secret.
+          type: string
+          example: s3cr3t4p1cl13ntt0k3n1234567890abcdef
+          writeOnly: true
+        authorization_endpoint:
+          description: The URL where users are redirected to authorize access.
+          type: string
+          format: uri
+          example: https://identity.service.com/oauth/authorize
+        token_endpoint:
+          description: The URL used to retrieve access tokens.
+          type: string
+          format: uri
+          example: https://identity.service.com/oauth/token
+      additionalProperties: false
+      required:
+      - type
+      - client_id
+      - client_secret
+      - authorization_endpoint
+      - token_endpoint
+      title: OAuth Config
+      x-speakeasy-name-override: oauth_config
     BaseError:
       description: standard error
       type: object
@@ -163,58 +360,6 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -230,40 +375,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Not found
-    UpsertOAuthAuthConfig:
-      type: object
-      properties:
-        type:
-          type: string
-          const: oauth
-        client_id:
-          description: The OAuth client identifier.
-          type: string
-          example: d745213a-b7e8-4998-abe3-41f164001970
-        client_secret:
-          description: The OAuth client secret.
-          type: string
-          example: s3cr3t4p1cl13ntt0k3n1234567890abcdef
-          writeOnly: true
-        authorization_endpoint:
-          description: The URL where users are redirected to authorize access.
-          type: string
-          format: uri
-          example: https://identity.service.com/oauth/authorize
-        token_endpoint:
-          description: The URL used to retrieve access tokens.
-          type: string
-          format: uri
-          example: https://identity.service.com/oauth/token
-      additionalProperties: false
-      required:
-      - type
-      - client_id
-      - client_secret
-      - authorization_endpoint
-      - token_endpoint
-      title: OAuth Config
-      x-speakeasy-name-override: oauth_config
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -297,99 +408,21 @@ components:
       - reason
       - rule
       - maximum
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    OAuthAuthConfig:
-      type: object
-      properties:
-        type:
-          type: string
-          const: oauth
-        client_id:
-          description: The OAuth client identifier.
-          type: string
-          example: d745213a-b7e8-4998-abe3-41f164001970
-        authorization_endpoint:
-          description: The URL where users are redirected to authorize access.
-          type: string
-          format: uri
-          example: https://identity.service.com/oauth/authorize
-        token_endpoint:
-          description: The URL used to retrieve access tokens.
-          type: string
-          format: uri
-          example: https://identity.service.com/oauth/token
-      required:
-      - type
-      - client_id
-      - authorization_endpoint
-      - token_endpoint
-      x-speakeasy-name-override: OauthAuthConfig
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -405,47 +438,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Forbidden
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    UpsertIntegrationInstanceAuthConfig:
-      oneOf:
-      - $ref: '#/components/schemas/UpsertOAuthAuthConfig'
-      title: UpsertIntegrationInstanceAuthConfig
-    IntegrationInstanceAuthConfig:
-      oneOf:
-      - $ref: '#/components/schemas/OAuthAuthConfig'
-      title: IntegrationInstanceAuthConfig
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -508,24 +500,24 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/BadRequestError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    IntegrationInstanceAuthConfigResponse:
-      description: A response containing integration instance auth config.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/IntegrationInstanceAuthConfig'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    IntegrationInstanceAuthConfigResponse:
+      description: A response containing integration instance auth config.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntegrationInstanceAuthConfig'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   requestBodies:
     UpsertIntegrationInstanceAuthConfigRequest:
       required: true

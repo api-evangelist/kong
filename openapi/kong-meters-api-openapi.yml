@@ -161,7 +161,166 @@ paths:
       tags:
       - Meters
 components:
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   schemas:
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    MeterPagePaginatedResponse:
+      description: Page paginated response.
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Meter'
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+      required:
+      - data
+      - meta
+    CreateMeterRequest:
+      description: Meter create request.
+      type: object
+      properties:
+        name:
+          description: 'Display name of the resource.
+
+
+            Between 1 and 256 characters.'
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: 'Optional description of the resource.
+
+
+            Maximum 1024 characters.'
+          type: string
+          maxLength: 1024
+        labels:
+          $ref: '#/components/schemas/Labels'
+        key:
+          $ref: '#/components/schemas/ResourceKey'
+        aggregation:
+          description: The aggregation type to use for the meter.
+          type: string
+          enum:
+          - sum
+          - count
+          - unique_count
+          - avg
+          - min
+          - max
+          - latest
+          x-speakeasy-unknown-values: allow
+        event_type:
+          description: The event type to include in the aggregation.
+          type: string
+          example: prompt
+          minLength: 1
+        events_from:
+          description: 'The date since the meter should include events.
+
+            Useful to skip old events.
+
+            If not specified, all historical events are included.'
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          title: RFC3339 Date-Time
+        value_property:
+          description: 'JSONPath expression to extract the value from the ingested event''s data property.
+
+
+            The ingested value for sum, avg, min, and max aggregations is a number or a string that can be parsed to a number.
+
+
+            For unique_count aggregation, the ingested value must be a string. For count aggregation the value_property is ignored.'
+          type: string
+          example: $.tokens
+          minLength: 1
+        dimensions:
+          description: 'Named JSONPath expressions to extract the group by values from the event data.
+
+
+            Keys must be unique and consist only alphanumeric and underscore characters.'
+          type: object
+          example:
+            type: $.type
+          additionalProperties:
+            type: string
+      required:
+      - name
+      - key
+      - aggregation
+      - event_type
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -171,60 +330,121 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    BaseError:
-      description: standard error
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
+        field:
           type: string
+          example: name
           readOnly: true
-        type:
-          description: The error type.
+        rule:
+          description: invalid parameters rules
           type: string
+          enum:
+          - enum
+          nullable: false
           readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
+        reason:
           type: string
+          example: is a required field
           readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
           type: string
-          readOnly: true
+          example: body
+      additionalProperties: false
       required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    ResourceKey:
+      description: A key is a unique string that is used to identify a resource.
+      type: string
+      example: resource_key
+      maxLength: 64
+      minLength: 1
+      pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
+      title: Resource Key
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -262,16 +482,6 @@ components:
       - reason
       - rule
       - minimum
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
     ListMetersParamsFilter:
       description: Filter options for listing meters.
       type: object
@@ -318,149 +528,6 @@ components:
           - oeq
           - neq
           title: StringFieldNEQFilter
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ULID:
-      description: ULID (Universally Unique Lexicographically Sortable Identifier).
-      type: string
-      example: 01G65Z755AFWAKHE12NY0CQ9FH
-      pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
-      title: ULID
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
     Meter:
       description: A meter is a configuration that defines how to match and aggregate events.
       type: object
@@ -581,44 +648,142 @@ components:
       - key
       - aggregation
       - event_type
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    MeterPagePaginatedResponse:
-      description: Page paginated response.
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    BaseError:
+      description: standard error
       type: object
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/Meter'
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
       required:
-      - data
-      - meta
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    ULID:
+      description: ULID (Universally Unique Lexicographically Sortable Identifier).
+      type: string
+      example: 01G65Z755AFWAKHE12NY0CQ9FH
+      pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+      title: ULID
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -634,136 +799,16 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Forbidden
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
-    InvalidParameterDependentItem:
+    PaginatedMeta:
+      description: returns the pagination information
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
+        page:
+          $ref: '#/components/schemas/PageMeta'
       required:
-      - field
-      - rule
-      - reason
-      - dependents
-    CreateMeterRequest:
-      description: Meter create request.
-      type: object
-      properties:
-        name:
-          description: 'Display name of the resource.
-
-
-            Between 1 and 256 characters.'
-          type: string
-          maxLength: 256
-          minLength: 1
-        description:
-          description: 'Optional description of the resource.
-
-
-            Maximum 1024 characters.'
-          type: string
-          maxLength: 1024
-        labels:
-          $ref: '#/components/schemas/Labels'
-        key:
-          $ref: '#/components/schemas/ResourceKey'
-        aggregation:
-          description: The aggregation type to use for the meter.
-          type: string
-          enum:
-          - sum
-          - count
-          - unique_count
-          - avg
-          - min
-          - max
-          - latest
-          x-speakeasy-unknown-values: allow
-        event_type:
-          description: The event type to include in the aggregation.
-          type: string
-          example: prompt
-          minLength: 1
-        events_from:
-          description: 'The date since the meter should include events.
-
-            Useful to skip old events.
-
-            If not specified, all historical events are included.'
-          type: string
-          format: date-time
-          example: '2023-01-01T01:01:01.001Z'
-          title: RFC3339 Date-Time
-        value_property:
-          description: 'JSONPath expression to extract the value from the ingested event''s data property.
-
-
-            The ingested value for sum, avg, min, and max aggregations is a number or a string that can be parsed to a number.
-
-
-            For unique_count aggregation, the ingested value must be a string. For count aggregation the value_property is ignored.'
-          type: string
-          example: $.tokens
-          minLength: 1
-        dimensions:
-          description: 'Named JSONPath expressions to extract the group by values from the event data.
-
-
-            Keys must be unique and consist only alphanumeric and underscore characters.'
-          type: object
-          example:
-            type: $.type
-          additionalProperties:
-            type: string
-      required:
-      - name
-      - key
-      - aggregation
-      - event_type
-    ResourceKey:
-      description: A key is a unique string that is used to identify a resource.
-      type: string
-      example: resource_key
-      maxLength: 64
-      minLength: 1
-      pattern: ^[a-z0-9]+(?:_[a-z0-9]+)*$
-      title: Resource Key
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -809,51 +854,6 @@ components:
             description: The page number.
             type: integer
       style: deepObject
-  responses:
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
   securitySchemes:
     personalAccessToken:
       type: http

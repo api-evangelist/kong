@@ -107,7 +107,169 @@ paths:
       tags:
       - Event Gateway Nodes
 components:
+  parameters:
+    eventGatewayNodeId:
+      schema:
+        type: string
+        format: uuid
+      name: eventGatewayNodeId
+      in: path
+      required: true
+      description: The ID of the Event Gateway Node.
+    gatewayId:
+      name: gatewayId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your Gateway.
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   schemas:
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    GatewayNode:
+      type: object
+      properties:
+        id:
+          description: The node ID.
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: true
+        version:
+          description: The string representation of the node current version.
+          type: string
+        last_seen_at:
+          description: An ISO-8604 timestamp representation of node last seen date.
+          type: string
+          format: date-time
+          example: '2025-08-04T20:10:06.927Z'
+        created_at:
+          description: An ISO-8604 timestamp representation of node creation date.
+          type: string
+          format: date-time
+          example: '2025-08-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An ISO-8604 timestamp representation of node update date.
+          type: string
+          format: date-time
+          example: '2025-08-04T20:10:06.927Z'
+          readOnly: true
+        config_applied_at:
+          description: The time the node succeeds in applying the configuration.
+          type: string
+          format: date-time
+          readOnly: true
+        config_version:
+          description: The version number of the configuration applied by the node.
+          type: string
+          example: v1.123
+          readOnly: true
+      required:
+      - id
+      - version
+      - last_seen_at
+      - created_at
+      - updated_at
+    EventGatewayNodeError:
+      description: An error reported by an event gateway node.
+      type: object
+      properties:
+        name:
+          description: The name of the error.
+          type: string
+        message:
+          description: The error message.
+          type: string
+      required:
+      - name
+      - message
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
     BaseError:
       description: standard error
       type: object
@@ -162,131 +324,6 @@ components:
       - instance
       - detail
       title: Error
-    GatewayNode:
-      type: object
-      properties:
-        id:
-          description: The node ID.
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: true
-        version:
-          description: The string representation of the node current version.
-          type: string
-        last_seen_at:
-          description: An ISO-8604 timestamp representation of node last seen date.
-          type: string
-          format: date-time
-          example: '2025-08-04T20:10:06.927Z'
-        created_at:
-          description: An ISO-8604 timestamp representation of node creation date.
-          type: string
-          format: date-time
-          example: '2025-08-04T20:10:06.927Z'
-          readOnly: true
-        updated_at:
-          description: An ISO-8604 timestamp representation of node update date.
-          type: string
-          format: date-time
-          example: '2025-08-04T20:10:06.927Z'
-          readOnly: true
-        config_applied_at:
-          description: The time the node succeeds in applying the configuration.
-          type: string
-          format: date-time
-          readOnly: true
-        config_version:
-          description: The version number of the configuration applied by the node.
-          type: string
-          example: v1.123
-          readOnly: true
-      required:
-      - id
-      - version
-      - last_seen_at
-      - created_at
-      - updated_at
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    EventGatewayNodeError:
-      description: An error reported by an event gateway node.
-      type: object
-      properties:
-        name:
-          description: The name of the error.
-          type: string
-        message:
-          description: The error message.
-          type: string
-      required:
-      - name
-      - message
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
     NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -303,6 +340,25 @@ components:
           detail:
             example: Not found
   responses:
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ListEventGatewayNodesResponse:
+      description: A paginated list response for a collection of nodes associated with an Event Gateway.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GatewayNode'
     EventGatewayNodeStatus:
       description: The status of an event gateway node.
       content:
@@ -321,48 +377,6 @@ components:
             required:
             - config_applied_at
             - config_version
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListEventGatewayNodeErrorsResponse:
-      description: A list of errors reported by an event gateway node.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayNodeError'
-            additionalProperties: false
-            required:
-            - meta
-            - data
-    ListEventGatewayNodesResponse:
-      description: A paginated list response for a collection of nodes associated with an Event Gateway.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/GatewayNode'
     Unauthorized:
       description: Unauthorized
       content:
@@ -389,43 +403,29 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-  parameters:
-    gatewayId:
-      name: gatewayId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your Gateway.
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    eventGatewayNodeId:
-      schema:
-        type: string
-        format: uuid
-      name: eventGatewayNodeId
-      in: path
-      required: true
-      description: The ID of the Event Gateway Node.
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ListEventGatewayNodeErrorsResponse:
+      description: A list of errors reported by an event gateway node.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayNodeError'
+            additionalProperties: false
+            required:
+            - meta
+            - data
   securitySchemes:
     personalAccessToken:
       type: http

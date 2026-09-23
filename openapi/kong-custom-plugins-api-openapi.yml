@@ -24,7 +24,7 @@ security:
 - konnectAccessToken: []
 - serviceAccessToken: []
 tags:
-- name: CustomPlugins
+- name: Custom Plugins
 paths:
   /v2/control-planes/{controlPlaneId}/core-entities/custom-plugins:
     parameters:
@@ -61,7 +61,7 @@ paths:
         '401':
           $ref: '#/components/responses/HTTP401Error'
       tags:
-      - CustomPlugins
+      - Custom Plugins
     post:
       operationId: create-custom-plugin
       summary: Create a new CustomPlugin
@@ -88,7 +88,7 @@ paths:
         '401':
           $ref: '#/components/responses/HTTP401Error'
       tags:
-      - CustomPlugins
+      - Custom Plugins
   /v2/control-planes/{controlPlaneId}/core-entities/custom-plugins/{CustomPluginId}:
     parameters:
     - $ref: '#/components/parameters/CustomPluginId'
@@ -110,7 +110,7 @@ paths:
         '401':
           $ref: '#/components/responses/HTTP401Error'
       tags:
-      - CustomPlugins
+      - Custom Plugins
     get:
       operationId: get-custom-plugin
       summary: Get a CustomPlugin
@@ -132,7 +132,7 @@ paths:
         '404':
           description: Resource does not exist
       tags:
-      - CustomPlugins
+      - Custom Plugins
     put:
       operationId: upsert-custom-plugin
       summary: Upsert a CustomPlugin
@@ -159,9 +159,17 @@ paths:
         '401':
           $ref: '#/components/responses/HTTP401Error'
       tags:
-      - CustomPlugins
+      - Custom Plugins
 components:
   parameters:
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
     CustomPluginId:
       description: ID of the CustomPlugin to lookup
       example: ''
@@ -170,15 +178,6 @@ components:
       required: true
       schema:
         type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
     controlPlaneId:
       name: controlPlaneId
       in: path
@@ -196,20 +195,28 @@ components:
       name: offset
       schema:
         type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
+    PaginationSize:
+      description: Number of resources to be returned.
       in: query
-      name: tags
+      name: size
       schema:
-        type: string
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     PaginationNextResponse:
       description: URI to the next page (may be null)
-      type: string
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
     CustomPlugin:
       type: object
@@ -252,16 +259,9 @@ components:
       - handler
       - name
       - schema
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
   responses:
     HTTP401Error:
       description: Unauthorized

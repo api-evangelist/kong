@@ -66,9 +66,7 @@ paths:
 
         routes in one or more gateway services, or API operations need to be made available for API packages,
 
-        then the API should be linked to the control plane that defines the routes that overlap with the API.
-
-        '
+        then the API should be linked to the control plane that defines the routes that overlap with the API.'
       requestBody:
         $ref: '#/components/requestBodies/CreateApiImplementationRequest'
       responses:
@@ -131,243 +129,67 @@ paths:
       tags:
       - API Implementation
 components:
+  responses:
+    ListApiImplementationsResponse:
+      description: Paginated list of API implementations
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiImplementationListItem'
+            additionalProperties: false
+            required:
+            - data
+            - meta
+            title: ListApiImplementations
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ApiImplementationConflict:
+      description: Conflict - A gateway service can only be linked to a single API
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiImplementationResponse:
+      description: An API implementation
+      content:
+        application/json:
+          schema:
+            description: An entity that implements an API
+            type: object
+            oneOf:
+            - $ref: '#/components/schemas/ApiImplementationGatewayServiceEntity'
+            - $ref: '#/components/schemas/ApiImplementationControlPlaneEntity'
+            required:
+            - id
+            - created_at
+            - updated_at
+            title: API Implementation
   schemas:
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    ApiImplementationListItem:
-      description: An entity that implements an API
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/ApiImplementationListItemGatewayServiceEntity'
-      - $ref: '#/components/schemas/ApiImplementationListItemControlPlaneEntity'
-      title: API Implementation List Item
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ApiImplementationGatewayServiceEntity:
-      description: A gateway service that implements an API
+    ApiImplementationListItemGatewayServiceEntity:
+      description: An API Implementation list item for gateway services
       type: object
       properties:
         id:
@@ -376,76 +198,54 @@ components:
           $ref: '#/components/schemas/CreatedAt'
         updated_at:
           $ref: '#/components/schemas/UpdatedAt'
+        api_id:
+          description: The API identifier.
+          type: string
+          format: uuid
+          example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+          readOnly: true
         service:
           $ref: '#/components/schemas/ApiImplementationService'
       additionalProperties: false
-      title: ApiImplementationGatewayServiceEntity
-      x-speakeasy-name-override: Service Reference
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
       required:
-      - field
-      - reason
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    ApiImplementationFilterParameters:
+      - id
+      - api_id
+      - created_at
+      - updated_at
+      title: ApiImplementationListItemGatewayServiceEntity
+    ApiImplementationListItemControlPlaneEntity:
+      description: An API Implementation list item for control planes
       type: object
       properties:
         id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        api_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        service_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        control_plane_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
+          $ref: '#/components/schemas/UUID'
         created_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
+          $ref: '#/components/schemas/CreatedAt'
         updated_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-      title: API Implementation Filter Parameters
+          $ref: '#/components/schemas/UpdatedAt'
+        api_id:
+          description: The API identifier.
+          type: string
+          format: uuid
+          example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+          readOnly: true
+        control_plane:
+          $ref: '#/components/schemas/ApiImplementationControlPlane'
+      additionalProperties: false
+      required:
+      - id
+      - api_id
+      - created_at
+      - updated_at
+      - control_plane
+      title: ApiImplementationListItemControlPlaneEntity
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     DateTimeFieldFilter:
       description: Filters on the given datetime (RFC-3339) field value.
       oneOf:
@@ -505,57 +305,53 @@ components:
         required:
         - gte
       title: DateTimeFieldFilter
-    InvalidParameterChoiceItem:
+    ApiImplementationFilterParameters:
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    ApiImplementationControlPlane:
-      description: A Control plane that implements an API
-      type: object
-      properties:
-        access_control_enforcement_enabled:
-          description: Indicates if the access control enforcement plugin is installed globally in the target control plane
-          type: boolean
-          readOnly: true
+        id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        api_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        service_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
         control_plane_id:
-          type: string
-          format: uuid
-          example: 7710d5c4-d902-410b-992f-18b814155b53
-          x-speakeasy-name-override: id
+          $ref: '#/components/schemas/UuidFieldFilter'
+        created_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+        updated_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+      title: API Implementation Filter Parameters
+    ApiImplementationControlPlaneEntity:
+      description: A control plane that implements an API
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        control_plane:
+          $ref: '#/components/schemas/ApiImplementationControlPlane'
       additionalProperties: false
-      required:
-      - control_plane_id
-      title: API Implementation Control Plane
+      title: ApiImplementationControlPlaneEntity
+      x-speakeasy-name-override: Control Plane Reference
+    ApiImplementation:
+      description: An entity that implements an API
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/ApiImplementationGatewayServiceEntity'
+      - $ref: '#/components/schemas/ApiImplementationControlPlaneEntity'
+      title: API Implementation
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     InvalidParameters:
       description: invalid parameters
       type: array
@@ -569,137 +365,6 @@ components:
       minItems: 1
       nullable: false
       uniqueItems: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
-    ApiImplementation:
-      description: An entity that implements an API
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/ApiImplementationGatewayServiceEntity'
-      - $ref: '#/components/schemas/ApiImplementationControlPlaneEntity'
-      title: API Implementation
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    ApiImplementationService:
-      description: A Gateway service that implements an API
-      type: object
-      properties:
-        control_plane_id:
-          type: string
-          format: uuid
-          example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-        id:
-          type: string
-          format: uuid
-          example: 7710d5c4-d902-410b-992f-18b814155b53
-        auth_strategy_sync_error:
-          allOf:
-          - $ref: '#/components/schemas/AuthStrategyApiSyncError'
-          readOnly: true
-          x-speakeasy-ignore: true
-      additionalProperties: false
-      required:
-      - control_plane_id
-      - id
-      title: API Implementation Service
-    ApiImplementationListItemControlPlaneEntity:
-      description: An API Implementation list item for control planes
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        api_id:
-          description: The API identifier.
-          type: string
-          format: uuid
-          example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-          readOnly: true
-        control_plane:
-          $ref: '#/components/schemas/ApiImplementationControlPlane'
-      additionalProperties: false
-      required:
-      - id
-      - api_id
-      - created_at
-      - updated_at
-      - control_plane
-      title: ApiImplementationListItemControlPlaneEntity
     AuthStrategyApiSyncError:
       type: object
       properties:
@@ -740,33 +405,307 @@ components:
       nullable: true
       required:
       - message
-    ApiImplementationListItemGatewayServiceEntity:
-      description: An API Implementation list item for gateway services
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        api_id:
-          description: The API identifier.
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    ApiImplementationListItem:
+      description: An entity that implements an API
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/ApiImplementationListItemGatewayServiceEntity'
+      - $ref: '#/components/schemas/ApiImplementationListItemControlPlaneEntity'
+      title: API Implementation List Item
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    ApiImplementationService:
+      description: A Gateway service that implements an API
+      type: object
+      properties:
+        control_plane_id:
           type: string
           format: uuid
           example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+        id:
+          type: string
+          format: uuid
+          example: 7710d5c4-d902-410b-992f-18b814155b53
+        auth_strategy_sync_error:
+          allOf:
+          - $ref: '#/components/schemas/AuthStrategyApiSyncError'
           readOnly: true
-        service:
-          $ref: '#/components/schemas/ApiImplementationService'
+          x-speakeasy-ignore: true
       additionalProperties: false
       required:
+      - control_plane_id
       - id
-      - api_id
-      - created_at
-      - updated_at
-      title: ApiImplementationListItemGatewayServiceEntity
-    ApiImplementationControlPlaneEntity:
-      description: A control plane that implements an API
+      title: API Implementation Service
+    ApiImplementationControlPlane:
+      description: A Control plane that implements an API
+      type: object
+      properties:
+        access_control_enforcement_enabled:
+          description: Indicates if the access control enforcement plugin is installed globally in the target control plane
+          type: boolean
+          readOnly: true
+        control_plane_id:
+          type: string
+          format: uuid
+          example: 7710d5c4-d902-410b-992f-18b814155b53
+          x-speakeasy-name-override: id
+      additionalProperties: false
+      required:
+      - control_plane_id
+      title: API Implementation Control Plane
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    ApiImplementationGatewayServiceEntity:
+      description: A gateway service that implements an API
       type: object
       properties:
         id:
@@ -775,69 +714,128 @@ components:
           $ref: '#/components/schemas/CreatedAt'
         updated_at:
           $ref: '#/components/schemas/UpdatedAt'
-        control_plane:
-          $ref: '#/components/schemas/ApiImplementationControlPlane'
+        service:
+          $ref: '#/components/schemas/ApiImplementationService'
       additionalProperties: false
-      title: ApiImplementationControlPlaneEntity
-      x-speakeasy-name-override: Control Plane Reference
-  responses:
-    ApiUnauthorized:
-      description: ApiUnauthorized
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    ListApiImplementationsResponse:
-      description: Paginated list of API implementations
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiImplementationListItem'
-            additionalProperties: false
-            required:
-            - data
-            - meta
-            title: ListApiImplementations
-    ApiImplementationConflict:
-      description: Conflict - A gateway service can only be linked to a single API
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    ApiNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ApiImplementationResponse:
-      description: An API implementation
-      content:
-        application/json:
-          schema:
-            description: An entity that implements an API
-            type: object
-            oneOf:
-            - $ref: '#/components/schemas/ApiImplementationGatewayServiceEntity'
-            - $ref: '#/components/schemas/ApiImplementationControlPlaneEntity'
-            required:
-            - id
-            - created_at
-            - updated_at
-            title: API Implementation
+      title: ApiImplementationGatewayServiceEntity
+      x-speakeasy-name-override: Service Reference
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
   parameters:
     PageNumber:
       name: page[number]
@@ -849,23 +847,6 @@ components:
         type: integer
         example: 1
       x-speakeasy-terraform-ignore: true
-    ApiImplementationSort:
-      name: sort
-      description: "Sorts a collection of API implementations. Supported sort attributes are:\n\n\n  - id\n  - api_id\n  - control_plane_id\n  - service_id\n  - created_at\n  - updated_at\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
-    ImplementationId:
-      schema:
-        type: string
-        format: uuid
-        example: 032d905a-ed33-46a3-a093-d8f536af9a8a
-      name: implementationId
-      in: path
-      required: true
-      description: The Portal identifier
-      x-speakeasy-match: id
     PageSize:
       name: page[size]
       description: The maximum number of items to include per page. The last page of a collection may include fewer items.
@@ -876,6 +857,21 @@ components:
         type: integer
         example: 10
       x-speakeasy-terraform-ignore: true
+    ApiImplementationFilters:
+      name: filter
+      description: Filters APIs in the response.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApiImplementationFilterParameters'
+      style: deepObject
+    ApiImplementationSort:
+      name: sort
+      description: "Sorts a collection of API implementations. Supported sort attributes are:\n\n\n  - id\n  - api_id\n  - control_plane_id\n  - service_id\n  - created_at\n  - updated_at\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
     ApiId:
       schema:
         type: string
@@ -885,14 +881,16 @@ components:
       in: path
       required: true
       description: The UUID API identifier
-    ApiImplementationFilters:
-      name: filter
-      description: Filters APIs in the response.
-      required: false
-      in: query
+    ImplementationId:
       schema:
-        $ref: '#/components/schemas/ApiImplementationFilterParameters'
-      style: deepObject
+        type: string
+        format: uuid
+        example: 032d905a-ed33-46a3-a093-d8f536af9a8a
+      name: implementationId
+      in: path
+      required: true
+      description: The Portal identifier
+      x-speakeasy-match: id
   requestBodies:
     CreateApiImplementationRequest:
       required: true

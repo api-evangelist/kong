@@ -7,9 +7,9 @@ info:
   description: 'OpenAPI 3.0 spec for Kong Gateway''s Admin API.
 
 
-    You can learn more about Kong Gateway at [developer.konghq.com](https://developer.konghq.com).
+    You can learn more about Kong Gateway at developer.konghq.com.
 
-    Give Kong a star at the [Kong/kong](https://github.com/kong/kong) repository.'
+    Give Kong a star at the Kong/kong repository.'
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
@@ -47,7 +47,6 @@ paths:
         terraform-resource: Group#create
       operationId: create-group
       summary: Create a new Group
-      description: Create a new Group
       requestBody:
         description: Description of the new Group for creation
         required: true
@@ -75,7 +74,6 @@ paths:
         terraform-resource: Group#delete
       operationId: delete-group
       summary: Delete a Group
-      description: Delete a Group
       parameters:
       - $ref: '#/components/parameters/GroupId'
       responses:
@@ -177,72 +175,6 @@ paths:
       tags:
       - Groups
 components:
-  requestBodies:
-    GroupRoleRequest:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupRole'
-      description: Request body schema for assigning or updating roles for a group.
-  responses:
-    CreateGroupRolesResponse:
-      description: Successfully created or updated roles.
-      content:
-        application/json:
-          example:
-            group:
-              comment: Read access to all endpoints, across all workspaces
-              id: 7574eb1d-c9fa-46a9-bd3a-3f1b4b196287
-              name: read-only
-              updated_at: '2024-04-23T18:25:43Z'
-            rbac_role:
-              id: 7fdea5c8-2bfa-4aa9-9c21-7bb9e607186d
-              name: admin
-            workspace:
-              id: 99bd8d18-f5b6-410e-aefe-d75f4252f13c
-          schema:
-            $ref: '#/components/schemas/GroupRole'
-    HTTP401Error:
-      description: Unauthorized
-      content:
-        application/json:
-          examples:
-            DuplicateApiKey:
-              summary: Duplicate API key found
-              value:
-                message: Duplicate API key found
-                status: 401
-            InvalidAuthCred:
-              summary: Invalid authentication credentials
-              value:
-                message: Unauthorized
-                status: 401
-            NoAPIKey:
-              summary: No API key found
-              value:
-                message: No API key found in request
-                status: 401
-          schema:
-            $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    GroupId:
-      description: ID of the Group to lookup
-      example: ''
-      in: path
-      name: GroupId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    GroupRoleId:
-      description: ID of the Group to lookup
-      example: ''
-      in: path
-      name: GroupId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-name-override: group_id
   schemas:
     Group:
       x-speakeasy-entity: Group
@@ -331,6 +263,72 @@ components:
         jq: ".\n| if .group != null and .group.id != null\n  then . + { group_id: .group.id }\n  else .\n  end\n| if .rbac_role != null and .rbac_role.id != null\n  then . + { role_id: .rbac_role.id }\n  else .\n  end\n| if .workspace != null and (.workspace | type) == \"object\" and .workspace.id != null\n  then .workspace = .workspace.id\n  else .\n  end\n| del(.group, .rbac_role)\n"
       x-speakeasy-transform-to-api:
         jq: ".\n| if .workspace != null\n  then . + { workspace_id: .workspace }\n  else .\n  end\n| if .role_id != null\n  then . + { rbac_role_id: .role_id }\n  else .\n  end\n| del(.group_id, .role_id, .workspace, .group, .rbac_role)\n"
+  parameters:
+    GroupId:
+      description: ID of the Group to lookup
+      example: ''
+      in: path
+      name: GroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    GroupRoleId:
+      description: ID of the Group to lookup
+      example: ''
+      in: path
+      name: GroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-name-override: group_id
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+    CreateGroupRolesResponse:
+      description: Successfully created or updated roles.
+      content:
+        application/json:
+          example:
+            group:
+              comment: Read access to all endpoints, across all workspaces
+              id: 7574eb1d-c9fa-46a9-bd3a-3f1b4b196287
+              name: read-only
+              updated_at: '2024-04-23T18:25:43Z'
+            rbac_role:
+              id: 7fdea5c8-2bfa-4aa9-9c21-7bb9e607186d
+              name: admin
+            workspace:
+              id: 99bd8d18-f5b6-410e-aefe-d75f4252f13c
+          schema:
+            $ref: '#/components/schemas/GroupRole'
+  requestBodies:
+    GroupRoleRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GroupRole'
+      description: Request body schema for assigning or updating roles for a group.
   securitySchemes:
     adminToken:
       in: header

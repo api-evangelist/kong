@@ -58,61 +58,72 @@ paths:
       tags:
       - Me
 components:
+  responses:
+    MeOrganization:
+      description: Me Organization
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                description: UUID of the organization.
+                type: string
+                format: uuid
+                readOnly: true
+              name:
+                description: Name of the organization.
+                type: string
+              owner_id:
+                description: Owner ID of the organization.
+                type: string
+              login_path:
+                description: Path to organization-specific login when single sign on (SSO) is enabled. Blank otherwise.
+                type: string
+              created_at:
+                description: Date the organization was created.
+                type: string
+                format: date-time
+                readOnly: true
+              updated_at:
+                description: Date the organization was last updated.
+                type: string
+                format: date-time
+                readOnly: true
+              state:
+                description: State of the organization
+                type: string
+                enum:
+                - active
+                - inactive
+                - deleting
+                - deleted
+                x-speakeasy-unknown-values: allow
+              retention_period_days:
+                description: The number of days an organization spends inactive before being deleted.
+                type: integer
+            example:
+              id: d99c041a-c7cf-46a2-bf3a-44bb5f75400e
+              name: string
+              owner_id: 1c9c3848-5897-4f2c-beed-df6f3e3adb37
+              created_at: '2023-01-23T17:22:52.150Z'
+              updated_at: '2023-01-23T17:22:52.150Z'
+              state: active
+              retention_period_days: 90
+            title: Me Organization Response
+    IdentityUnauthenticated:
+      description: Unauthenticated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    UserSingle:
+      description: A get action response of a single user.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
   schemas:
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
     User:
       description: The user object contains information about an individual user who can use the Konnect application and API.
       type: object
@@ -187,71 +198,60 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Invalid credentials
-  responses:
-    MeOrganization:
-      description: Me Organization
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                description: UUID of the organization.
-                type: string
-                format: uuid
-                readOnly: true
-              name:
-                description: Name of the organization.
-                type: string
-              owner_id:
-                description: Owner ID of the organization.
-                type: string
-              login_path:
-                description: Path to organization-specific login when single sign on (SSO) is enabled. Blank otherwise.
-                type: string
-              created_at:
-                description: Date the organization was created.
-                type: string
-                format: date-time
-                readOnly: true
-              updated_at:
-                description: Date the organization was last updated.
-                type: string
-                format: date-time
-                readOnly: true
-              state:
-                description: State of the organization
-                type: string
-                enum:
-                - active
-                - inactive
-                - deleting
-                - deleted
-                x-speakeasy-unknown-values: allow
-              retention_period_days:
-                description: The number of days an organization spends inactive before being deleted.
-                type: integer
-            example:
-              id: d99c041a-c7cf-46a2-bf3a-44bb5f75400e
-              name: string
-              owner_id: 1c9c3848-5897-4f2c-beed-df6f3e3adb37
-              created_at: '2023-01-23T17:22:52.150Z'
-              updated_at: '2023-01-23T17:22:52.150Z'
-              state: active
-              retention_period_days: 90
-            title: Me Organization Response
-    IdentityUnauthenticated:
-      description: Unauthenticated
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    UserSingle:
-      description: A get action response of a single user.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/User'
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
   securitySchemes:
     personalAccessToken:
       type: http

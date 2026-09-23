@@ -50,7 +50,6 @@ paths:
         terraform-resource: ConsumerGroup#create
       operationId: create-consumer_group
       summary: Create a new Consumer Group
-      description: Create a new Consumer Group
       parameters:
       - $ref: '#/components/parameters/Workspace'
       requestBody:
@@ -101,7 +100,6 @@ paths:
         terraform-resource: ConsumerGroup#delete
       operationId: delete-consumer_group
       summary: Delete a Consumer Group
-      description: Delete a Consumer Group
       parameters:
       - $ref: '#/components/parameters/ConsumerGroupId'
       - $ref: '#/components/parameters/Workspace'
@@ -291,7 +289,6 @@ paths:
     get:
       operationId: list-consumer_group
       summary: List all Consumer Groups
-      description: List all Consumer Groups
       parameters:
       - $ref: '#/components/parameters/PaginationSize'
       - $ref: '#/components/parameters/PaginationOffset'
@@ -324,7 +321,6 @@ paths:
     post:
       operationId: create-consumer_group
       summary: Create a new Consumer Group
-      description: Create a new Consumer Group
       requestBody:
         description: Description of the new Consumer Group for creation
         required: true
@@ -360,7 +356,6 @@ paths:
     delete:
       operationId: delete-consumer_group
       summary: Delete a Consumer Group
-      description: Delete a Consumer Group
       parameters:
       - $ref: '#/components/parameters/ConsumerGroupId_2'
       responses:
@@ -559,12 +554,94 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
+  parameters:
+    ConsumerGroupIdManageConsumers:
+      description: The UUID or name of the consumer group
+      in: path
+      name: ConsumerGroupId
+      required: true
+      schema:
+        type: string
+        example: cf4c7e60-11db-49dd-b300-7c7e5f0f7e6b
+      x-speakeasy-name-override: consumer_group_id
+    ConsumerGroupId:
+      description: ID of the Consumer Group to lookup
+      example: ''
+      in: path
+      name: ConsumerGroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    ConsumerGroupId_2:
+      description: ID of the Consumer Group to lookup
+      example: ''
+      in: path
+      name: ConsumerGroupId
+      required: true
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    ListConsumers:
+      description: Expand the consumer group to include a list of its consumers.
+      example: false
+      in: query
+      name: list_consumers
+      schema:
+        type: boolean
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
   schemas:
-    ConsumerGroupInsideWrapper:
+    GatewayUnauthorizedError:
       type: object
       properties:
-        consumer_group:
-          $ref: '#/components/schemas/ConsumerGroup'
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     Consumer:
       x-speakeasy-entity: Consumer
       description: The Consumer object represents a consumer - or a user - of a Service. You can either rely on Kong as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong and your existing primary datastore.
@@ -604,6 +681,11 @@ components:
         - silver-tier
         username: bob-the-builder
       additionalProperties: false
+    ConsumerGroupInsideWrapper:
+      type: object
+      properties:
+        consumer_group:
+          $ref: '#/components/schemas/ConsumerGroup'
     ConsumerGroup:
       x-speakeasy-entity: ConsumerGroup
       type: object
@@ -633,16 +715,6 @@ components:
       additionalProperties: false
       required:
       - name
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
     Consumer_2:
       description: The Consumer object represents a consumer - or a user - of a Service. You can either rely on Kong as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong and your existing primary datastore.
       type: object
@@ -681,12 +753,6 @@ components:
         - silver-tier
         username: bob-the-builder
       additionalProperties: false
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
-      type: string
     ConsumerGroup_2:
       type: object
       properties:
@@ -715,83 +781,12 @@ components:
       additionalProperties: false
       required:
       - name
-  parameters:
-    ConsumerGroupIdManageConsumers:
-      description: The UUID or name of the consumer group
-      in: path
-      name: ConsumerGroupId
-      required: true
-      schema:
-        type: string
-        example: cf4c7e60-11db-49dd-b300-7c7e5f0f7e6b
-      x-speakeasy-name-override: consumer_group_id
-    ConsumerGroupId:
-      description: ID of the Consumer Group to lookup
-      example: ''
-      in: path
-      name: ConsumerGroupId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    ListConsumers:
-      description: Expand the consumer group to include a list of its consumers.
-      example: false
-      in: query
-      name: list_consumers
-      schema:
-        type: boolean
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    ConsumerGroupId_2:
-      description: ID of the Consumer Group to lookup
-      example: ''
-      in: path
-      name: ConsumerGroupId
-      required: true
-      schema:
-        type: string
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
   responses:
     HTTP401Error:
       description: Unauthorized

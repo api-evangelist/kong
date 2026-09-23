@@ -38,9 +38,7 @@ servers:
 - url: https://eu.api.konghq.com
 - url: https://au.api.konghq.com
 tags:
-- description: 'A JSON Web key set. Key sets are the preferred way to expose keys to plugins because they tell the plugin where to look for keys or have a scoping mechanism to restrict plugins to specific keys.
-
-    '
+- description: A JSON Web key set. Key sets are the preferred way to expose keys to plugins because they tell the plugin where to look for keys or have a scoping mechanism to restrict plugins to specific keys.
   name: KeySets
 paths:
   /{workspace}/key-sets:
@@ -50,7 +48,6 @@ paths:
         terraform-resource: KeySet#create
       operationId: create-key-set
       summary: Create a new KeySet
-      description: Create a new KeySet
       parameters:
       - $ref: '#/components/parameters/Workspace'
       requestBody:
@@ -100,7 +97,6 @@ paths:
         terraform-resource: KeySet#delete
       operationId: delete-key-set
       summary: Delete a KeySet
-      description: Delete a KeySet
       parameters:
       - $ref: '#/components/parameters/KeySetIdOrName'
       - $ref: '#/components/parameters/Workspace'
@@ -190,7 +186,6 @@ paths:
     get:
       operationId: list-key-set
       summary: List all KeySets
-      description: List all KeySets
       parameters:
       - $ref: '#/components/parameters/PaginationSize'
       - $ref: '#/components/parameters/PaginationOffset'
@@ -223,7 +218,6 @@ paths:
     post:
       operationId: create-key-set
       summary: Create a new KeySet
-      description: Create a new KeySet
       requestBody:
         description: Description of the new KeySet for creation
         content:
@@ -258,7 +252,6 @@ paths:
     delete:
       operationId: delete-key-set
       summary: Delete a KeySet
-      description: Delete a KeySet
       parameters:
       - $ref: '#/components/parameters/KeySetId'
       responses:
@@ -328,6 +321,16 @@ paths:
     - url: https://au.api.konghq.com
 components:
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     KeySet:
       x-speakeasy-entity: KeySet
       type: object
@@ -361,16 +364,6 @@ components:
         tags:
         - idp-keys
       additionalProperties: false
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
     KeySet_2:
       type: object
       properties:
@@ -409,6 +402,67 @@ components:
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
+  parameters:
+    KeySetIdOrName:
+      description: ID or name of the KeySet to lookup
+      example: 6cc34248-50b4-4a81-9201-3bdf7a83f712
+      in: path
+      name: KeySetIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    KeySetId:
+      description: ID of the KeySet to lookup
+      example: 6cc34248-50b4-4a81-9201-3bdf7a83f712
+      in: path
+      name: KeySetId
+      required: true
+      schema:
+        type: string
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -438,67 +492,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    KeySetIdOrName:
-      description: ID or name of the KeySet to lookup
-      example: 6cc34248-50b4-4a81-9201-3bdf7a83f712
-      in: path
-      name: KeySetIdOrName
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    KeySetId:
-      description: ID of the KeySet to lookup
-      example: 6cc34248-50b4-4a81-9201-3bdf7a83f712
-      in: path
-      name: KeySetId
-      required: true
-      schema:
-        type: string
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
   securitySchemes:
     adminToken:
       in: header

@@ -203,9 +203,7 @@ paths:
       summary: List Identity Providers
       description: 'Retrieves the identity providers available within the organization. This operation provides information about
 
-        various identity providers for SAML or OIDC authentication integrations.
-
-        '
+        various identity providers for SAML or OIDC authentication integrations.'
       parameters:
       - name: filter
         in: query
@@ -234,9 +232,7 @@ paths:
       summary: Create Identity Provider
       description: 'Creates a new identity provider. This operation allows the creation of a new identity provider for
 
-        authentication purposes.
-
-        '
+        authentication purposes.'
       requestBody:
         $ref: '#/components/requestBodies/CreateIdentityProviderRequest'
       responses:
@@ -272,9 +268,7 @@ paths:
       summary: Get Identity Provider
       description: 'Retrieves the configuration of a single identity provider. This operation returns information about a
 
-        specific identity provider''s settings and authentication integration details.
-
-        '
+        specific identity provider''s settings and authentication integration details.'
       responses:
         '200':
           $ref: '#/components/responses/IdentityProvider'
@@ -296,9 +290,7 @@ paths:
       summary: Update Identity Provider
       description: 'Updates the configuration of an existing identity provider. This operation allows modifications to be made
 
-        to an existing identity provider''s configuration.
-
-        '
+        to an existing identity provider''s configuration.'
       requestBody:
         $ref: '#/components/requestBodies/UpdateIdentityProviderRequest'
       responses:
@@ -324,9 +316,7 @@ paths:
       summary: Delete Identity Provider
       description: 'Deletes an existing identity provider configuration. This operation removes a specific identity provider
 
-        from the organization.
-
-        '
+        from the organization.'
       responses:
         '204':
           description: No Content
@@ -357,9 +347,7 @@ paths:
       summary: List Team Group Mappings
       description: 'Returns a paginated list of team group mappings for the specified identity provider.
 
-        Mappings define the relationship between identity provider groups and Konnect teams.
-
-        '
+        Mappings define the relationship between identity provider groups and Konnect teams.'
       parameters:
       - $ref: '#/components/parameters/PageSize'
       - $ref: '#/components/parameters/PageAfter'
@@ -399,9 +387,7 @@ paths:
       summary: Create Team Group Mapping
       description: 'Creates a new team group mapping for the specified identity provider.
 
-        A mapping associates an identity provider group with a Konnect team.
-
-        '
+        A mapping associates an identity provider group with a Konnect team.'
       requestBody:
         $ref: '#/components/requestBodies/CreateIdpTeamGroupMappingRequest'
       responses:
@@ -469,9 +455,7 @@ paths:
       summary: Delete Team Group Mapping
       description: 'Deletes a team group mapping by ID.
 
-        Returns 204 if the mapping was deleted, or 404 if the mapping was not found.
-
-        '
+        Returns 204 if the mapping was deleted, or 404 if the mapping was not found.'
       responses:
         '204':
           description: No Content
@@ -489,11 +473,155 @@ paths:
       - Auth Settings
 components:
   schemas:
-    IdentityProviderLoginPath:
-      description: The path used for initiating login requests with the identity provider.
+    OIDCIdentityProviderClaimMappings:
+      description: "Defines the mappings between OpenID Connect (OIDC) claims and local claims used by your application for \nauthentication.\n"
+      type: object
+      properties:
+        name:
+          description: The claim mapping for the user's name.
+          type: string
+          example: name
+          default: name
+        email:
+          description: The claim mapping for the user's email address.
+          type: string
+          example: email
+          default: email
+        groups:
+          description: The claim mapping for the user's group membership information.
+          type: string
+          example: groups
+          default: groups
+      title: OIDC Claim Mappings
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    OIDCIdentityProviderClientId:
+      description: The client ID assigned to your application by the identity provider.
       type: string
-      example: myapp
-      title: Identity Provider Login Path Property
+      example: YOUR_CLIENT_ID
+      title: OIDC Identity Provider Login Client Id Property
+    CreateIdentityProvider:
+      x-speakeasy-entity: IdentityProvider
+      description: The identity provider that contains configuration data for creating an authentication integration.
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/IdentityProviderType'
+        enabled:
+          $ref: '#/components/schemas/IdentityProviderEnabled'
+        login_path:
+          $ref: '#/components/schemas/IdentityProviderLoginPath'
+        config:
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/OIDCIdentityProviderConfig'
+          - $ref: '#/components/schemas/SAMLIdentityProviderConfig'
+      title: Identity Provider
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    UpdateIdentityProvider:
+      x-speakeasy-entity: IdentityProvider
+      description: The identity provider that contains configuration data for updating an authentication integration.
+      type: object
+      properties:
+        enabled:
+          $ref: '#/components/schemas/IdentityProviderEnabled'
+        login_path:
+          $ref: '#/components/schemas/IdentityProviderLoginPath'
+        config:
+          type: object
+          oneOf:
+          - $ref: '#/components/schemas/OIDCIdentityProviderConfig'
+          - $ref: '#/components/schemas/SAMLIdentityProviderConfig'
+      title: Identity Provider
+    OIDCIdentityProviderClientSecret:
+      description: The Client Secret assigned to your application by the identity provider.
+      type: string
+      example: YOUR_CLIENT_SECRET
+      title: OIDC Identity Provider Login Client Secret Property
+      writeOnly: true
+      x-speakeasy-param-sensitive: true
+      x-speakeasy-terraform-plan-only: true
+    OIDCIdentityProviderIssuer:
+      description: The issuer URI of the identity provider. This is the URL where the provider's metadata can be obtained.
+      type: string
+      format: uri
+      example: https://konghq.okta.com/oauth2/default
+      title: OIDC Identity Provider Issuer Property
+    TeamMapping:
+      description: A team assignment is a mapping of an IdP group to a Konnect Team.
+      type: object
+      properties:
+        group:
+          description: The IdP group.
+          type: string
+          example: Service Developers
+        team_ids:
+          description: An array of ID's that are mapped to the specified group.
+          type: array
+          items:
+            type: string
+            format: uuid
+            example: 6801e673-cc10-498a-94cd-4271de07a0d3
+          uniqueItems: true
+      example:
+        group: Service Developers
+        team_ids:
+        - 6801e673-cc10-498a-94cd-4271de07a0d3
+      title: TeamMapping
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -503,25 +631,135 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    OIDCIdentityProviderConfig:
-      description: The identity provider that contains configuration data for the OIDC authentication integration.
+    IdentityProviderEnabled:
+      description: 'Indicates whether the identity provider is enabled.
+
+        Only one identity provider can be active at a time, such as SAML or OIDC.
+
+        '
+      type: boolean
+      example: true
+      default: false
+      title: Identity Provider Enabled Property
+    IdentityProviderType:
+      description: Specifies the type of identity provider.
+      type: string
+      example: oidc
+      enum:
+      - oidc
+      - saml
+      x-speakeasy-unknown-values: allow
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        issuer_url:
-          $ref: '#/components/schemas/OIDCIdentityProviderIssuer'
-        client_id:
-          $ref: '#/components/schemas/OIDCIdentityProviderClientId'
-        client_secret:
-          $ref: '#/components/schemas/OIDCIdentityProviderClientSecret'
-        scopes:
-          $ref: '#/components/schemas/OIDCIdentityProviderScopes'
-        claim_mappings:
-          $ref: '#/components/schemas/OIDCIdentityProviderClaimMappings'
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
       required:
-      - issuer_url
-      - client_id
-      title: OIDC Identity Provider Config
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    SAMLIdentityProviderMetadata:
+      description: 'The identity provider''s SAML metadata. If the identity provider supports a metadata URL, you can use the `idp_metadata_url` field instead.
+
+        '
+      type: string
+      example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<EntityDescriptor xmlns=\"urn:oasis:names:tc:SAML:2.0:metadata\">\n  <!-- SAML metadata content here -->\n</EntityDescriptor>\n"
+      title: SAML Identity Provider Metadata
+    IdentityProviderLoginPath:
+      description: The path used for initiating login requests with the identity provider.
+      type: string
+      example: myapp
+      title: Identity Provider Login Path Property
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    StringFieldEqualsFilter:
+      description: Filters on the given string field value by exact match.
+      properties:
+        eq:
+          type: string
+      title: StringFieldEqualsFilter
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -559,6 +797,26 @@ components:
       - reason
       - rule
       - minimum
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     BaseError:
       description: standard error
       type: object
@@ -613,91 +871,6 @@ components:
       - instance
       - detail
       title: Error
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    OIDCIdentityProviderIssuer:
-      description: The issuer URI of the identity provider. This is the URL where the provider's metadata can be obtained.
-      type: string
-      format: uri
-      example: https://konghq.okta.com/oauth2/default
-      title: OIDC Identity Provider Issuer Property
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    OIDCIdentityProviderClaimMappings:
-      description: "Defines the mappings between OpenID Connect (OIDC) claims and local claims used by your application for \nauthentication.\n"
-      type: object
-      properties:
-        name:
-          description: The claim mapping for the user's name.
-          type: string
-          example: name
-          default: name
-        email:
-          description: The claim mapping for the user's email address.
-          type: string
-          example: email
-          default: email
-        groups:
-          description: The claim mapping for the user's group membership information.
-          type: string
-          example: groups
-          default: groups
-      title: OIDC Claim Mappings
     SAMLIdentityProviderConfig:
       description: The identity provider that contains configuration data for the SAML authentication integration.
       type: object
@@ -729,36 +902,13 @@ components:
           readOnly: true
       additionalProperties: false
       title: SAML Identity Provider Config
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     IdpTeamGroupMapping:
       description: A mapping between a Konnect team and an identity provider group.
       type: object
@@ -785,24 +935,21 @@ components:
       - created_at
       - updated_at
       title: IdpTeamGroupMapping
-    IdentityProviderType:
-      description: Specifies the type of identity provider.
-      type: string
-      example: oidc
-      enum:
-      - oidc
-      - saml
-      x-speakeasy-unknown-values: allow
-    IdentityProviderEnabled:
-      description: 'Indicates whether the identity provider is enabled.
-
-        Only one identity provider can be active at a time, such as SAML or OIDC.
-
-        '
-      type: boolean
-      example: true
-      default: false
-      title: Identity Provider Enabled Property
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -836,119 +983,6 @@ components:
       - reason
       - rule
       - maximum
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    OIDCIdentityProviderScopes:
-      description: The scopes requested by your application when authenticating with the identity provider.
-      type: array
-      items:
-        type: string
-      default:
-      - email
-      - openid
-      - profile
-      title: OIDC Identity Provider Scopes Property
-    OIDCIdentityProviderClientSecret:
-      description: The Client Secret assigned to your application by the identity provider.
-      type: string
-      example: YOUR_CLIENT_SECRET
-      title: OIDC Identity Provider Login Client Secret Property
-      writeOnly: true
-      x-speakeasy-param-sensitive: true
-      x-speakeasy-terraform-plan-only: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    TeamMapping:
-      description: A team assignment is a mapping of an IdP group to a Konnect Team.
-      type: object
-      properties:
-        group:
-          description: The IdP group.
-          type: string
-          example: Service Developers
-        team_ids:
-          description: An array of ID's that are mapped to the specified group.
-          type: array
-          items:
-            type: string
-            format: uuid
-            example: 6801e673-cc10-498a-94cd-4271de07a0d3
-          uniqueItems: true
-      example:
-        group: Service Developers
-        team_ids:
-        - 6801e673-cc10-498a-94cd-4271de07a0d3
-      title: TeamMapping
     TeamGroupMapping:
       description: A map of Konnect Team to IdP groups.
       type: object
@@ -971,64 +1005,6 @@ components:
         - Tech Leads
         - API Engineers
       title: TeamGroupMapping
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    SAMLIdentityProviderMetadata:
-      description: 'The identity provider''s SAML metadata. If the identity provider supports a metadata URL, you can use the `idp_metadata_url` field instead.
-
-        '
-      type: string
-      example: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<EntityDescriptor xmlns=\"urn:oasis:names:tc:SAML:2.0:metadata\">\n  <!-- SAML metadata content here -->\n</EntityDescriptor>\n"
-      title: SAML Identity Provider Metadata
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
     IdentityProvider:
       x-speakeasy-entity: IdentityProvider
       description: The identity provider that contains configuration data for authentication integration.
@@ -1052,60 +1028,71 @@ components:
         updated_at:
           $ref: '#/components/schemas/UpdatedAt'
       title: Identity Provider
-    UpdateIdentityProvider:
-      x-speakeasy-entity: IdentityProvider
-      description: The identity provider that contains configuration data for updating an authentication integration.
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    OIDCIdentityProviderScopes:
+      description: The scopes requested by your application when authenticating with the identity provider.
+      type: array
+      items:
+        type: string
+      default:
+      - email
+      - openid
+      - profile
+      title: OIDC Identity Provider Scopes Property
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    PaginatedMeta:
+      description: returns the pagination information
       type: object
       properties:
-        enabled:
-          $ref: '#/components/schemas/IdentityProviderEnabled'
-        login_path:
-          $ref: '#/components/schemas/IdentityProviderLoginPath'
-        config:
-          type: object
-          oneOf:
-          - $ref: '#/components/schemas/OIDCIdentityProviderConfig'
-          - $ref: '#/components/schemas/SAMLIdentityProviderConfig'
-      title: Identity Provider
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
+        page:
+          $ref: '#/components/schemas/PageMeta'
       required:
-      - field
-      - rule
-      - reason
-      - dependents
-    StringFieldEqualsFilter:
-      description: Filters on the given string field value by exact match.
-      properties:
-        eq:
-          type: string
-      title: StringFieldEqualsFilter
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     IdP:
       description: 'The IdP object contains the configuration data for the OIDC authentication integration.
 
@@ -1148,29 +1135,6 @@ components:
               example: custom-groups-claim
               default: groups
       title: IdP Configuration
-    CreateIdentityProvider:
-      x-speakeasy-entity: IdentityProvider
-      description: The identity provider that contains configuration data for creating an authentication integration.
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/IdentityProviderType'
-        enabled:
-          $ref: '#/components/schemas/IdentityProviderEnabled'
-        login_path:
-          $ref: '#/components/schemas/IdentityProviderLoginPath'
-        config:
-          type: object
-          oneOf:
-          - $ref: '#/components/schemas/OIDCIdentityProviderConfig'
-          - $ref: '#/components/schemas/SAMLIdentityProviderConfig'
-      title: Identity Provider
-    SAMLIdentityProviderMetadataURL:
-      description: The identity provider's metadata URL where the identity provider's metadata can be obtained.
-      type: string
-      format: uri
-      example: https://mocksaml.com/api/saml/metadata
-      title: SAML Identity Provider Metadata URL
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -1200,41 +1164,32 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    OIDCIdentityProviderClientId:
-      description: The client ID assigned to your application by the identity provider.
+    SAMLIdentityProviderMetadataURL:
+      description: The identity provider's metadata URL where the identity provider's metadata can be obtained.
       type: string
-      example: YOUR_CLIENT_ID
-      title: OIDC Identity Provider Login Client Id Property
+      format: uri
+      example: https://mocksaml.com/api/saml/metadata
+      title: SAML Identity Provider Metadata URL
+    OIDCIdentityProviderConfig:
+      description: The identity provider that contains configuration data for the OIDC authentication integration.
+      type: object
+      properties:
+        issuer_url:
+          $ref: '#/components/schemas/OIDCIdentityProviderIssuer'
+        client_id:
+          $ref: '#/components/schemas/OIDCIdentityProviderClientId'
+        client_secret:
+          $ref: '#/components/schemas/OIDCIdentityProviderClientSecret'
+        scopes:
+          $ref: '#/components/schemas/OIDCIdentityProviderScopes'
+        claim_mappings:
+          $ref: '#/components/schemas/OIDCIdentityProviderClaimMappings'
+      additionalProperties: false
+      required:
+      - issuer_url
+      - client_id
+      title: OIDC Identity Provider Config
   requestBodies:
-    CreateIdentityProviderRequest:
-      description: 'An object representing the configuration for creating a new identity provider. This configuration may pertain  to either an OIDC or a SAML identity provider.
-
-        '
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CreateIdentityProvider'
-    CreateIdpTeamGroupMappingRequest:
-      description: Request to create an IDP team group mapping.
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              team_id:
-                description: The Konnect team ID to associate with the identity provider group.
-                type: string
-                format: uuid
-                example: 6801e673-cc10-498a-94cd-4271de07a0d3
-              group:
-                description: The identity provider group name. Group names are case sensitive.
-                type: string
-                example: Tech Leads
-            required:
-            - team_id
-            - group
     UpdateIdPConfiguration:
       content:
         application/json:
@@ -1280,6 +1235,26 @@ components:
                     example: custom-group-claim
                     default: groups
       description: The request schema for the update IdP configuration request.
+    CreateIdpTeamGroupMappingRequest:
+      description: Request to create an IDP team group mapping.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              team_id:
+                description: The Konnect team ID to associate with the identity provider group.
+                type: string
+                format: uuid
+                example: 6801e673-cc10-498a-94cd-4271de07a0d3
+              group:
+                description: The identity provider group name. Group names are case sensitive.
+                type: string
+                example: Tech Leads
+            required:
+            - team_id
+            - group
     PatchTeamGroupMappings:
       content:
         application/json:
@@ -1305,6 +1280,48 @@ components:
                 groups:
                 - Service Developers
       description: The request schema for a partial update of mappings from Konnect Teams to IdP Groups.
+    UpdateTeamMappings:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              mappings:
+                description: The mappings object.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    group:
+                      type: string
+                    team_ids:
+                      type: array
+                      items:
+                        type: string
+            example:
+              mappings:
+              - group: Service Developers
+                team_ids:
+                - af91db4c-6e51-403e-a2bf-33d27ae50c0a
+      description: The request schema for updating IdP team mappings.
+    CreateIdentityProviderRequest:
+      description: 'An object representing the configuration for creating a new identity provider. This configuration may pertain  to either an OIDC or a SAML identity provider.
+
+        '
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateIdentityProvider'
+    UpdateIdentityProviderRequest:
+      description: 'An object representing the configuration for updating an identity provider. This configuration may pertain  to either an OIDC or a SAML identity provider.
+
+        '
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateIdentityProvider'
     UpdateAuthenticationSettings:
       description: The request schema to update an organization's authentication settings.
       content:
@@ -1332,71 +1349,60 @@ components:
                 description: Whether a Konnect Identity Admin assigns teams to a user.
                 type: boolean
                 example: false
-    UpdateTeamMappings:
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    PageBefore:
+      name: page[before]
+      description: Request the next page of data, starting with the item before this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+  responses:
+    IdentityBadRequest:
+      description: Bad Request
       content:
-        application/json:
+        application/problem+json:
           schema:
-            type: object
-            properties:
-              mappings:
-                description: The mappings object.
-                type: array
-                items:
-                  type: object
-                  properties:
-                    group:
-                      type: string
-                    team_ids:
-                      type: array
-                      items:
-                        type: string
-            example:
-              mappings:
-              - group: Service Developers
-                team_ids:
-                - af91db4c-6e51-403e-a2bf-33d27ae50c0a
-      description: The request schema for updating IdP team mappings.
-    UpdateIdentityProviderRequest:
-      description: 'An object representing the configuration for updating an identity provider. This configuration may pertain  to either an OIDC or a SAML identity provider.
+            $ref: '#/components/schemas/BadRequestError'
+    IdentityProvider:
+      description: 'An identity provider configuration. This response represents the configuration of a specific identity provider, which can be either OIDC or SAML.
 
         '
-      required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UpdateIdentityProvider'
-  responses:
-    PreconditionFailed:
-      description: Precondition Failed
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 412
-              title:
-                description: The error response code.
-                type: string
-                example: Precondition Failed
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:1896611024257578096
-              detail:
-                description: Details about the error response.
-                type: string
-                example: IdP configuration not found
-            title: Precondition Failed Response
-    IdentityUnauthenticated:
-      description: Unauthenticated
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
+            $ref: '#/components/schemas/IdentityProvider'
     Unauthorized:
       description: Unauthorized
       content:
@@ -1423,12 +1429,125 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    IdpTeamGroupMapping:
+      description: A single team group mapping.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdpTeamGroupMapping'
+    CreateIdentityProviderPermissionDenied:
+      description: Permission denied
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    IdPConfiguration:
+      description: A get action response of the IdP configuration.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IdP'
     IdentityPermissionDenied:
       description: Permission denied
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
+    IdentityUnauthenticated:
+      description: Unauthenticated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    AuthenticationSettings:
+      description: Response for authentication settings endpoint
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              basic_auth_enabled:
+                description: The organization has basic auth enabled.
+                type: boolean
+                example: true
+              oidc_auth_enabled:
+                description: The organization has OIDC disabled.
+                type: boolean
+                example: false
+              saml_auth_enabled:
+                description: The organization has SAML disabled.
+                type: boolean
+                example: false
+              idp_mapping_enabled:
+                description: IdP groups determine the Konnect teams a user has.
+                type: boolean
+                example: true
+              konnect_mapping_enabled:
+                description: A Konnect Identity Admin assigns teams to a user.
+                type: boolean
+                example: false
+            title: Authentication Settings Response
+    IdentityNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    IdpTeamGroupMappingsCollection:
+      description: A paginated collection of IDP team group mappings.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdpTeamGroupMapping'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    IdentityProviders:
+      description: 'A collection of identity providers. This response contains a collection of identity providers, which may  include both OIDC and SAML identity providers.
+
+        '
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/IdentityProvider'
+            title: Identity Provider Collection Response
+    PreconditionFailed:
+      description: Precondition Failed
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 412
+              title:
+                description: The error response code.
+                type: string
+                example: Precondition Failed
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:1896611024257578096
+              detail:
+                description: Details about the error response.
+                type: string
+                example: IdP configuration not found
+            title: Precondition Failed Response
     TeamMappingResponse:
       description: A paginated list response for a collection of team mappings.
       content:
@@ -1472,40 +1591,6 @@ components:
                         type: string
                         example: 3df49db8-39ff-490d-9fe1-251a3361fb13
             title: Team Mapping Response
-    AuthenticationSettings:
-      description: Response for authentication settings endpoint
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              basic_auth_enabled:
-                description: The organization has basic auth enabled.
-                type: boolean
-                example: true
-              oidc_auth_enabled:
-                description: The organization has OIDC disabled.
-                type: boolean
-                example: false
-              saml_auth_enabled:
-                description: The organization has SAML disabled.
-                type: boolean
-                example: false
-              idp_mapping_enabled:
-                description: IdP groups determine the Konnect teams a user has.
-                type: boolean
-                example: true
-              konnect_mapping_enabled:
-                description: A Konnect Identity Admin assigns teams to a user.
-                type: boolean
-                example: false
-            title: Authentication Settings Response
-    IdentityBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
     TeamMappingCollection:
       description: A paginated list response for a collection of team mappings.
       content:
@@ -1532,107 +1617,6 @@ components:
                 items:
                   $ref: '#/components/schemas/TeamGroupMapping'
             title: Team Group Mapping Collection Response
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    IdpTeamGroupMappingsCollection:
-      description: A paginated collection of IDP team group mappings.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/IdpTeamGroupMapping'
-    IdpTeamGroupMapping:
-      description: A single team group mapping.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/IdpTeamGroupMapping'
-    CreateIdentityProviderPermissionDenied:
-      description: Permission denied
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    IdPConfiguration:
-      description: A get action response of the IdP configuration.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/IdP'
-    IdentityProvider:
-      description: 'An identity provider configuration. This response represents the configuration of a specific identity provider, which can be either OIDC or SAML.
-
-        '
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/IdentityProvider'
-    IdentityNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    IdentityProviders:
-      description: 'A collection of identity providers. This response contains a collection of identity providers, which may  include both OIDC and SAML identity providers.
-
-        '
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/IdentityProvider'
-            title: Identity Provider Collection Response
-  parameters:
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageBefore:
-      name: page[before]
-      description: Request the next page of data, starting with the item before this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   securitySchemes:
     personalAccessToken:
       type: http
