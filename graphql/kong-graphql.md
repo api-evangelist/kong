@@ -1,1 +1,0 @@
-# Kong GraphQL API
