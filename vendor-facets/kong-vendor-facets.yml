@@ -1,0 +1,272 @@
+# Vendor facets — Kong (Kong Gateway + Konnect Dev Portal; Insomnia is profiled separately). The only
+# gateway here whose default rate-limiting plugin emits the RateLimit-* and X-RateLimit-* headers on
+# every response, and a Konnect portal with self-service sign-up, app registration and DCR against the
+# customer's IdP. What it cannot reach: rate-limit headers inside the provider's OpenAPI, a served
+# OAuth discovery or protected-resource document, public pricing, SDKs.
+vendor: kong
+name: Kong
+website: https://konghq.com
+areas:
+- developer-portal
+- api-gateway
+registry_keys:
+- kong
+rubric_schema_version: 0.22.0
+generated: '2026-09-25'
+features_refreshed: '2026-09-25'
+basis: capability
+summary: >-
+  Kong lands on developer ergonomics and access clarity through the Konnect Dev Portal: a branded API
+  catalog, OpenAPI/AsyncAPI reference, try-it console and self-service sign-up with keys — each scored
+  only once declared in apis.yml. Its Rate Limiting plugin emits RateLimit-* and X-RateLimit-* headers
+  by default, but the `verified` grade reads those headers from the provider's OpenAPI, which the plugin
+  does not write. The AI MCP Proxy converts routes to MCP tools on the customer's gateway (Enterprise,
+  `templated`), and the portal's DCR registers clients at the customer's IdP rather than serving a registration
+  endpoint Kong's customers can be scored for.
+features:
+- id: rate-limiting-plugin
+  name: Rate Limiting plugin with RateLimit-* / X-RateLimit-* headers
+  description: >-
+    Emits RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset (IETF draft), X-RateLimit-Limit-<window>/Remaining-<window>
+    and Retry-After on 429 by default (hide_client_headers turns them off); 429 body is {"message":"API
+    rate limit exceeded"}.
+  source: https://developer.konghq.com/plugins/rate-limiting/
+  tier: open-source
+- id: ai-mcp-proxy
+  name: AI MCP Proxy plugin
+  description: >-
+    Converts a Kong-managed REST service into MCP tools from its OpenAPI (conversion-listener / conversion-only
+    / listener modes) or proxies upstream MCP servers, served on a Kong route.
+  source: https://developer.konghq.com/plugins/ai-mcp-proxy/
+  tier: enterprise
+- id: konnect-dev-portal
+  name: Konnect Dev Portal
+  description: >-
+    Branded API catalog with OpenAPI/AsyncAPI docs, try-it in browser and Insomnia, Markdown page editor,
+    search, multiple portals, and an MCP server so coding agents can use portal APIs.
+  source: https://konghq.com/products/kong-konnect/features/developer-portal
+  tier: paid
+- id: self-service-registration
+  name: Developer self-service and application registration
+  description: >-
+    Developers sign up, create an application, register it with an API and retrieve keys without admin
+    involvement; auth strategies are key auth, OIDC, or DCR that creates the client at the customer's
+    IdP (Okta, Auth0, Azure AD, Curity).
+  source: https://developer.konghq.com/dev-portal/self-service/
+  tier: paid
+- id: kong-identity
+  name: Kong Identity managed authorization server
+  description: >-
+    A Konnect-managed OAuth 2.0 authorization server (auth servers, scopes, claims, clients) used with
+    the OIDC plugin; the fetched guide issues tokens with client_credentials.
+  source: https://developer.konghq.com/how-to/configure-kong-identity-oidc/
+  tier: paid
+- id: metering-billing
+  name: Konnect Metering & Billing (OpenMeter)
+  description: Usage metering, plans made of rate cards, subscriptions, invoicing and Stripe/CRM integrations.
+  source: https://developer.konghq.com/metering-and-billing/
+  tier: paid
+- id: portal-analytics
+  name: Portal and API analytics
+  description: Usage, request volume, error rate and latency metrics for published APIs.
+  source: https://konghq.com/products/kong-konnect/features/developer-portal
+  tier: paid
+maps:
+- feature: konnect-dev-portal
+  check: portal_present
+  layer: composite
+  provider_must: Declare the Dev Portal URL as a DeveloperPortal entry in apis.yml common[].
+  catalog_pass_rate: 0.228
+  facet: developer_ergonomics
+  points: 4
+  baseline_pass_rate: 0.633
+- feature: konnect-dev-portal
+  check: api_reference_present
+  layer: composite
+  provider_must: Declare the rendered reference as an APIReference entry in apis.yml common[].
+  catalog_pass_rate: 0.222
+  facet: developer_ergonomics
+  points: 3
+  baseline_pass_rate: 0.942
+  saturated: true
+  saturated_note: >-
+    94% of providers with a contract, docs and a reference already earn this; the vendor cannot move it
+    for most of its buyers.
+- feature: konnect-dev-portal
+  check: console_or_sandbox
+  layer: composite
+  provider_must: Declare the try-it reference as a Console entry in apis.yml common[].
+  catalog_pass_rate: 0.089
+  facet: developer_ergonomics
+  points: 3
+  baseline_pass_rate: 0.332
+- feature: konnect-dev-portal
+  check: documentation_present
+  layer: composite
+  provider_must: Write the guides in the page editor and declare them as a Documentation entry in apis.yml
+    common[].
+  catalog_pass_rate: 0.453
+  facet: developer_ergonomics
+  points: 4
+  baseline_pass_rate: 0.95
+  saturated: true
+  saturated_note: >-
+    95% of providers with a contract, docs and a reference already earn this; the vendor cannot move it
+    for most of its buyers.
+- feature: self-service-registration
+  check: sign_up_present
+  layer: composite
+  provider_must: Enable developer sign-up and declare the page as SignUp or Login in apis.yml common[].
+  catalog_pass_rate: 0.19
+  facet: access_clarity
+  points: 5
+  baseline_pass_rate: 0.463
+- feature: rate-limiting-plugin
+  check: rate_limit_signal
+  layer: agent_readiness
+  grade: documented
+  partial: true
+  partial_note: >-
+    The plugin emits exactly the headers the `verified` grade names, but the grade reads them from response
+    headers declared in the provider's OpenAPI, and nothing fetched shows Kong adding them to the spec.
+    Until the provider declares them, only the `documented` fallback (a published rate_limits artifact)
+    is reachable.
+  points: 7
+  baseline_pass_rate: 0.381
+- feature: ai-mcp-proxy
+  check: mcp_server
+  layer: agent_readiness
+  grade: templated
+  note: >-
+    Tools come from the provider's own OpenAPI and are served on the provider's own Kong route and host,
+    so `templated` (0.6). Enterprise-only (AI Gateway Enterprise). `verified` only if the catalog probe
+    of the provider's mcp/ manifest passes.
+  points: 12
+  baseline_pass_rate: 0.22
+- feature: self-service-registration
+  check: delegated_identity
+  layer: agent_readiness
+  grade: documented
+  conditional: true
+  condition: >-
+    Only if the provider's OpenAPI declares an oauth2 authorizationCode flow or openIdConnect scheme —
+    the portal's OIDC strategy configures the gateway, it does not write the provider's contract.
+  points: 6
+  baseline_pass_rate: 0.209
+earns_nothing:
+- feature: self-service-registration
+  check: dynamic_client_registration
+  why: >-
+    Konnect's DCR is Kong calling the customer's IdP to create portal apps; the check reads a registration_endpoint
+    in a served discovery document, which is the IdP's, not something Kong serves on the provider's domain.
+- feature: kong-identity
+  check: auth_clarity
+  why: >-
+    The fetched guide shows a Konnect-managed issuer and client_credentials tokens, but not an openid-configuration
+    served on the provider's host, and client_credentials does not satisfy delegated_identity's authorization_code
+    test.
+- feature: metering-billing
+  check: plans_present
+  why: >-
+    The fetched page describes plans assigned to customers via subscriptions, not a public plan catalog
+    on the portal; the plans artifact is harvested from public pricing pages.
+- feature: portal-analytics
+  why: Analytics help the provider and no check reads them.
+- feature: konnect-dev-portal
+  check: mcp_server
+  why: >-
+    The portal MCP server serves the portal's catalog to coding agents on Kong's portal product; it is
+    not the provider's API as an MCP server, and the rubric grades the latter.
+out_of_reach:
+  checks:
+  - sdk_count_1
+  - sdk_count_3
+  - cli_present
+  - idempotency
+  - dry_run_mode
+  - reversibility_documented
+  - protected_resource_metadata
+  - well_known_published
+  - agent_card
+  - pricing_link
+  - change_log_present
+  - status_page_present
+  note: >-
+    Nothing fetched shows Kong serving a protected-resource or discovery document on the provider's host,
+    and SDKs, pricing and API behaviours are the provider's to publish.
+unscored_practice:
+- feature: rate-limiting-plugin
+  why: >-
+    Kong is the one gateway in this set that emits both IETF RateLimit-* and X-RateLimit-* headers by
+    default; the rubric only credits it when the provider writes them into its contract.
+surface:
+  developer_ergonomics:
+    reachable: 14.0
+    total: 42
+  access_clarity:
+    reachable: 5.0
+    total: 38
+  agent_readiness:
+    reachable: 13.7
+    total: 139
+hard_rule: >-
+  A model, not a score. Adopting this vendor changes a provider's Kin Score only when the provider publishes
+  the resulting artifacts on its own surface; nothing here writes a score, and no sponsorship or partnership
+  can.
+method: searched
+source:
+- https://developer.konghq.com/dev-portal/self-service/
+- https://developer.konghq.com/how-to/configure-kong-identity-oidc/
+- https://developer.konghq.com/metering-and-billing/
+- https://developer.konghq.com/plugins/ai-mcp-proxy/
+- https://developer.konghq.com/plugins/rate-limiting/
+- https://konghq.com/products/kong-konnect/features/developer-portal
+measured:
+  cohort:
+    method: vendors-catalog.json detections (CNAME / header / URL shape / markup), never a name match
+    detected: 0
+    in_baseline: 0
+  control:
+    basis: providers earning contract_present + documentation_present + api_reference_present, minus the
+      cohort
+    n: 5216
+  metric: >-
+    cohort_pct / control_pct = mean share of the check's points earned (derived and platform credit weighted),
+    x100
+  measured_on: '2026-09-25'
+  status: 'not measurable: 0 detected customers clear the baseline (need 20)'
+simulation:
+  simulated_on: '2026-09-25'
+  rubric: 0.23.0
+  population: providers publishing a contract (contract_present earned), replayable exactly
+  providers: 8977
+  providers_unreplayable: 987
+  providers_moved: 8880
+  conditional_rows: excluded (they depend on what the API already does)
+  composite_lift:
+    median: 4.7
+    p75: 6.1
+    p90: 7.4
+    max: 9.4
+    mean_among_movers: 4.8
+  agent_readiness_lift:
+    median: 5.2
+    p75: 6.0
+    p90: 7.7
+    max: 9.0
+    mean_among_movers: 5.4
+  facet_lift_median_among_movers:
+    developer_ergonomics: 16.6
+    access_clarity: 13.1
+  composite_band_moves:
+    thin -> developing: 1803
+    developing -> strong: 705
+    emerging -> thin: 353
+    strong -> exemplar: 148
+    minimal -> emerging: 3
+  agent_readiness_band_moves:
+    agent-aware -> agent-ready: 2456
+    agent-ready -> agent-native: 209
+  method: >-
+    each provider's own kin/checks file, the vendor's maps at their stated credit, the scorer's composite
+    formula; from -> to, nothing written
