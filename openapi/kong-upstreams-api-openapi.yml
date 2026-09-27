@@ -223,7 +223,7 @@ paths:
       - konnectAccessToken: []
       - serviceAccessToken: []
     post:
-      operationId: create-upstream
+      operationId: postV2ControlPlanesByControlPlaneIdCoreEntitiesUpstreams
       summary: Create a new Upstream
       requestBody:
         description: Description of the new Upstream for creation
@@ -248,6 +248,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: create-upstream
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -258,7 +260,7 @@ paths:
     - $ref: '#/components/parameters/UpstreamId'
     - $ref: '#/components/parameters/controlPlaneId'
     delete:
-      operationId: delete-upstream
+      operationId: deleteV2ControlPlanesByControlPlaneIdCoreEntitiesUpstreamsByUpstreamId
       summary: Delete an Upstream
       parameters:
       - $ref: '#/components/parameters/UpstreamId'
@@ -274,8 +276,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: delete-upstream
     get:
-      operationId: get-upstream
+      operationId: getV2ControlPlanesByControlPlaneIdCoreEntitiesUpstreamsByUpstreamId
       summary: Get an Upstream
       description: Get an Upstream using ID or name.
       responses:
@@ -296,8 +300,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: get-upstream
     put:
-      operationId: upsert-upstream
+      operationId: putV2ControlPlanesByControlPlaneIdCoreEntitiesUpstreamsByUpstreamId
       summary: Upsert a Upstream
       description: Create or Update Upstream using ID or name.
       requestBody:
@@ -323,6 +329,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: upsert-upstream
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -1458,73 +1466,12 @@ components:
       additionalProperties: false
       required:
       - name
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
-  parameters:
-    UpstreamIdOrName:
-      description: ID or name of the Upstream to lookup
-      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
-      in: path
-      name: UpstreamIdOrName
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    UpstreamId:
-      description: ID of the Upstream to lookup
-      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
-      in: path
-      name: UpstreamId
-      required: true
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -1554,6 +1501,67 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
+  parameters:
+    UpstreamIdOrName:
+      description: ID or name of the Upstream to lookup
+      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
+      in: path
+      name: UpstreamIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    UpstreamId:
+      description: ID of the Upstream to lookup
+      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
+      in: path
+      name: UpstreamId
+      required: true
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
   securitySchemes:
     adminToken:
       in: header

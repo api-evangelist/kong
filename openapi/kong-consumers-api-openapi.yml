@@ -223,7 +223,7 @@ paths:
       - konnectAccessToken: []
       - serviceAccessToken: []
     post:
-      operationId: create-consumer
+      operationId: postV2ControlPlanesByControlPlaneIdCoreEntitiesConsumers
       summary: Create a new Consumer
       requestBody:
         description: Description of the new Consumer for creation
@@ -248,6 +248,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: create-consumer
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -258,7 +260,7 @@ paths:
     - $ref: '#/components/parameters/ConsumerId'
     - $ref: '#/components/parameters/controlPlaneId'
     delete:
-      operationId: delete-consumer
+      operationId: deleteV2ControlPlanesByControlPlaneIdCoreEntitiesConsumersByConsumerId
       summary: Delete a Consumer
       parameters:
       - $ref: '#/components/parameters/ConsumerId'
@@ -274,8 +276,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: delete-consumer
     get:
-      operationId: get-consumer
+      operationId: getV2ControlPlanesByControlPlaneIdCoreEntitiesConsumersByConsumerId
       summary: Get a Consumer
       description: Get a Consumer using ID or username.
       responses:
@@ -296,8 +300,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: get-consumer
     put:
-      operationId: upsert-consumer
+      operationId: putV2ControlPlanesByControlPlaneIdCoreEntitiesConsumersByConsumerId
       summary: Upsert a Consumer
       description: Create or Update Consumer using ID or username.
       requestBody:
@@ -323,6 +329,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: upsert-consumer
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -467,12 +475,19 @@ components:
         type: string
         example: team-payments
         default: default
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
+    ConsumerId:
+      description: ID of the Consumer to lookup
+      example: c1059869-6fa7-4329-a5f5-5946d14ca2c5
+      in: path
+      name: ConsumerId
+      required: true
+      schema:
+        type: string
+    NameContainsFilter:
+      description: Filter routes by a substring of the name.
+      example: john
       in: query
-      name: tags
+      name: filter[name][contains]
       schema:
         type: string
     ConsumerGroupId:
@@ -490,28 +505,15 @@ components:
       name: filter[name][eq]
       schema:
         type: string
-    CustomId:
-      description: Filter consumers by their custom_id.
-      example: my-custom-id
+    PaginationSize:
+      description: Number of resources to be returned.
       in: query
-      name: custom_id
+      name: size
       schema:
-        type: string
-    ConsumerId:
-      description: ID of the Consumer to lookup
-      example: c1059869-6fa7-4329-a5f5-5946d14ca2c5
-      in: path
-      name: ConsumerId
-      required: true
-      schema:
-        type: string
-    NameContainsFilter:
-      description: Filter routes by a substring of the name.
-      example: john
-      in: query
-      name: filter[name][contains]
-      schema:
-        type: string
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
     controlPlaneId:
       name: controlPlaneId
       in: path
@@ -529,15 +531,21 @@ components:
       name: offset
       schema:
         type: string
-    PaginationSize:
-      description: Number of resources to be returned.
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
       in: query
-      name: size
+      name: tags
       schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
+        type: string
+    CustomId:
+      description: Filter consumers by their custom_id.
+      example: my-custom-id
+      in: query
+      name: custom_id
+      schema:
+        type: string
   schemas:
     GatewayUnauthorizedError:
       type: object
@@ -654,11 +662,11 @@ components:
       additionalProperties: false
       required:
       - name
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
       type: string
   responses:
     HTTP401Error:

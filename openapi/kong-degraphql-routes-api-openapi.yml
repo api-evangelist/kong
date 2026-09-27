@@ -185,6 +185,16 @@ paths:
       - Degraphql_routes
 components:
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     Degraphql_routeWithoutParents:
       type: object
       properties:
@@ -226,22 +236,6 @@ components:
       required:
       - query
       - uri
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
-      type: string
     Degraphql_route:
       type: object
       properties:
@@ -286,7 +280,28 @@ components:
       - query
       - uri
       - service
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
   parameters:
+    ServiceId:
+      description: ID of the Service to lookup
+      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
+      in: path
+      name: ServiceId
+      required: true
+      schema:
+        type: string
     Degraphql_routeId:
       description: ID of the Degraphql_route to lookup
       example: ''
@@ -295,14 +310,15 @@ components:
       required: true
       schema:
         type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
+    PaginationSize:
+      description: Number of resources to be returned.
       in: query
-      name: tags
+      name: size
       schema:
-        type: string
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
     controlPlaneId:
       name: controlPlaneId
       in: path
@@ -320,30 +336,14 @@ components:
       name: offset
       schema:
         type: string
-    ServiceId:
-      description: ID of the Service to lookup
-      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
-      in: path
-      name: ServiceId
-      required: true
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
       schema:
         type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-  responses:
-    HTTP401Error:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GatewayUnauthorizedError'
   securitySchemes:
     personalAccessToken:
       type: http

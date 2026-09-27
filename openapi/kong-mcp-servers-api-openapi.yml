@@ -423,222 +423,15 @@ paths:
       - MCP Servers
 components:
   schemas:
-    KongService:
-      type: object
-      properties:
-        id:
-          description: Service ID
-          type: string
-          format: uuid
-        name:
-          description: Service name
-          type: string
-          example: mcp-test-service
-        protocol:
-          description: The protocol used to communicate with the Service.
-          type: string
-          example: https
-        host:
-          description: Service host
-          type: string
-          example: mcp-test-service.svc.cluster.local
-        port:
-          description: Service port
-          type: integer
-          example: 80
-          maximum: 65535
-          minimum: 1
-        path:
-          description: Service path
-          type: string
-          example: /
-      required:
-      - name
-      - protocol
-      - host
-      - port
-      - path
-    MCPServerInfo:
-      type: object
-      properties:
-        id:
-          description: The unique identifier for the MCP server.
-          type: string
-          format: uuid
-        name:
-          description: The name of the MCP server.
-          type: string
-          maxLength: 256
-          minLength: 1
-        description:
-          description: A description of the MCP server.
-          type: string
-          maxLength: 1024
-        labels:
-          description: Labels for the MCP server.
-          type: object
-          additionalProperties:
-            type: string
-        deployed_at:
-          description: The timestamp when the MCP server was deployed.
-          type: string
-          format: date-time
-        control_plane_id:
-          description: The control plane ID associated with the MCP server.
-          type: string
-          format: uuid
-          nullable: true
-        resource_id:
-          description: The MCP resource ID associated with the MCP server.
-          type: string
-          format: uuid
-          nullable: true
-        version:
-          description: The version of the MCP server.
-          type: string
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      required:
-      - id
-      - name
-      - created_at
-      - updated_at
-      - version
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
-    MCPServerPodsStatus:
-      type: object
-      properties:
-        ready:
-          description: Number of pods in the ready state.
-          type: integer
-          example: 2
-          minimum: 0
-        starting:
-          description: Number of pods in the starting state.
-          type: integer
-          example: 0
-          minimum: 0
-        failing:
-          description: Number of pods in the failing state.
-          type: integer
-          example: 0
-          minimum: 0
-      required:
-      - ready
-      - starting
-      - failing
-    MCPServerSignalV1:
-      description: 'Signal notifying the client that the MCP control plane config has changed.
-
-        '
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - mcp
-        version:
-          description: The current version of the MCP control plane.
-          type: string
-        offset:
-          description: The offset for the MCP signal.
-          type: string
-      example:
-        type: mcp
-        version: v1
-        offset: '6'
-      additionalProperties: false
-      required:
-      - type
-      - version
-      - offset
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    MCPServerSignals:
-      description: The MCP server signals response.
-      type: object
-      properties:
-        signals:
-          description: A list of signals for the MCP server.
-          type: array
-          items:
-            $ref: '#/components/schemas/MCPServerSignal'
-      required:
-      - signals
-    CreateMCPServerRequest:
-      type: object
-      properties:
-        name:
-          description: The name of the MCP server.
-          type: string
-          maxLength: 256
-          minLength: 1
-        description:
-          description: A description of the MCP server.
-          type: string
-          maxLength: 1024
-        labels:
-          description: Labels for the MCP server.
-          type: object
-          additionalProperties:
-            type: string
-        control_plane_id:
-          description: The control plane ID associated with the MCP server.
-          type: string
-          format: uuid
-          nullable: true
-        resource_id:
-          description: The MCP resource ID associated with the MCP server.
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - name
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     MCPServerVersionStatus:
       type: object
       properties:
@@ -663,102 +456,7 @@ components:
       - desired_replicas
       - created_replicas
       - pods_status
-    KongRoute:
-      type: object
-      properties:
-        id:
-          description: Route ID
-          type: string
-          format: uuid
-        name:
-          description: Route name
-          type: string
-          example: mcp-test-route-jsonrpc
-        service:
-          description: Reference to the service
-          type: object
-          properties:
-            id:
-              type: string
-              format: uuid
-        paths:
-          description: Request paths
-          type: array
-          items:
-            type: string
-          example:
-          - /mcp/test-service
-        methods:
-          description: HTTP methods
-          type: array
-          items:
-            type: string
-          example:
-          - POST
-      required:
-      - name
-      - paths
-      - methods
-    MCPCapabilitiesMap:
-      description: "Map of capability name -> capability request fields.\n\nExample:\n  {\n    \"mcp\": { \"version\": \"v1\", \"offset\": \"5\" }\n  }\n"
-      type: object
-      properties:
-        mcp:
-          $ref: '#/components/schemas/MCPCapabilityRequest'
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    KongEntitiesResponse:
-      type: object
-      properties:
-        routes:
-          type: array
-          items:
-            $ref: '#/components/schemas/KongRoute'
-        services:
-          type: array
-          items:
-            $ref: '#/components/schemas/KongService'
-      required:
-      - routes
-      - services
-    MCPServerCodeResponse:
-      type: object
-      properties:
-        code:
-          description: Generated Python code for the MCP server implementation
-          type: string
-          example: print("Hello MCP")
-      required:
-      - code
-    InvalidParameterChoiceItem:
+    InvalidParameterMaximumLength:
       type: object
       properties:
         field:
@@ -769,58 +467,43 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - enum
+          - max_length
+          - max_items
+          - max
           nullable: false
           readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
       - rule
-      - choices
-    UpdateMCPServerRequest:
-      type: object
-      properties:
-        name:
-          description: The name of the MCP server.
-          type: string
-          maxLength: 256
-          minLength: 1
-        description:
-          description: A description of the MCP server.
-          type: string
-          maxLength: 1024
-        labels:
-          description: Labels for the MCP server.
-          type: object
-          additionalProperties:
-            type: string
-        control_plane_id:
-          description: The control plane ID associated with the MCP server.
-          type: string
-          format: uuid
-          nullable: true
-        resource_id:
-          description: The MCP resource ID associated with the MCP server.
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - name
+      - maximum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -854,33 +537,87 @@ components:
       - rule
       - reason
       - dependents
-    MCPServerStatusRequest:
-      description: 'List of per-version deployment statuses for the MCP server.
-
-        '
-      type: array
-      items:
-        $ref: '#/components/schemas/MCPServerVersionStatus'
-    InvalidParameterStandard:
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
       type: object
       properties:
-        field:
+        contains:
           type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
       additionalProperties: false
       required:
-      - field
-      - reason
+      - contains
+      title: StringFieldContainsFilter
+    CreateMCPServerRequest:
+      type: object
+      properties:
+        name:
+          description: The name of the MCP server.
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: A description of the MCP server.
+          type: string
+          maxLength: 1024
+        labels:
+          description: Labels for the MCP server.
+          type: object
+          additionalProperties:
+            type: string
+        control_plane_id:
+          description: The control plane ID associated with the MCP server.
+          type: string
+          format: uuid
+          nullable: true
+        resource_id:
+          description: The MCP resource ID associated with the MCP server.
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - name
+    MCPServerCPInfo:
+      allOf:
+      - $ref: '#/components/schemas/MCPServerInfo'
+      - type: object
+        properties:
+          container:
+            allOf:
+            - $ref: '#/components/schemas/ContainerSpec'
+            - description: Configuration for the main container.
+          init_container:
+            allOf:
+            - $ref: '#/components/schemas/ContainerSpec'
+            - description: Configuration for the init container.
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -918,18 +655,89 @@ components:
       - reason
       - rule
       - minimum
-    ListMCPServersResponse:
+    MCPCapabilitiesMap:
+      description: "Map of capability name -> capability request fields.\n\nExample:\n  {\n    \"mcp\": { \"version\": \"v1\", \"offset\": \"5\" }\n  }\n"
       type: object
       properties:
-        data:
+        mcp:
+          $ref: '#/components/schemas/MCPCapabilityRequest'
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    MCPServerSignals:
+      description: The MCP server signals response.
+      type: object
+      properties:
+        signals:
+          description: A list of signals for the MCP server.
           type: array
           items:
-            $ref: '#/components/schemas/MCPServerInfo'
-        meta:
-          $ref: '#/components/schemas/CursorMeta'
+            $ref: '#/components/schemas/MCPServerSignal'
       required:
-      - data
-      - meta
+      - signals
+    MCPServerPodsStatus:
+      type: object
+      properties:
+        ready:
+          description: Number of pods in the ready state.
+          type: integer
+          example: 2
+          minimum: 0
+        starting:
+          description: Number of pods in the starting state.
+          type: integer
+          example: 0
+          minimum: 0
+        failing:
+          description: Number of pods in the failing state.
+          type: integer
+          example: 0
+          minimum: 0
+      required:
+      - ready
+      - starting
+      - failing
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     MCPServerSignal:
       description: A single signal envelope containing exactly one typed capability signal.
       discriminator:
@@ -938,6 +746,87 @@ components:
           mcp: '#/components/schemas/MCPServerSignalV1'
       oneOf:
       - $ref: '#/components/schemas/MCPServerSignalV1'
+    MCPServerCodeResponse:
+      type: object
+      properties:
+        code:
+          description: Generated Python code for the MCP server implementation
+          type: string
+          example: print("Hello MCP")
+      required:
+      - code
+    KongService:
+      type: object
+      properties:
+        id:
+          description: Service ID
+          type: string
+          format: uuid
+        name:
+          description: Service name
+          type: string
+          example: mcp-test-service
+        protocol:
+          description: The protocol used to communicate with the Service.
+          type: string
+          example: https
+        host:
+          description: Service host
+          type: string
+          example: mcp-test-service.svc.cluster.local
+        port:
+          description: Service port
+          type: integer
+          example: 80
+          maximum: 65535
+          minimum: 1
+        path:
+          description: Service path
+          type: string
+          example: /
+      required:
+      - name
+      - protocol
+      - host
+      - port
+      - path
+    ListMCPServersCPInfoResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MCPServerCPInfo'
+        meta:
+          $ref: '#/components/schemas/CursorMeta'
+      required:
+      - data
+      - meta
+    MCPServerSignalV1:
+      description: 'Signal notifying the client that the MCP control plane config has changed.
+
+        '
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - mcp
+        version:
+          description: The current version of the MCP control plane.
+          type: string
+        offset:
+          description: The offset for the MCP signal.
+          type: string
+      example:
+        type: mcp
+        version: v1
+        offset: '6'
+      additionalProperties: false
+      required:
+      - type
+      - version
+      - offset
     BaseError:
       description: standard error
       type: object
@@ -992,6 +881,125 @@ components:
       - instance
       - detail
       title: Error
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    KongRoute:
+      type: object
+      properties:
+        id:
+          description: Route ID
+          type: string
+          format: uuid
+        name:
+          description: Route name
+          type: string
+          example: mcp-test-route-jsonrpc
+        service:
+          description: Reference to the service
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+        paths:
+          description: Request paths
+          type: array
+          items:
+            type: string
+          example:
+          - /mcp/test-service
+        methods:
+          description: HTTP methods
+          type: array
+          items:
+            type: string
+          example:
+          - POST
+      required:
+      - name
+      - paths
+      - methods
+    MCPServerStatusRequest:
+      description: 'List of per-version deployment statuses for the MCP server.
+
+        '
+      type: array
+      items:
+        $ref: '#/components/schemas/MCPServerVersionStatus'
     ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -1007,67 +1015,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Forbidden
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ContainerSpec:
-      type: object
-      properties:
-        image:
-          description: The container image to use.
-          type: string
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
     MCPServerStatusResponse:
       type: object
       properties:
@@ -1094,48 +1041,55 @@ components:
           x-speakeasy-unknown-values: allow
       required:
       - status
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    ListMCPServersCPInfoResponse:
+    ListMCPServersResponse:
       type: object
       properties:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/MCPServerCPInfo'
+            $ref: '#/components/schemas/MCPServerInfo'
         meta:
           $ref: '#/components/schemas/CursorMeta'
       required:
       - data
       - meta
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+    UpdateMCPServerRequest:
+      type: object
+      properties:
+        name:
+          description: The name of the MCP server.
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: A description of the MCP server.
+          type: string
+          maxLength: 1024
+        labels:
+          description: Labels for the MCP server.
+          type: object
+          additionalProperties:
+            type: string
+        control_plane_id:
+          description: The control plane ID associated with the MCP server.
+          type: string
+          format: uuid
+          nullable: true
+        resource_id:
+          description: The MCP resource ID associated with the MCP server.
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - name
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
     PatchMCPServerRequest:
       type: object
       properties:
@@ -1170,48 +1124,32 @@ components:
           type: string
           format: uuid
           nullable: true
-    MCPServerCPInfo:
-      allOf:
-      - $ref: '#/components/schemas/MCPServerInfo'
-      - type: object
-        properties:
-          container:
-            allOf:
-            - $ref: '#/components/schemas/ContainerSpec'
-            - description: Configuration for the main container.
-          init_container:
-            allOf:
-            - $ref: '#/components/schemas/ContainerSpec'
-            - description: Configuration for the init container.
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
+    ContainerSpec:
+      type: object
+      properties:
+        image:
+          description: The container image to use.
+          type: string
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     MCPCapabilityRequest:
       type: object
       properties:
@@ -1224,73 +1162,81 @@ components:
       additionalProperties: false
       required:
       - version
-  parameters:
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    MCPCapabilities:
-      name: capabilities
-      in: query
-      style: deepObject
-      explode: true
-      description: 'Capability requests as a deepObject map.
-
-        - Keys are capability names (e.g. `mcp`).
-
-        - Values contain the capability request fields (`version`).
-
-        '
-      schema:
-        $ref: '#/components/schemas/MCPCapabilitiesMap'
-      example:
-        mcp:
-          version: '5'
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    mcpServerId:
-      name: mcpServerId
-      in: path
-      required: true
-      description: The ID of the MCP server.
-      schema:
-        type: string
-        format: uuid
-    MCPServerCommonFilter:
-      schema:
-        type: object
-        properties:
-          name:
-            $ref: '#/components/schemas/StringFieldContainsFilter'
-      in: query
-      name: filter
-      description: Filter documents returned in the response.
-      required: false
-      style: deepObject
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    MCPServerInfo:
+      type: object
+      properties:
+        id:
+          description: The unique identifier for the MCP server.
+          type: string
+          format: uuid
+        name:
+          description: The name of the MCP server.
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: A description of the MCP server.
+          type: string
+          maxLength: 1024
+        labels:
+          description: Labels for the MCP server.
+          type: object
+          additionalProperties:
+            type: string
+        deployed_at:
+          description: The timestamp when the MCP server was deployed.
+          type: string
+          format: date-time
+        control_plane_id:
+          description: The control plane ID associated with the MCP server.
+          type: string
+          format: uuid
+          nullable: true
+        resource_id:
+          description: The MCP resource ID associated with the MCP server.
+          type: string
+          format: uuid
+          nullable: true
+        version:
+          description: The version of the MCP server.
+          type: string
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      required:
+      - id
+      - name
+      - created_at
+      - updated_at
+      - version
+    KongEntitiesResponse:
+      type: object
+      properties:
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/KongRoute'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/KongService'
+      required:
+      - routes
+      - services
   responses:
+    ListMCPServersResponse:
+      description: A response to listing MCP servers.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ListMCPServersResponse'
+    CreateMCPServerResponse:
+      description: A response to creating an MCP server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/MCPServerInfo'
     Unauthorized:
       description: Unauthorized
       content:
@@ -1317,24 +1263,24 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    BadRequest:
-      description: Bad Request
+    Forbidden:
+      description: Forbidden
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/BadRequestError'
+            $ref: '#/components/schemas/ForbiddenError'
     ListMCPServersCPInfoResponse:
       description: A response to listing MCP servers with CP info.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ListMCPServersCPInfoResponse'
-    ListMCPServersResponse:
-      description: A response to listing MCP servers.
+    BadRequest:
+      description: Bad Request
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: '#/components/schemas/ListMCPServersResponse'
+            $ref: '#/components/schemas/BadRequestError'
     MCPServerSignalsResponse:
       description: The MCP server signals response.
       content:
@@ -1347,12 +1293,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    CreateMCPServerResponse:
-      description: A response to creating an MCP server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/MCPServerInfo'
     UpdateMCPServerResponse:
       description: A response to updating an MCP server.
       content:
@@ -1365,12 +1305,72 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ConflictError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    mcpServerId:
+      name: mcpServerId
+      in: path
+      required: true
+      description: The ID of the MCP server.
+      schema:
+        type: string
+        format: uuid
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    MCPCapabilities:
+      name: capabilities
+      in: query
+      style: deepObject
+      explode: true
+      description: 'Capability requests as a deepObject map.
+
+        - Keys are capability names (e.g. `mcp`).
+
+        - Values contain the capability request fields (`version`).
+
+        '
+      schema:
+        $ref: '#/components/schemas/MCPCapabilitiesMap'
+      example:
+        mcp:
+          version: '5'
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    MCPServerCommonFilter:
+      schema:
+        type: object
+        properties:
+          name:
+            $ref: '#/components/schemas/StringFieldContainsFilter'
+      in: query
+      name: filter
+      description: Filter documents returned in the response.
+      required: false
+      style: deepObject
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   securitySchemes:
     personalAccessToken:
       type: http

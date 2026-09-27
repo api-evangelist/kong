@@ -213,7 +213,7 @@ paths:
       - konnectAccessToken: []
       - serviceAccessToken: []
     post:
-      operationId: create-ca_certificate
+      operationId: postV2ControlPlanesByControlPlaneIdCoreEntitiesCaCertificates
       summary: Create a new CA Certificate
       requestBody:
         description: Description of the new CA Certificate for creation
@@ -238,6 +238,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: create-ca_certificate
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -248,7 +250,7 @@ paths:
     - $ref: '#/components/parameters/CACertificateId_2'
     - $ref: '#/components/parameters/controlPlaneId'
     delete:
-      operationId: delete-ca_certificate
+      operationId: deleteV2ControlPlanesByControlPlaneIdCoreEntitiesCaCertificatesByCACertificateId
       summary: Delete a CA Certificate
       parameters:
       - $ref: '#/components/parameters/CACertificateId_2'
@@ -264,8 +266,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: delete-ca_certificate
     get:
-      operationId: get-ca_certificate
+      operationId: getV2ControlPlanesByControlPlaneIdCoreEntitiesCaCertificatesByCACertificateId
       summary: Get a CA Certificate
       description: Get a CA Certificate using ID.
       responses:
@@ -286,8 +290,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: get-ca_certificate
     put:
-      operationId: upsert-ca_certificate
+      operationId: putV2ControlPlanesByControlPlaneIdCoreEntitiesCaCertificatesByCACertificateId
       summary: Upsert a CA Certificate
       description: Create or Update CA Certificate using ID.
       requestBody:
@@ -313,6 +319,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: upsert-ca_certificate
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -320,6 +328,16 @@ paths:
     - url: https://au.api.konghq.com
 components:
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     CACertificate:
       x-speakeasy-entity: CACertificate
       description: A CA certificate object represents a trusted CA. These objects are used by Kong to verify the validity of a client or server certificate.
@@ -366,19 +384,6 @@ components:
       additionalProperties: false
       required:
       - cert
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
     CACertificate_2:
       description: A CA certificate object represents a trusted CA. These objects are used by Kong to verify the validity of a client or server certificate.
       type: object
@@ -427,6 +432,61 @@ components:
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+  parameters:
+    CACertificateId:
+      description: ID of the CA Certificate to lookup
+      example: 3c31f18a-f27a-4f9b-8cd4-bf841554612f
+      in: path
+      name: CACertificateId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    CACertificateId_2:
+      description: ID of the CA Certificate to lookup
+      example: 3c31f18a-f27a-4f9b-8cd4-bf841554612f
+      in: path
+      name: CACertificateId
+      required: true
+      schema:
+        type: string
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -456,58 +516,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    CACertificateId:
-      description: ID of the CA Certificate to lookup
-      example: 3c31f18a-f27a-4f9b-8cd4-bf841554612f
-      in: path
-      name: CACertificateId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    CACertificateId_2:
-      description: ID of the CA Certificate to lookup
-      example: 3c31f18a-f27a-4f9b-8cd4-bf841554612f
-      in: path
-      name: CACertificateId
-      required: true
-      schema:
-        type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
   securitySchemes:
     adminToken:
       in: header

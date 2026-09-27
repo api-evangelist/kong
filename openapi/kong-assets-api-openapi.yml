@@ -147,35 +147,6 @@ paths:
       - Assets
 components:
   schemas:
-    ImagePNGDataUri:
-      description: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
-      type: string
-      format: uri
-      example: data:image/png,YW5faW1hZ2VfZmlsZQ==
-      pattern: ^data:image/png(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-      title: ImagePNGDataUri
-      x-validation-message: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
-    ImageJPGDataUri:
-      description: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
-      type: string
-      format: uri
-      example: data:image/jpeg,YW5faW1hZ2VfZmlsZQ==
-      pattern: ^data:image/jpeg(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-      title: ImageJPGDataUri
-      x-validation-message: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -185,45 +156,19 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    PortalImageAssetBlob:
-      description: Raw binary image data
-      type: string
-      format: binary
-      title: PortalImageAsset
-    InvalidParameterChoiceItem:
+    ReplacePortalImageAsset:
+      description: The image data to upload. Images must be a data URL with binary image data in base 64 format. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URLs.
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
+        data:
+          $ref: '#/components/schemas/PortalImageDataUri'
+      example:
+        data: data:image/jpeg;base64,bmljZV9sb29raW5nX3BpY3R1cmU=
       additionalProperties: false
+      nullable: true
       required:
-      - field
-      - reason
-      - rule
-      - choices
+      - data
+      title: ReplacePortalImageAsset
     ImageICODataUri:
       description: must be a data URL with base64 ICO image data, e.g., data:image/ico;base64,<BASE64_IMAGE_DATA>
       type: string
@@ -232,6 +177,14 @@ components:
       pattern: ^data:image/(x-icon|ico|icon|vnd.microsoft.icon)(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
       title: ImageICODataUri
       x-validation-message: must be a data URL with base64 ICO image data, e.g., data:image/ico;base64,<BASE64_IMAGE_DATA>
+    ImageJPGDataUri:
+      description: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/jpeg,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/jpeg(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImageJPGDataUri
+      x-validation-message: must be a data URL with base64 JPEG image data, e.g., data:image/jpeg;base64,<BASE64_IMAGE_DATA>
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -265,26 +218,14 @@ components:
       - rule
       - reason
       - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+    PortalImageDataUri:
+      oneOf:
+      - $ref: '#/components/schemas/ImagePNGDataUri'
+      - $ref: '#/components/schemas/ImageJPGDataUri'
+      - $ref: '#/components/schemas/ImageGIFDataUri'
+      - $ref: '#/components/schemas/ImageICODataUri'
+      - $ref: '#/components/schemas/ImageSVGDataUri'
+      title: PortalImageDataUri
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -330,6 +271,21 @@ components:
       pattern: ^data:image/gif(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
       title: ImageGIFDataUri
       x-validation-message: must be a data URL with base64 GIF image data, e.g., data:image/gif;base64,<BASE64_IMAGE_DATA>
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     BaseError:
       description: standard error
       type: object
@@ -384,19 +340,138 @@ components:
       - instance
       - detail
       title: Error
-    ReplacePortalImageAsset:
-      description: The image data to upload. Images must be a data URL with binary image data in base 64 format. See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URLs.
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        data:
-          $ref: '#/components/schemas/PortalImageDataUri'
-      example:
-        data: data:image/jpeg;base64,bmljZV9sb29raW5nX3BpY3R1cmU=
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
-      nullable: true
       required:
-      - data
-      title: ReplacePortalImageAsset
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    PortalImageAssetBlob:
+      description: Raw binary image data
+      type: string
+      format: binary
+      title: PortalImageAsset
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    ImageSVGDataUri:
+      description: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/svg+xml,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/svg\+xml(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImageSVGDataUri
+      x-validation-message: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
+    ImagePNGDataUri:
+      description: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
+      type: string
+      format: uri
+      example: data:image/png,YW5faW1hZ2VfZmlsZQ==
+      pattern: ^data:image/png(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
+      title: ImagePNGDataUri
+      x-validation-message: must be a data URL with base64 PNG image data, e.g., data:image/png;base64,<BASE64_IMAGE_DATA>
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -430,81 +505,6 @@ components:
       - reason
       - rule
       - maximum
-    PortalImageDataUri:
-      oneOf:
-      - $ref: '#/components/schemas/ImagePNGDataUri'
-      - $ref: '#/components/schemas/ImageJPGDataUri'
-      - $ref: '#/components/schemas/ImageGIFDataUri'
-      - $ref: '#/components/schemas/ImageICODataUri'
-      - $ref: '#/components/schemas/ImageSVGDataUri'
-      title: PortalImageDataUri
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    ImageSVGDataUri:
-      description: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
-      type: string
-      format: uri
-      example: data:image/svg+xml,YW5faW1hZ2VfZmlsZQ==
-      pattern: ^data:image/svg\+xml(;base64)?,(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$
-      title: ImageSVGDataUri
-      x-validation-message: must be a data URL with base64 SVG image data, e.g., data:image/svg\+xml;base64,<BASE64_IMAGE_DATA>
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
   responses:
     Unauthorized:
       description: Unauthorized
@@ -532,18 +532,6 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    PortalAssetResponse:
-      description: Image asset for the portal. Can be either png, jpeg or svg
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                $ref: '#/components/schemas/PortalImageDataUri'
-            additionalProperties: false
-            required:
-            - data
     PortalAssetResponseRaw:
       description: Logo of the portal. Can be either png, jpeg or svg
       content:
@@ -562,6 +550,26 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
+    PortalAssetResponse:
+      description: Image asset for the portal. Can be either png, jpeg or svg
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                $ref: '#/components/schemas/PortalImageDataUri'
+            additionalProperties: false
+            required:
+            - data
+  requestBodies:
+    ReplacePortalImageAsset:
+      description: Update an image asset for the portal.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ReplacePortalImageAsset'
   parameters:
     PortalId:
       schema:
@@ -572,14 +580,6 @@ components:
       in: path
       required: true
       description: ID of the portal.
-  requestBodies:
-    ReplacePortalImageAsset:
-      description: Update an image asset for the portal.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ReplacePortalImageAsset'
   securitySchemes:
     personalAccessToken:
       type: http

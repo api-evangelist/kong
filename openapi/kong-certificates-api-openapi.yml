@@ -218,7 +218,7 @@ paths:
       - konnectAccessToken: []
       - serviceAccessToken: []
     post:
-      operationId: create-certificate
+      operationId: postV2ControlPlanesByControlPlaneIdCoreEntitiesCertificates
       summary: Create a new Certificate
       requestBody:
         description: Description of the new Certificate for creation
@@ -243,6 +243,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: create-certificate
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -253,7 +255,7 @@ paths:
     - $ref: '#/components/parameters/CertificateId_2'
     - $ref: '#/components/parameters/controlPlaneId'
     delete:
-      operationId: delete-certificate
+      operationId: deleteV2ControlPlanesByControlPlaneIdCoreEntitiesCertificatesByCertificateId
       summary: Delete a Certificate
       parameters:
       - $ref: '#/components/parameters/CertificateId_2'
@@ -269,8 +271,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: delete-certificate
     get:
-      operationId: get-certificate
+      operationId: getV2ControlPlanesByControlPlaneIdCoreEntitiesCertificatesByCertificateId
       summary: Get a Certificate
       description: Get a Certificate using ID.
       responses:
@@ -291,8 +295,10 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: get-certificate
     put:
-      operationId: upsert-certificate
+      operationId: putV2ControlPlanesByControlPlaneIdCoreEntitiesCertificatesByCertificateId
       summary: Upsert a Certificate
       description: Create or Update Certificate using ID.
       requestBody:
@@ -318,6 +324,8 @@ paths:
       - systemAccountAccessToken: []
       - konnectAccessToken: []
       - serviceAccessToken: []
+      x-operation-id-source: normalized
+      x-operation-id-original: upsert-certificate
     servers:
     - url: https://global.api.konghq.com
     - url: https://us.api.konghq.com
@@ -466,12 +474,73 @@ components:
       required:
       - cert
       - key
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+  parameters:
+    CertificateId:
+      description: ID of the Certificate to lookup
+      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
+      in: path
+      name: CertificateId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    CertificateId_2:
+      description: ID of the Certificate to lookup
+      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
+      in: path
+      name: CertificateId
+      required: true
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -501,67 +570,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    CertificateId:
-      description: ID of the Certificate to lookup
-      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
-      in: path
-      name: CertificateId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    CertificateId_2:
-      description: ID of the Certificate to lookup
-      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
-      in: path
-      name: CertificateId
-      required: true
-      schema:
-        type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
   securitySchemes:
     adminToken:
       in: header

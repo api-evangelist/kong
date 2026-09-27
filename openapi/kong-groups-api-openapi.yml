@@ -176,38 +176,6 @@ paths:
       - Groups
 components:
   schemas:
-    Group:
-      x-speakeasy-entity: Group
-      type: object
-      properties:
-        comment:
-          description: Any comments associated with the specific group.
-          type: string
-          nullable: true
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        name:
-          description: The name of the group
-          type: string
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-      example:
-        comment: This is an example comment for the group.
-        created_at: 1706598432
-        id: d4e7f2c9-8a7b-4e89-b3a1-9c3d6f1e5b92
-        name: example-group
-        updated_at: 1706684832
-      additionalProperties: false
-      required:
-      - name
     GatewayUnauthorizedError:
       type: object
       properties:
@@ -263,6 +231,45 @@ components:
         jq: ".\n| if .group != null and .group.id != null\n  then . + { group_id: .group.id }\n  else .\n  end\n| if .rbac_role != null and .rbac_role.id != null\n  then . + { role_id: .rbac_role.id }\n  else .\n  end\n| if .workspace != null and (.workspace | type) == \"object\" and .workspace.id != null\n  then .workspace = .workspace.id\n  else .\n  end\n| del(.group, .rbac_role)\n"
       x-speakeasy-transform-to-api:
         jq: ".\n| if .workspace != null\n  then . + { workspace_id: .workspace }\n  else .\n  end\n| if .role_id != null\n  then . + { rbac_role_id: .role_id }\n  else .\n  end\n| del(.group_id, .role_id, .workspace, .group, .rbac_role)\n"
+    Group:
+      x-speakeasy-entity: Group
+      type: object
+      properties:
+        comment:
+          description: Any comments associated with the specific group.
+          type: string
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the group
+          type: string
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        comment: This is an example comment for the group.
+        created_at: 1706598432
+        id: d4e7f2c9-8a7b-4e89-b3a1-9c3d6f1e5b92
+        name: example-group
+        updated_at: 1706684832
+      additionalProperties: false
+      required:
+      - name
+  requestBodies:
+    GroupRoleRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GroupRole'
+      description: Request body schema for assigning or updating roles for a group.
   parameters:
     GroupId:
       description: ID of the Group to lookup
@@ -322,13 +329,6 @@ components:
               id: 99bd8d18-f5b6-410e-aefe-d75f4252f13c
           schema:
             $ref: '#/components/schemas/GroupRole'
-  requestBodies:
-    GroupRoleRequest:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupRole'
-      description: Request body schema for assigning or updating roles for a group.
   securitySchemes:
     adminToken:
       in: header

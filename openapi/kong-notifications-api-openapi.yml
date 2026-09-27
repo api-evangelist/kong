@@ -237,50 +237,38 @@ paths:
       - Notifications
 components:
   schemas:
-    CursorMetaPage:
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    NotificationUpdatePayload:
+      description: Status of the notification.
       type: object
       properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    NotificationFilterParameters:
-      type: object
-      properties:
-        title:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
-        description:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
-        namespace:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
-        region:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
         status:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
-      additionalProperties: false
-      title: NotificationFilterParameters
+          $ref: '#/components/schemas/NotificationStatus'
+      required:
+      - status
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     Notification:
       description: Properties of a notification.
       type: object
@@ -319,174 +307,6 @@ components:
       - details
       - created_at
       - updated_at
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    NotificationChannelType:
-      type: string
-      enum:
-      - EMAIL
-      - IN_APP
-      x-speakeasy-unknown-values: allow
-    EntityTypes:
-      type: string
-      enum:
-      - billing-invoice
-      - access-token
-      - webhook
-      - dev-portal
-      - dataplane-group
-      - dataplane
-      - kai-enablement
-      - enterprise-trial
-      x-speakeasy-unknown-values: allow
-    NotificationUpdatePayload:
-      description: Status of the notification.
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/NotificationStatus'
-      required:
-      - status
-    ListCursorMeta:
-      anyOf:
-      - $ref: '#/components/schemas/CursorMeta'
-      - allOf:
-        - $ref: '#/components/schemas/CursorMetaPage'
-        deprecated: true
-    NotificationRegion:
-      description: Region associated to a notification.
-      type: string
-      enum:
-      - US
-      - EU
-      - AU
-      - ME
-      - IN
-      - '*'
-      x-speakeasy-unknown-values: allow
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    NotificationNamespace:
-      type: string
-      enum:
-      - plan-and-usage
-      - organization
-      - dev-portal
-      - cloud-gateways
-      - gateway-manager
-      x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    EventSubscription:
-      description: Properties associated with an event subscription.
-      type: object
-      properties:
-        regions:
-          type: array
-          items:
-            $ref: '#/components/schemas/NotificationRegion'
-        entities:
-          type: array
-          items:
-            type: string
-            description: ID of the entity. Use '*' to represent all entities of this type.
-        channels:
-          type: array
-          items:
-            $ref: '#/components/schemas/NotificationChannel'
-        enabled:
-          description: Enable/Disable complete subscription within an event.
-          type: boolean
-        name:
-          description: User provided name of the subscription.
-          type: string
-      required:
-      - regions
-      - entities
-      - channels
-      - enabled
-      - name
-    BulkPayload:
-      description: Request body schema for bulk status update.
-      type: object
-      properties:
-        ids:
-          type: array
-          items:
-            type: string
-          maxItems: 100
-          minItems: 1
-          uniqueItems: true
-        status:
-          $ref: '#/components/schemas/NotificationStatus'
-      required:
-      - ids
-      - status
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -520,32 +340,32 @@ components:
       - rule
       - reason
       - dependents
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     UUID:
       description: Contains a unique identifier used for this resource.
       type: string
       format: uuid
       example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
       readOnly: true
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+    NotificationChannelType:
+      type: string
+      enum:
+      - EMAIL
+      - IN_APP
+      x-speakeasy-unknown-values: allow
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -583,6 +403,109 @@ components:
       - reason
       - rule
       - minimum
+    ConfigurationFilterParameters:
+      type: object
+      properties:
+        event_title:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        event_description:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        event_namespace:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        region:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+      additionalProperties: false
+      title: ConfigurationFilterParameters
+    NotificationChannel:
+      description: Channel subscription details for an event.
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/NotificationChannelType'
+        enabled:
+          type: boolean
+      required:
+      - type
+      - enabled
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    UserConfiguration:
+      description: Properties of an event.
+      type: object
+      properties:
+        event_id:
+          type: string
+        event_title:
+          type: string
+        event_description:
+          type: string
+        event_namespace:
+          $ref: '#/components/schemas/NotificationNamespace'
+        event_subscription_count:
+          type: integer
+          default: 0
+        default_subscription:
+          type: array
+          items:
+            $ref: '#/components/schemas/DefaultSubscription'
+      required:
+      - event_id
+      - event_title
+      - event_description
+      - event_namespace
+      - event_subscription_count
+      - default_subscription
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    NotificationNamespace:
+      type: string
+      enum:
+      - plan-and-usage
+      - organization
+      - dev-portal
+      - cloud-gateways
+      - gateway-manager
+      x-speakeasy-unknown-values: allow
     EventSubscriptionResponse:
       description: Properties associated with an event subscription.
       type: object
@@ -624,51 +547,21 @@ components:
       - channels
       - enabled
       - name
-    UserConfiguration:
-      description: Properties of an event.
+    NotificationFilterParameters:
       type: object
       properties:
-        event_id:
-          type: string
-        event_title:
-          type: string
-        event_description:
-          type: string
-        event_namespace:
-          $ref: '#/components/schemas/NotificationNamespace'
-        event_subscription_count:
-          type: integer
-          default: 0
-        default_subscription:
-          type: array
-          items:
-            $ref: '#/components/schemas/DefaultSubscription'
-      required:
-      - event_id
-      - event_title
-      - event_description
-      - event_namespace
-      - event_subscription_count
-      - default_subscription
-    NotificationStatus:
-      description: Status of the notification.
-      type: string
-      enum:
-      - READ
-      - UNREAD
-      - ARCHIVED
-      x-speakeasy-unknown-values: allow
-    LegacyStringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `contains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
+        title:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        description:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        namespace:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        region:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        status:
+          $ref: '#/components/schemas/LegacyStringFieldFilter'
       additionalProperties: false
+      title: NotificationFilterParameters
     BaseError:
       description: standard error
       type: object
@@ -723,52 +616,228 @@ components:
       - instance
       - detail
       title: Error
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
+    BulkPayload:
+      description: Request body schema for bulk status update.
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+          maxItems: 100
+          minItems: 1
+          uniqueItems: true
+        status:
+          $ref: '#/components/schemas/NotificationStatus'
+      required:
+      - ids
+      - status
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    NotFoundError:
+      x-speakeasy-unknown-values: allow
+    NotificationStatus:
+      description: Status of the notification.
+      type: string
+      enum:
+      - READ
+      - UNREAD
+      - ARCHIVED
+      x-speakeasy-unknown-values: allow
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    NotificationRegion:
+      description: Region associated to a notification.
+      type: string
+      enum:
+      - US
+      - EU
+      - AU
+      - ME
+      - IN
+      - '*'
+      x-speakeasy-unknown-values: allow
+    ListCursorMeta:
+      anyOf:
+      - $ref: '#/components/schemas/CursorMeta'
+      - allOf:
+        - $ref: '#/components/schemas/CursorMetaPage'
+        deprecated: true
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 403
           title:
-            example: Not Found
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
-    NotificationChannel:
-      description: Channel subscription details for an event.
+            example: Forbidden
+    CursorMeta:
+      description: Pagination metadata.
       type: object
       properties:
-        type:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
+    EventSubscription:
+      description: Properties associated with an event subscription.
+      type: object
+      properties:
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationRegion'
+        entities:
+          type: array
+          items:
+            type: string
+            description: ID of the entity. Use '*' to represent all entities of this type.
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+        enabled:
+          description: Enable/Disable complete subscription within an event.
+          type: boolean
+        name:
+          description: User provided name of the subscription.
+          type: string
+      required:
+      - regions
+      - entities
+      - channels
+      - enabled
+      - name
+    DefaultSubscription:
+      type: object
+      properties:
+        channel:
           $ref: '#/components/schemas/NotificationChannelType'
         enabled:
           type: boolean
       required:
-      - type
+      - channel
       - enabled
-    ConfigurationFilterParameters:
+    LegacyStringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `contains`'
       type: object
       properties:
-        event_title:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
-        event_description:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
-        event_namespace:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
-        region:
-          $ref: '#/components/schemas/LegacyStringFieldFilter'
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
       additionalProperties: false
-      title: ConfigurationFilterParameters
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    EntityTypes:
+      type: string
+      enum:
+      - billing-invoice
+      - access-token
+      - webhook
+      - dev-portal
+      - dataplane-group
+      - dataplane
+      - kai-enablement
+      - enterprise-trial
+      x-speakeasy-unknown-values: allow
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -802,75 +871,63 @@ components:
       - reason
       - rule
       - maximum
-    DefaultSubscription:
-      type: object
-      properties:
-        channel:
-          $ref: '#/components/schemas/NotificationChannelType'
-        enabled:
-          type: boolean
-      required:
-      - channel
-      - enabled
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
+  parameters:
+    ConfigurationFilter:
+      name: filter
+      description: Filters a collection of configurations.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ConfigurationFilterParameters'
+      style: deepObject
+    subscriptionId:
+      name: subscriptionId
+      in: path
+      required: true
+      description: Subscription ID of the user configuration.
+      schema:
+        type: string
+    NotificationFilter:
+      name: filter
+      description: Filters a collection of notifications.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/NotificationFilterParameters'
+      style: deepObject
+    PageBefore:
+      name: page[before]
+      description: Request the next page of data, starting with the item before this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    eventId:
+      name: eventId
+      in: path
+      required: true
+      description: Formatted string ID of the notification event.
+      schema:
+        type: string
+        example: invoice-ready
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    notificationId:
+      name: notificationId
+      in: path
+      required: true
+      description: ID of the notification.
+      schema:
+        type: string
   responses:
     Unauthorized:
       description: Unauthorized
@@ -898,18 +955,55 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    BadRequest:
-      description: Bad Request
+    EventSubscriptionListResponse:
+      description: A paginated list response for all subscriptions associated with an event.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventSubscriptionResponse'
+              meta:
+                $ref: '#/components/schemas/ListCursorMeta'
+            additionalProperties: false
+            required:
+            - data
+            - meta
+    Forbidden:
+      description: Forbidden
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/BadRequestError'
+            $ref: '#/components/schemas/ForbiddenError'
+    UserConfigurationListResponse:
+      description: A paginated list response for all notification events and user subscriptions.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserConfiguration'
+            additionalProperties: false
+            required:
+            - data
     EventSubscriptionResponse:
       description: Response containing specific subscription details associated with an event.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/EventSubscriptionResponse'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     NotificationListResponse:
       description: A paginated list response for a collection of notifications
       content:
@@ -933,113 +1027,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Notification'
-    EventSubscriptionListResponse:
-      description: A paginated list response for all subscriptions associated with an event.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventSubscriptionResponse'
-              meta:
-                $ref: '#/components/schemas/ListCursorMeta'
-            additionalProperties: false
-            required:
-            - data
-            - meta
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    UserConfigurationListResponse:
-      description: A paginated list response for all notification events and user subscriptions.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserConfiguration'
-            additionalProperties: false
-            required:
-            - data
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-  parameters:
-    subscriptionId:
-      name: subscriptionId
-      in: path
-      required: true
-      description: Subscription ID of the user configuration.
-      schema:
-        type: string
-    ConfigurationFilter:
-      name: filter
-      description: Filters a collection of configurations.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ConfigurationFilterParameters'
-      style: deepObject
-    notificationId:
-      name: notificationId
-      in: path
-      required: true
-      description: ID of the notification.
-      schema:
-        type: string
-    PageBefore:
-      name: page[before]
-      description: Request the next page of data, starting with the item before this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-    eventId:
-      name: eventId
-      in: path
-      required: true
-      description: Formatted string ID of the notification event.
-      schema:
-        type: string
-        example: invoice-ready
-    NotificationFilter:
-      name: filter
-      description: Filters a collection of notifications.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/NotificationFilterParameters'
-      style: deepObject
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   requestBodies:
-    EventSubscriptionRequest:
-      description: Request body schema for creating/updating event subscription.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EventSubscription'
     BulkRequest:
       description: Request body schema for bulk status update.
       content:
@@ -1052,6 +1046,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/NotificationUpdatePayload'
+    EventSubscriptionRequest:
+      description: Request body schema for creating/updating event subscription.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventSubscription'
   securitySchemes:
     personalAccessToken:
       type: http

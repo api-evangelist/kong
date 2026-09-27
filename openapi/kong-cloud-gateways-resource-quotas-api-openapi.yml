@@ -95,31 +95,6 @@ paths:
       x-speakeasy-group: CloudGateways
 components:
   schemas:
-    ResourceQuotaValue:
-      description: 'The aggregate non-negative integer count of this resource that''s allowed for the organization.
-
-        '
-      type: integer
-      example: 2
-      minimum: 0
-    ResourceQuotaDescription:
-      description: A more verbose description of what this resource quota enforces.
-      type: string
-      example: Across the organization, the aggregate number of active networks cannot exceed this value.
-      readOnly: true
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -129,45 +104,26 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    DefaultResourceQuotaId:
+    ResourceQuotaDescription:
+      description: A more verbose description of what this resource quota enforces.
       type: string
-      format: uuid
-      example: cc504063-f3bb-4e09-8e32-bbcdbc5cd618
+      example: Across the organization, the aggregate number of active networks cannot exceed this value.
       readOnly: true
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -201,51 +157,6 @@ components:
       - rule
       - reason
       - dependents
-    ResourceQuotaId:
-      type: string
-      format: uuid
-      example: 9678f205-49a1-47bb-82d9-d01cafa42a0d
-      readOnly: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -283,6 +194,50 @@ components:
       - reason
       - rule
       - minimum
+    ResourceQuotaName:
+      description: The human-readable name of this resource quota.
+      type: string
+      example: Active Networks
+      readOnly: true
+    ResourceQuotaValue:
+      description: 'The aggregate non-negative integer count of this resource that''s allowed for the organization.
+
+        '
+      type: integer
+      example: 2
+      minimum: 0
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ResourceQuotaQualifier:
+      description: Enumeration of resources available for quota enforcement.
+      type: string
+      enum:
+      - count/provider-accounts.per-provider
+      - count/networks.not-offline
+      - count/data-planes-estimate
+      - count/serverless-data-planes-estimate
+      - count/data-plane-groups-estimate
+      - count/managed-cache-instances
+      - max/managed-cache-size
+      x-speakeasy-unknown-values: allow
+    DefaultResourceQuotaId:
+      type: string
+      format: uuid
+      example: cc504063-f3bb-4e09-8e32-bbcdbc5cd618
+      readOnly: true
     BaseError:
       description: standard error
       type: object
@@ -337,21 +292,112 @@ components:
       - instance
       - detail
       title: Error
-    NotFoundError:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    ResourceQuotaId:
+      type: string
+      format: uuid
+      example: 9678f205-49a1-47bb-82d9-d01cafa42a0d
+      readOnly: true
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 403
           title:
-            example: Not Found
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
+            example: Forbidden
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     DefaultResourceQuota:
       description: Object containing information about a default resource quota, and any organizational overrides.
       type: object
@@ -393,12 +439,7 @@ components:
       - created_at
       - updated_at
       title: Default Resource Quota
-    ResourceQuotaName:
-      description: The human-readable name of this resource quota.
-      type: string
-      example: Active Networks
-      readOnly: true
-    InvalidParameterMaximumLength:
+    InvalidParameterStandard:
       type: object
       properties:
         field:
@@ -406,31 +447,18 @@ components:
           example: name
           readOnly: true
         rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
+          $ref: '#/components/schemas/InvalidRules'
         source:
           type: string
           example: body
         reason:
           type: string
-          example: must not have more than 8 characters
+          example: is a required field
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
-      - rule
-      - maximum
     ResourceQuota:
       description: Object containing information about a resource quota for an organization.
       type: object
@@ -466,98 +494,60 @@ components:
       - created_at
       - updated_at
       title: Resource Quota
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    PaginatedMeta:
-      description: returns the pagination information
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
       type: object
       properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
       required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    ResourceQuotaQualifier:
-      description: Enumeration of resources available for quota enforcement.
-      type: string
-      enum:
-      - count/provider-accounts.per-provider
-      - count/networks.not-offline
-      - count/data-planes-estimate
-      - count/serverless-data-planes-estimate
-      - count/data-plane-groups-estimate
-      - count/managed-cache-instances
-      - max/managed-cache-size
-      x-speakeasy-unknown-values: allow
+      - number
+      - size
+      - total
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
   parameters:
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
     PageSize:
       name: page[size]
       description: The maximum number of items to include per page. The last page of a collection may include fewer items.
@@ -568,6 +558,16 @@ components:
         type: integer
         example: 10
       x-speakeasy-terraform-ignore: true
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
     ResourceQuotaId:
       name: resourceQuotaId
       in: path
@@ -576,12 +576,6 @@ components:
       schema:
         $ref: '#/components/schemas/ResourceQuotaId'
   responses:
-    RetrieveResourceQuotaResponse:
-      description: Response format for retrieving a resource quota for an organization.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ResourceQuota'
     Unauthorized:
       description: Unauthorized
       content:
@@ -625,6 +619,18 @@ components:
             - meta
             - data
             title: ListDefaultResourceQuotasResponse
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    RetrieveResourceQuotaResponse:
+      description: Response format for retrieving a resource quota for an organization.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceQuota'
     CloudGatewaysBadRequest:
       description: Bad Request
       content:
@@ -654,12 +660,6 @@ components:
             - meta
             - data
             title: ListResourceQuotasResponse
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
   securitySchemes:
     personalAccessToken:
       type: http

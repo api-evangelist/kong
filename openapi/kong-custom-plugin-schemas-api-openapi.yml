@@ -139,193 +139,7 @@ paths:
       tags:
       - Custom Plugin Schemas
 components:
-  responses:
-    KonnectCPLegacyBadRequest:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/KonnectCPLegacyBadRequestError'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    KonnectCPLegacyUnauthorized:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/KonnectCPLegacyUnauthorizedError'
-    KonnectCPLegacyNotFound:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/KonnectCPLegacyNotFoundError'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    KonnectCPLegacyConflict:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/KonnectCPLegacyConflictError'
-    list-plugin-schemas:
-      description: A paginated list response for a collection of custom plugin schemas.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              items:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    lua_schema:
-                      description: The custom plugin schema; `jq -Rs '.' schema.lua`.
-                      type: string
-                      example: return { name = \"myplugin\", fields = { { config = { type = \"record\", fields = { } } } } }
-                    name:
-                      description: The custom plugin name determined by the custom plugin schema.
-                      type: string
-                      example: myplugin
-                    created_at:
-                      description: An ISO-8604 timestamp representation of custom plugin schema creation date.
-                      type: integer
-                      example: 1422386534
-                    updated_at:
-                      description: An ISO-8604 timestamp representation of custom plugin schema update date.
-                      type: integer
-                      example: 1422412345
-              page:
-                type: object
-                properties:
-                  total:
-                    type: integer
-    plugin-schemas:
-      description: A response for a single custom plugin schema.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              item:
-                x-speakeasy-entity: GatewayCustomPluginSchema
-                type: object
-                properties:
-                  lua_schema:
-                    description: The custom plugin schema; `jq -Rs '.' schema.lua`.
-                    type: string
-                    example: return { name = \"myplugin\", fields = { { config = { type = \"record\", fields = { } } } } }
-                  name:
-                    description: The custom plugin name determined by the custom plugin schema.
-                    type: string
-                    example: myplugin
-                  created_at:
-                    description: An ISO-8604 timestamp representation of custom plugin schema creation date.
-                    type: integer
-                    example: 1422386534
-                  updated_at:
-                    description: An ISO-8604 timestamp representation of custom plugin schema update date.
-                    type: integer
-                    example: 1422412345
-    KonnectCPLegacyForbidden:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/KonnectCPLegacyForbiddenError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-  parameters:
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   schemas:
-    KonnectCPLegacyBadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
-      - type: object
-        properties:
-          message:
-            example: Bad Request
-    KonnectCPLegacyForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
-      - type: object
-        properties:
-          message:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -335,40 +149,13 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
+    KonnectCPLegacyUnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
+      - type: object
+        properties:
+          message:
+            example: Unauthorized
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -402,33 +189,13 @@ components:
       - rule
       - reason
       - dependents
-    KonnectCPLegacyConflictError:
+    KonnectCPLegacyNotFoundError:
       allOf:
       - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
       - type: object
         properties:
           message:
-            example: Conflict
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+            example: Not Found
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -466,6 +233,28 @@ components:
       - reason
       - rule
       - minimum
+    KonnectCPLegacyConflictError:
+      allOf:
+      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
+      - type: object
+        properties:
+          message:
+            example: Conflict
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     BaseError:
       description: standard error
       type: object
@@ -520,6 +309,142 @@ components:
       - instance
       - detail
       title: Error
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    KonnectCPLegacyForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
+      - type: object
+        properties:
+          message:
+            example: Forbidden
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    KonnectCPLegacyBadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
+      - type: object
+        properties:
+          message:
+            example: Bad Request
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    KonnectCPLegacyBaseError:
+      description: standard error
+      type: object
+      properties:
+        message:
+          description: 'A short summary of the problem.
+
+            '
+          type: string
+          readOnly: true
+      title: Error
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -553,90 +478,165 @@ components:
       - reason
       - rule
       - maximum
-    KonnectCPLegacyNotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
-      - type: object
-        properties:
-          message:
-            example: Not Found
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    KonnectCPLegacyBaseError:
-      description: standard error
-      type: object
-      properties:
-        message:
-          description: 'A short summary of the problem.
-
-            '
-          type: string
-          readOnly: true
-      title: Error
-    KonnectCPLegacyUnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
-      - type: object
-        properties:
-          message:
-            example: Unauthorized
+  responses:
+    KonnectCPLegacyBadRequest:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KonnectCPLegacyBadRequestError'
+    plugin-schemas:
+      description: A response for a single custom plugin schema.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              item:
+                x-speakeasy-entity: GatewayCustomPluginSchema
+                type: object
+                properties:
+                  lua_schema:
+                    description: The custom plugin schema; `jq -Rs '.' schema.lua`.
+                    type: string
+                    example: return { name = \"myplugin\", fields = { { config = { type = \"record\", fields = { } } } } }
+                  name:
+                    description: The custom plugin name determined by the custom plugin schema.
+                    type: string
+                    example: myplugin
+                  created_at:
+                    description: An ISO-8604 timestamp representation of custom plugin schema creation date.
+                    type: integer
+                    example: 1422386534
+                  updated_at:
+                    description: An ISO-8604 timestamp representation of custom plugin schema update date.
+                    type: integer
+                    example: 1422412345
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    KonnectCPLegacyConflict:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KonnectCPLegacyConflictError'
+    KonnectCPLegacyForbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KonnectCPLegacyForbiddenError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    KonnectCPLegacyUnauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KonnectCPLegacyUnauthorizedError'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    list-plugin-schemas:
+      description: A paginated list response for a collection of custom plugin schemas.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    lua_schema:
+                      description: The custom plugin schema; `jq -Rs '.' schema.lua`.
+                      type: string
+                      example: return { name = \"myplugin\", fields = { { config = { type = \"record\", fields = { } } } } }
+                    name:
+                      description: The custom plugin name determined by the custom plugin schema.
+                      type: string
+                      example: myplugin
+                    created_at:
+                      description: An ISO-8604 timestamp representation of custom plugin schema creation date.
+                      type: integer
+                      example: 1422386534
+                    updated_at:
+                      description: An ISO-8604 timestamp representation of custom plugin schema update date.
+                      type: integer
+                      example: 1422412345
+              page:
+                type: object
+                properties:
+                  total:
+                    type: integer
+    KonnectCPLegacyNotFound:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KonnectCPLegacyNotFoundError'
+  parameters:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
   requestBodies:
     create-plugin-schemas:
       content:

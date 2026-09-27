@@ -168,12 +168,183 @@ paths:
       x-speakeasy-group: CloudGateways
 components:
   schemas:
-    IDFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    CustomDomainStateFieldOrEqualityFilter:
+      description: 'Filter custom domain state by determining if the value is equal to any in a set of values, where the set is a
+
+        comma-delimited list.
+
+        '
+      type: object
+      properties:
+        oeq:
+          type: string
+      required:
+      - oeq
+      title: CustomDomainStateFieldOrEqualityFilter
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    CustomDomainId:
+      type: string
+      format: uuid
+      example: 39ed3790-085d-4605-9627-f96d86aaf425
+      readOnly: true
+    CustomDomainOnlinePropertyStatus:
+      description: Set of available statuses for the online properties of a custom domain.
+      type: string
+      enum:
+      - verified
+      - unverified
+      readOnly: true
+      title: Custom Domain Online Property Status
+      x-speakeasy-unknown-values: allow
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    CustomDomainStateFieldEqualsFilter:
+      description: Filter custom domain state by exact match.
+      oneOf:
+      - $ref: '#/components/schemas/CustomDomainState'
+      - type: object
+        title: CustomDomainStateFieldEqualsComparison
+        properties:
+          eq:
+            $ref: '#/components/schemas/CustomDomainState'
+        required:
+        - eq
+      title: CustomDomainStateFieldEqualsFilter
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    CloudGatewaysStringFieldFilterOverride:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
       type: object
       properties:
         eq:
           description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
           type: string
         neq:
           description: The field does not match the provided value.
@@ -181,7 +352,161 @@ components:
         oeq:
           description: The field matches any of the provided values.
           type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
       additionalProperties: false
+    CustomDomainOnlineStatus:
+      type: object
+      properties:
+        cname:
+          $ref: '#/components/schemas/CustomDomainOnlinePropertyStatus'
+        ssl:
+          $ref: '#/components/schemas/CustomDomainOnlinePropertyStatus'
+      additionalProperties: false
+      required:
+      - cname
+      - ssl
+      title: Custom Domain Online Status
+    CustomDomainStateFieldFilter:
+      oneOf:
+      - $ref: '#/components/schemas/CustomDomainStateFieldEqualsFilter'
+      - $ref: '#/components/schemas/CustomDomainStateFieldNotEqualsFilter'
+      - $ref: '#/components/schemas/CustomDomainStateFieldOrEqualityFilter'
+      title: CustomDomainStateFieldFilter
+    CustomDomainName:
+      description: Domain name of the custom domain.
+      type: string
+      example: example.com
+      title: Custom Domain Name
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ControlPlaneGeoFieldEqualsFilter:
+      description: Filter a control-plane geo by exact match.
+      oneOf:
+      - $ref: '#/components/schemas/ControlPlaneGeo'
+      - type: object
+        title: ControlPlaneGeoFieldEqualsComparison
+        properties:
+          eq:
+            $ref: '#/components/schemas/ControlPlaneGeo'
+        required:
+        - eq
+      title: ControlPlaneGeoFieldEqualsFilter
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    CreateCustomDomainRequest:
+      description: Request schema for creating a custom domain in the global API.
+      type: object
+      properties:
+        control_plane_id:
+          $ref: '#/components/schemas/ControlPlaneId'
+        control_plane_geo:
+          $ref: '#/components/schemas/ControlPlaneGeo'
+        domain:
+          $ref: '#/components/schemas/CustomDomainName'
+        kind:
+          $ref: '#/components/schemas/CustomDomainKind'
+      additionalProperties: false
+      required:
+      - control_plane_id
+      - control_plane_geo
+      - domain
+      title: CreateCustomDomainRequest
     ControlPlaneGeoFieldNotEqualsFilter:
       description: Filter a control-plane geo by inequality match.
       type: object
@@ -191,6 +516,133 @@ components:
       required:
       - neq
       title: ControlPlaneGeoFieldNotEqualsFilter
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CustomDomainKind:
+      description: '**Pre-release Feature**
+
+        This feature is currently in beta and is subject to change.
+
+
+        Kind of the custom domain based on Cloud Gateway deployment.'
+      type: string
+      default: dedicated.v0
+      enum:
+      - dedicated.v0
+      - serverless.v1
+      title: CustomDomainKind
+      x-speakeasy-unknown-values: allow
+    ControlPlaneGeoFieldFilter:
+      oneOf:
+      - $ref: '#/components/schemas/ControlPlaneGeoFieldEqualsFilter'
+      - $ref: '#/components/schemas/ControlPlaneGeoFieldNotEqualsFilter'
+      - $ref: '#/components/schemas/ControlPlaneGeoFieldOrEqualityFilter'
+      title: ControlPlaneGeoFieldFilter
+    ControlPlaneGeoFieldOrEqualityFilter:
+      description: 'Filter a control-plane geo by determining if the value is equal to any in a set of values, where the set is a
+
+        comma-delimited list.
+
+        '
+      type: object
+      properties:
+        oeq:
+          type: string
+      required:
+      - oeq
+      title: ControlPlaneGeoFieldOrEqualityFilter
+    CustomDomainStateFieldNotEqualsFilter:
+      description: Filter custom domain state by inequality match.
+      type: object
+      properties:
+        neq:
+          $ref: '#/components/schemas/CustomDomainState'
+      required:
+      - neq
+      title: CustomDomainStateFieldNotEqualsFilter
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    CustomDomainsFilterParameters:
+      type: object
+      properties:
+        control_plane_id:
+          $ref: '#/components/schemas/IDFieldFilter'
+        control_plane_geo:
+          $ref: '#/components/schemas/ControlPlaneGeoFieldFilter'
+        domain:
+          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
+        state:
+          $ref: '#/components/schemas/CustomDomainStateFieldFilter'
+      additionalProperties: false
+      title: CustomDomainsFilterParameters
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     CustomDomain:
       x-speakeasy-entity: CloudGatewayCustomDomain
       description: Object containing information about a custom domain for a control-plane.
@@ -283,230 +735,10 @@ components:
       - created_at
       - updated_at
       title: Custom Domain
-    ControlPlaneGeoFieldFilter:
-      oneOf:
-      - $ref: '#/components/schemas/ControlPlaneGeoFieldEqualsFilter'
-      - $ref: '#/components/schemas/ControlPlaneGeoFieldNotEqualsFilter'
-      - $ref: '#/components/schemas/ControlPlaneGeoFieldOrEqualityFilter'
-      title: ControlPlaneGeoFieldFilter
-    CustomDomainStateFieldOrEqualityFilter:
-      description: 'Filter custom domain state by determining if the value is equal to any in a set of values, where the set is a
-
-        comma-delimited list.
-
-        '
-      type: object
-      properties:
-        oeq:
-          type: string
-      required:
-      - oeq
-      title: CustomDomainStateFieldOrEqualityFilter
-    CustomDomainStateFieldFilter:
-      oneOf:
-      - $ref: '#/components/schemas/CustomDomainStateFieldEqualsFilter'
-      - $ref: '#/components/schemas/CustomDomainStateFieldNotEqualsFilter'
-      - $ref: '#/components/schemas/CustomDomainStateFieldOrEqualityFilter'
-      title: CustomDomainStateFieldFilter
-    CustomDomainId:
+    ControlPlaneId:
       type: string
       format: uuid
-      example: 39ed3790-085d-4605-9627-f96d86aaf425
-      readOnly: true
-    CustomDomainOnlinePropertyStatus:
-      description: Set of available statuses for the online properties of a custom domain.
-      type: string
-      enum:
-      - verified
-      - unverified
-      readOnly: true
-      title: Custom Domain Online Property Status
-      x-speakeasy-unknown-values: allow
-    CustomDomainName:
-      description: Domain name of the custom domain.
-      type: string
-      example: example.com
-      title: Custom Domain Name
-    CustomDomainKind:
-      description: '**Pre-release Feature**
-
-        This feature is currently in beta and is subject to change.
-
-
-        Kind of the custom domain based on Cloud Gateway deployment.'
-      type: string
-      default: dedicated.v0
-      enum:
-      - dedicated.v0
-      - serverless.v1
-      title: CustomDomainKind
-      x-speakeasy-unknown-values: allow
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    ControlPlaneGeo:
-      description: Set of control-plane geos supported for deploying cloud-gateways configurations.
-      type: string
-      enum:
-      - us
-      - eu
-      - au
-      - me
-      - in
-      - sg
-      title: Control-Plane Geo
-      x-speakeasy-unknown-values: allow
-    CloudGatewaysStringFieldFilterOverride:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-      additionalProperties: false
-    CustomDomainState:
-      description: State of the custom domain.
-      type: string
-      enum:
-      - created
-      - initializing
-      - ready
-      - terminating
-      - terminated
-      - error
-      readOnly: true
-      title: Custom Domain State
-      x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    CustomDomainOnlineStatus:
-      type: object
-      properties:
-        cname:
-          $ref: '#/components/schemas/CustomDomainOnlinePropertyStatus'
-        ssl:
-          $ref: '#/components/schemas/CustomDomainOnlinePropertyStatus'
-      additionalProperties: false
-      required:
-      - cname
-      - ssl
-      title: Custom Domain Online Status
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
+      example: 0949471e-b759-45ba-87ab-ee63fb781388
     InvalidParameterStandard:
       type: object
       properties:
@@ -527,178 +759,45 @@ components:
       required:
       - field
       - reason
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    CustomDomainsFilterParameters:
-      type: object
-      properties:
-        control_plane_id:
-          $ref: '#/components/schemas/IDFieldFilter'
-        control_plane_geo:
-          $ref: '#/components/schemas/ControlPlaneGeoFieldFilter'
-        domain:
-          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
-        state:
-          $ref: '#/components/schemas/CustomDomainStateFieldFilter'
-      additionalProperties: false
-      title: CustomDomainsFilterParameters
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    ControlPlaneId:
+    ControlPlaneGeo:
+      description: Set of control-plane geos supported for deploying cloud-gateways configurations.
       type: string
-      format: uuid
-      example: 0949471e-b759-45ba-87ab-ee63fb781388
-    CustomDomainStateFieldNotEqualsFilter:
-      description: Filter custom domain state by inequality match.
+      enum:
+      - us
+      - eu
+      - au
+      - me
+      - in
+      - sg
+      title: Control-Plane Geo
+      x-speakeasy-unknown-values: allow
+    IDFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
       properties:
-        neq:
-          $ref: '#/components/schemas/CustomDomainState'
-      required:
-      - neq
-      title: CustomDomainStateFieldNotEqualsFilter
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ControlPlaneGeoFieldOrEqualityFilter:
-      description: 'Filter a control-plane geo by determining if the value is equal to any in a set of values, where the set is a
-
-        comma-delimited list.
-
-        '
-      type: object
-      properties:
-        oeq:
+        eq:
+          description: The field exactly matches the provided value.
           type: string
-      required:
-      - oeq
-      title: ControlPlaneGeoFieldOrEqualityFilter
-    ControlPlaneGeoFieldEqualsFilter:
-      description: Filter a control-plane geo by exact match.
-      oneOf:
-      - $ref: '#/components/schemas/ControlPlaneGeo'
-      - type: object
-        title: ControlPlaneGeoFieldEqualsComparison
-        properties:
-          eq:
-            $ref: '#/components/schemas/ControlPlaneGeo'
-        required:
-        - eq
-      title: ControlPlaneGeoFieldEqualsFilter
+        neq:
+          description: The field does not match the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+      additionalProperties: false
+    CustomDomainState:
+      description: State of the custom domain.
+      type: string
+      enum:
+      - created
+      - initializing
+      - ready
+      - terminating
+      - terminated
+      - error
+      readOnly: true
+      title: Custom Domain State
+      x-speakeasy-unknown-values: allow
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -732,116 +831,15 @@ components:
       - reason
       - rule
       - maximum
-    CreateCustomDomainRequest:
-      description: Request schema for creating a custom domain in the global API.
-      type: object
-      properties:
-        control_plane_id:
-          $ref: '#/components/schemas/ControlPlaneId'
-        control_plane_geo:
-          $ref: '#/components/schemas/ControlPlaneGeo'
-        domain:
-          $ref: '#/components/schemas/CustomDomainName'
-        kind:
-          $ref: '#/components/schemas/CustomDomainKind'
-      additionalProperties: false
-      required:
-      - control_plane_id
-      - control_plane_geo
-      - domain
-      title: CreateCustomDomainRequest
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    CustomDomainStateFieldEqualsFilter:
-      description: Filter custom domain state by exact match.
-      oneOf:
-      - $ref: '#/components/schemas/CustomDomainState'
-      - type: object
-        title: CustomDomainStateFieldEqualsComparison
-        properties:
-          eq:
-            $ref: '#/components/schemas/CustomDomainState'
-        required:
-        - eq
-      title: CustomDomainStateFieldEqualsFilter
   parameters:
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
+    CustomDomainsFilter:
+      name: filter
+      description: Filters supported for custom domains on the global API.
       required: false
       in: query
-      allowEmptyValue: true
       schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
+        $ref: '#/components/schemas/CustomDomainsFilterParameters'
+      style: deepObject
     PageSize:
       name: page[size]
       description: The maximum number of items to include per page. The last page of a collection may include fewer items.
@@ -852,14 +850,16 @@ components:
         type: integer
         example: 10
       x-speakeasy-terraform-ignore: true
-    CustomDomainsFilter:
-      name: filter
-      description: Filters supported for custom domains on the global API.
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
       required: false
       in: query
+      allowEmptyValue: true
       schema:
-        $ref: '#/components/schemas/CustomDomainsFilterParameters'
-      style: deepObject
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
     CustomDomainId:
       name: customDomainId
       description: ID of the custom domain to operate on.
@@ -895,24 +895,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    CloudGatewaysBadRequest:
-      description: Bad Request
+    Forbidden:
+      description: Forbidden
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/BadRequestError'
-    CreateCustomDomainResponse:
-      description: Response format for creating a custom domain for a control-plane in the global API.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CustomDomain'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
+            $ref: '#/components/schemas/ForbiddenError'
     ListCustomDomainsResponse:
       description: A paginated list for a collection of custom domains.
       content:
@@ -930,30 +918,42 @@ components:
             - meta
             - data
             title: ListGlobalCustomDomainsResponse
+    CreateCustomDomainResponse:
+      description: Response format for creating a custom domain for a control-plane in the global API.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CustomDomain'
     RetrieveCustomDomainResponse:
       description: Response format for retrieving a custom domain for a control-plane.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomDomain'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     RetrieveCustomDomainOnlineStatusResponse:
       description: Response format for retrieving the CNAME and SSL status of a custom domain.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomDomainOnlineStatus'
+    CloudGatewaysBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
   securitySchemes:
     personalAccessToken:
       type: http

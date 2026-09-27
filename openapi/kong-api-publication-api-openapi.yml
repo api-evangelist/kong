@@ -205,130 +205,40 @@ paths:
       tags:
       - API Publication
 components:
-  requestBodies:
-    PutApiPackagePublicationRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiPackagePublication'
-    PutApiPublicationRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiPublication'
-  parameters:
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
-    ApiPublicationFilters:
-      name: filter
-      description: Filters API Publications in the response.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ApiPublicationFilterParameters'
-      style: deepObject
-    ApiPublicationSort:
-      name: sort
-      description: "Sorts a collection of API publications. Supported sort attributes are:\n  - portal_id\n  - portal_name\n  - api_id\n  - api_name\n  - created_at\n  - updated_at\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
-    PortalApiPublicationFilters:
-      name: filter
-      description: Filters API Publications in a portal response (excludes portal-specific filters).
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/PortalApiPublicationFilterParameters'
-      style: deepObject
-    ApiId:
-      schema:
-        type: string
-        format: uuid
-        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-      name: apiId
-      in: path
-      required: true
-      description: The UUID API identifier
-    PortalApiPublicationSort:
-      name: sort
-      description: "Sorts a collection of API publications within a portal. Supported sort attributes are:\n\n\n  - api_id\n  - api_name\n  - created_at\n  - updated_at\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
-    ApiPackageId:
-      schema:
-        type: string
-        format: uuid
-        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-      name: apiPackageId
-      in: path
-      required: true
-      description: The UUID API Package identifier
   schemas:
-    ApiPublicationVisibility:
-      description: 'The visibility of the API in the portal.
-
-        Public API publications do not require authentication to view and retrieve information about them.
-
-        Private API publications require authentication to retrieve information about them.
-
-        '
-      type: string
-      default: private
-      enum:
-      - public
-      - private
-      title: API Publication Visibility
-      x-speakeasy-unknown-values: allow
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    ApiPackagePublication:
-      description: An API Package publication in a portal
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    ApiPublicationListItem:
+      description: An API publication in a portal
       type: object
       properties:
+        api_id:
+          description: The API identifier.
+          type: string
+          format: uuid
+          example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+          readOnly: true
+        portal_id:
+          description: The portal identifier.
+          type: string
+          format: uuid
+          example: 7710d5c4-d902-410b-992f-18b814155b53
+          readOnly: true
         auto_approve_registrations:
           $ref: '#/components/schemas/AutoApproveRegistrations'
-        auth_strategy_ids:
-          $ref: '#/components/schemas/ApiPublicationAuthStrategyIds'
+        entity_type:
+          $ref: '#/components/schemas/EntityType'
         visibility:
           $ref: '#/components/schemas/ApiPublicationVisibility'
+        auth_strategy_ids:
+          $ref: '#/components/schemas/ApiPublicationAuthStrategyIds'
         warnings:
           description: Informational warnings (e.g. incompatible fields stripped for ACE). Empty if none.
           type: array
@@ -340,7 +250,76 @@ components:
         updated_at:
           $ref: '#/components/schemas/UpdatedAt'
       additionalProperties: false
-      title: API Package Publication
+      required:
+      - api_id
+      - portal_id
+      - visibility
+      - created_at
+      - updated_at
+      - auth_strategy_ids
+      - auto_approve_registrations
+      - entity_type
+      title: API Publication List Item
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    ApiPublicationAuthStrategyIds:
+      description: 'The auth strategy the API enforces for applications in the portal.
+
+        Omitting this property means the portal''s default application auth strategy will be used.
+
+        Setting to null means the API will not require application authentication.
+
+        DCR support for application registration is currently in development.
+
+        '
+      type: array
+      items:
+        type: string
+        format: uuid
+      maxItems: 1
+      minItems: 1
+      nullable: true
+      title: API Publication Auth Strategy IDs
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
     PublicationListItem:
       description: An API or API Package publication in a portal
       type: object
@@ -389,95 +368,6 @@ components:
       - auto_approve_registrations
       - entity_type
       title: Publication List Item
-    PortalApiPublicationFilterParameters:
-      description: API Publication filters excluding portal-specific fields (since portal is already specified in path)
-      type: object
-      properties:
-        api_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        api_name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        auth_strategy_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        entity_type:
-          $ref: '#/components/schemas/StringFieldFilter'
-      title: Portal API Publication Filter Parameters
-    AutoApproveRegistrations:
-      description: Whether the application registration auto approval on this portal for the api is enabled. If set to false, fallbacks on portal's auto_approve_applications value.
-      type: boolean
-      title: Auto Approve Registrations
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    ApiPublicationFilterParameters:
-      type: object
-      properties:
-        portal_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        portal_name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        api_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        api_name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        auth_strategy_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        entity_type:
-          $ref: '#/components/schemas/StringFieldFilter'
-      title: API Publication Filter Parameters
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -511,20 +401,20 @@ components:
       - rule
       - reason
       - dependents
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     PageMeta:
       description: Contains pagination query parameters and the total number of objects returned.
       type: object
@@ -545,26 +435,6 @@ components:
       - number
       - size
       - total
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -602,64 +472,36 @@ components:
       - reason
       - rule
       - minimum
-    ApiPublicationListItem:
-      description: An API publication in a portal
-      type: object
-      properties:
-        api_id:
-          description: The API identifier.
-          type: string
-          format: uuid
-          example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-          readOnly: true
-        portal_id:
-          description: The portal identifier.
-          type: string
-          format: uuid
-          example: 7710d5c4-d902-410b-992f-18b814155b53
-          readOnly: true
-        auto_approve_registrations:
-          $ref: '#/components/schemas/AutoApproveRegistrations'
-        entity_type:
-          $ref: '#/components/schemas/EntityType'
-        visibility:
-          $ref: '#/components/schemas/ApiPublicationVisibility'
-        auth_strategy_ids:
-          $ref: '#/components/schemas/ApiPublicationAuthStrategyIds'
-        warnings:
-          description: Informational warnings (e.g. incompatible fields stripped for ACE). Empty if none.
-          type: array
-          items:
-            type: string
-          readOnly: true
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      required:
-      - api_id
-      - portal_id
-      - visibility
-      - created_at
-      - updated_at
-      - auth_strategy_ids
-      - auto_approve_registrations
-      - entity_type
-      title: API Publication List Item
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
+    ApiPublicationVisibility:
+      description: 'The visibility of the API in the portal.
 
-        The `desc` suffix is used to specify a descending order.
+        Public API publications do not require authentication to view and retrieve information about them.
 
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+        Private API publications require authentication to retrieve information about them.
 
         '
       type: string
-      example: created_at desc
-      title: SortQuery
+      default: private
+      enum:
+      - public
+      - private
+      title: API Publication Visibility
+      x-speakeasy-unknown-values: allow
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     BaseError:
       description: standard error
       type: object
@@ -714,13 +556,110 @@ components:
       - instance
       - detail
       title: Error
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+      x-speakeasy-unknown-values: allow
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    PortalApiPublicationFilterParameters:
+      description: API Publication filters excluding portal-specific fields (since portal is already specified in path)
+      type: object
+      properties:
+        api_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        api_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        auth_strategy_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        entity_type:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: Portal API Publication Filter Parameters
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
     StringFieldFilter:
       description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
       type: object
@@ -741,21 +680,109 @@ components:
           description: The field does not match the provided value.
           type: string
       additionalProperties: false
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
+    EntityType:
+      description: The type of entity that is being published. Can be either an API or an API Package.
+      type: string
+      example: api
+      enum:
+      - api
+      - api_package
+      title: Entity Type
+      x-speakeasy-unknown-values: allow
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    ApiPublicationFilterParameters:
+      type: object
+      properties:
+        portal_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        portal_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        api_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        api_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        auth_strategy_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        entity_type:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: API Publication Filter Parameters
+    AutoApproveRegistrations:
+      description: Whether the application registration auto approval on this portal for the api is enabled. If set to false, fallbacks on portal's auto_approve_applications value.
+      type: boolean
+      title: Auto Approve Registrations
+    ApiPublication:
+      description: An API publication in a portal
+      type: object
+      properties:
+        auto_approve_registrations:
+          $ref: '#/components/schemas/AutoApproveRegistrations'
+        auth_strategy_ids:
+          $ref: '#/components/schemas/ApiPublicationAuthStrategyIds'
+        visibility:
+          $ref: '#/components/schemas/ApiPublicationVisibility'
+        warnings:
+          description: Informational warnings (e.g. incompatible fields stripped for ACE). Empty if none.
+          type: array
+          items:
+            type: string
+          readOnly: true
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      title: API Publication
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    ApiPackagePublication:
+      description: An API Package publication in a portal
+      type: object
+      properties:
+        auto_approve_registrations:
+          $ref: '#/components/schemas/AutoApproveRegistrations'
+        auth_strategy_ids:
+          $ref: '#/components/schemas/ApiPublicationAuthStrategyIds'
+        visibility:
+          $ref: '#/components/schemas/ApiPublicationVisibility'
+        warnings:
+          description: Informational warnings (e.g. incompatible fields stripped for ACE). Empty if none.
+          type: array
+          items:
+            type: string
+          readOnly: true
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      title: API Package Publication
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -789,131 +816,25 @@ components:
       - reason
       - rule
       - maximum
-    ApiPublication:
-      description: An API publication in a portal
-      type: object
-      properties:
-        auto_approve_registrations:
-          $ref: '#/components/schemas/AutoApproveRegistrations'
-        auth_strategy_ids:
-          $ref: '#/components/schemas/ApiPublicationAuthStrategyIds'
-        visibility:
-          $ref: '#/components/schemas/ApiPublicationVisibility'
-        warnings:
-          description: Informational warnings (e.g. incompatible fields stripped for ACE). Empty if none.
-          type: array
-          items:
-            type: string
-          readOnly: true
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      title: API Publication
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ApiPublicationAuthStrategyIds:
-      description: 'The auth strategy the API enforces for applications in the portal.
-
-        Omitting this property means the portal''s default application auth strategy will be used.
-
-        Setting to null means the API will not require application authentication.
-
-        DCR support for application registration is currently in development.
-
-        '
-      type: array
-      items:
-        type: string
-        format: uuid
-      maxItems: 1
-      minItems: 1
-      nullable: true
-      title: API Publication Auth Strategy IDs
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    EntityType:
-      description: The type of entity that is being published. Can be either an API or an API Package.
-      type: string
-      example: api
-      enum:
-      - api
-      - api_package
-      title: Entity Type
-      x-speakeasy-unknown-values: allow
   responses:
-    ApiNotFound:
-      description: Not Found
+    ListApiPublicationResponse:
+      description: Paginated list of API publications
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/NotFoundError'
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiPublicationListItem'
+            additionalProperties: false
+            required:
+            - data
+            - meta
+            title: ListApiPublications
     ApiPublicationResponse:
       description: An API publication in a portal
       content:
@@ -945,6 +866,48 @@ components:
             - updated_at
             - auth_strategy_ids
             title: API Publication
+    ListPublicationResponse:
+      description: Paginated list of publications
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicationListItem'
+            additionalProperties: false
+            required:
+            - data
+            - meta
+            title: ListPublications
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiPublicationBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     ApiPackagePublicationResponse:
       description: An API Package publication in a portal
       content:
@@ -976,60 +939,97 @@ components:
             - updated_at
             - auth_strategy_ids
             title: API Package Publication
-    ApiPublicationBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListApiPublicationResponse:
-      description: Paginated list of API publications
+  requestBodies:
+    PutApiPublicationRequest:
+      required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiPublicationListItem'
-            additionalProperties: false
-            required:
-            - data
-            - meta
-            title: ListApiPublications
-    ApiUnauthorized:
-      description: ApiUnauthorized
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    ListPublicationResponse:
-      description: Paginated list of publications
+            $ref: '#/components/schemas/ApiPublication'
+    PutApiPackagePublicationRequest:
+      required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PublicationListItem'
-            additionalProperties: false
-            required:
-            - data
-            - meta
-            title: ListPublications
+            $ref: '#/components/schemas/ApiPackagePublication'
+  parameters:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    ApiPublicationSort:
+      name: sort
+      description: "Sorts a collection of API publications. Supported sort attributes are:\n  - portal_id\n  - portal_name\n  - api_id\n  - api_name\n  - created_at\n  - updated_at\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
+    ApiPublicationFilters:
+      name: filter
+      description: Filters API Publications in the response.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApiPublicationFilterParameters'
+      style: deepObject
+    PortalApiPublicationSort:
+      name: sort
+      description: "Sorts a collection of API publications within a portal. Supported sort attributes are:\n\n\n  - api_id\n  - api_name\n  - created_at\n  - updated_at\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
+    ApiPackageId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiPackageId
+      in: path
+      required: true
+      description: The UUID API Package identifier
+    ApiId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiId
+      in: path
+      required: true
+      description: The UUID API identifier
+    PortalApiPublicationFilters:
+      name: filter
+      description: Filters API Publications in a portal response (excludes portal-specific filters).
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/PortalApiPublicationFilterParameters'
+      style: deepObject
   securitySchemes:
     personalAccessToken:
       type: http
