@@ -134,29 +134,102 @@ paths:
       tags:
       - Integration Instances
 components:
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    ListIntegrationInstancesResponse:
+      description: A paginated list response for a collection of integration instances.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IntegrationInstance'
+            additionalProperties: false
+            required:
+            - meta
+            - data
+    IntegrationInstanceResponse:
+      description: A response containing a single integration instance object.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IntegrationInstance'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
   schemas:
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    IntegrationRefWithoutInstance:
+      description: Short-hand descriptor of an integration that omits instance metadata.
       type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    InvalidParameterMaximumLength:
+      properties:
+        name:
+          type: string
+          example: gateway-manager
+        display_name:
+          type: string
+          example: gateway-manager
+      required:
+      - name
+      - display_name
+    InvalidParameterChoiceItem:
       type: object
       properties:
         field:
@@ -167,13 +240,169 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - max_length
-          - max_items
-          - max
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    LabelsFieldFilter:
+      allOf:
+      - title: LabelsFieldFilter
+        description: "Filters on the resource's `labels` field. Filters must use dot-notation to identify\nthe label key that will be used to filter the results. For example:\n\n\n  - `filter[labels.owner]`\n  - `filter[labels.owner][neq]=kong`\n  - `filter[labels.env]=dev`\n  - `filter[labels.env][ocontains]=dev,test`\n"
+      - $ref: '#/components/schemas/StringFieldFilter'
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
           nullable: false
           readOnly: true
           x-speakeasy-unknown-values: allow
-        maximum:
+        minimum:
           type: integer
           example: 8
         source:
@@ -181,48 +410,14 @@ components:
           example: body
         reason:
           type: string
-          example: must not have more than 8 characters
+          example: must have at least 8 characters
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
       - rule
-      - maximum
-    LabelsFieldFilter:
-      allOf:
-      - title: LabelsFieldFilter
-        description: "Filters on the resource's `labels` field. Filters must use dot-notation to identify\nthe label key that will be used to filter the results. For example:\n\n\n  - `filter[labels.owner]`\n  - `filter[labels.owner][neq]=kong`\n  - `filter[labels.env]=dev`\n  - `filter[labels.env][ocontains]=dev,test`\n"
-      - $ref: '#/components/schemas/StringFieldFilter'
-    LabelsUpdate:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-        nullable: true
-      maxProperties: 50
-      nullable: true
-      writeOnly: true
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
+      - minimum
     SortQuery:
       description: 'The `asc` suffix is optional as the default sort order is ascending.
 
@@ -269,56 +464,51 @@ components:
       - rule
       - reason
       - dependents
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    UpdateIntegrationInstance:
-      type: object
-      properties:
-        name:
-          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
-
-            '
-          type: string
-          example: aws-lambda-prod
-          maxLength: 120
-          minLength: 1
-          pattern: ^[0-9a-z.-]+$
-        display_name:
-          description: The display name of the integration instance.
-          type: string
-          example: AWS (prod)
-          maxLength: 120
-          minLength: 1
-        description:
-          description: Optionally provide a description of the integration instance.
-          type: string
-          maxLength: 2048
-          nullable: true
-        labels:
-          $ref: '#/components/schemas/LabelsUpdate'
-        config:
-          $ref: '#/components/schemas/IntegrationInstanceConfig'
-      additionalProperties: false
-    ConflictError:
+    NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 409
+            example: 404
           title:
-            example: Conflict
+            example: Not Found
           type:
-            example: https://httpstatuses.com/409
+            example: https://httpstatuses.com/404
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Conflict
+            example: Not found
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     DateTimeFieldFilter:
       description: Filters on the given datetime (RFC-3339) field value.
       oneOf:
@@ -378,6 +568,204 @@ components:
         required:
         - gte
       title: DateTimeFieldFilter
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    CreateIntegrationInstance:
+      type: object
+      properties:
+        integration_name:
+          description: The type of integration instance to create.
+          type: string
+          example: aws-lambda
+          maxLength: 120
+          minLength: 1
+          pattern: ^[0-9a-z.-]+$
+        name:
+          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
+
+            '
+          type: string
+          example: aws-lambda-prod
+          maxLength: 120
+          minLength: 1
+          pattern: ^[0-9a-z.-]+$
+        display_name:
+          description: The display name of the integration instance.
+          type: string
+          example: AWS (prod)
+          maxLength: 120
+          minLength: 1
+        description:
+          description: Optionally provide a description of the integration instance.
+          type: string
+          maxLength: 2048
+          nullable: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        config:
+          $ref: '#/components/schemas/IntegrationInstanceConfig'
+      additionalProperties: false
+      required:
+      - integration_name
+      - name
+      - display_name
+      - config
+    IntegrationInstanceFilterParameters:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        display_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        integration.name:
+          oneOf:
+          - $ref: '#/components/schemas/StringFieldFilter'
+        integration.display_name:
+          oneOf:
+          - $ref: '#/components/schemas/StringFieldFilter'
+        authorized:
+          $ref: '#/components/schemas/BooleanFieldFilter'
+        labels:
+          $ref: '#/components/schemas/LabelsFieldFilter'
+        created_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+        updated_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    UpdateIntegrationInstance:
+      type: object
+      properties:
+        name:
+          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
+
+            '
+          type: string
+          example: aws-lambda-prod
+          maxLength: 120
+          minLength: 1
+          pattern: ^[0-9a-z.-]+$
+        display_name:
+          description: The display name of the integration instance.
+          type: string
+          example: AWS (prod)
+          maxLength: 120
+          minLength: 1
+        description:
+          description: Optionally provide a description of the integration instance.
+          type: string
+          maxLength: 2048
+          nullable: true
+        labels:
+          $ref: '#/components/schemas/LabelsUpdate'
+        config:
+          $ref: '#/components/schemas/IntegrationInstanceConfig'
+      additionalProperties: false
     IntegrationInstance:
       description: Information about an integration instance.
       type: object
@@ -433,265 +821,36 @@ components:
       - config
       - created_at
       - updated_at
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterMinimumLength:
+    LabelsUpdate:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
       type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+        nullable: true
+      maxProperties: 50
+      nullable: true
+      writeOnly: true
     BooleanFieldFilter:
       description: Filter by a boolean value (true/false).
       type: boolean
       title: BooleanFieldFilter
-    BaseError:
-      description: standard error
+    IntegrationInstanceConfig:
+      description: 'JSON object representing configuration specific to the integration instance.
+
+        The expected schema depends on the integration type and is dynamically registered at runtime.
+
+        '
       type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    IntegrationInstanceFilterParameters:
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        display_name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        integration.name:
-          oneOf:
-          - $ref: '#/components/schemas/StringFieldFilter'
-        integration.display_name:
-          oneOf:
-          - $ref: '#/components/schemas/StringFieldFilter'
-        authorized:
-          $ref: '#/components/schemas/BooleanFieldFilter'
-        labels:
-          $ref: '#/components/schemas/LabelsFieldFilter'
-        created_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-        updated_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
+      example:
+        account_region: eu
+      default: {}
+      additionalProperties: true
+      x-speakeasy-type-override: any
     InvalidParameterStandard:
       type: object
       properties:
@@ -712,165 +871,6 @@ components:
       required:
       - field
       - reason
-    IntegrationInstanceConfig:
-      description: 'JSON object representing configuration specific to the integration instance.
-
-        The expected schema depends on the integration type and is dynamically registered at runtime.
-
-        '
-      type: object
-      example:
-        account_region: eu
-      default: {}
-      additionalProperties: true
-      x-speakeasy-type-override: any
-    IntegrationRefWithoutInstance:
-      description: Short-hand descriptor of an integration that omits instance metadata.
-      type: object
-      properties:
-        name:
-          type: string
-          example: gateway-manager
-        display_name:
-          type: string
-          example: gateway-manager
-      required:
-      - name
-      - display_name
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    CreateIntegrationInstance:
-      type: object
-      properties:
-        integration_name:
-          description: The type of integration instance to create.
-          type: string
-          example: aws-lambda
-          maxLength: 120
-          minLength: 1
-          pattern: ^[0-9a-z.-]+$
-        name:
-          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
-
-            '
-          type: string
-          example: aws-lambda-prod
-          maxLength: 120
-          minLength: 1
-          pattern: ^[0-9a-z.-]+$
-        display_name:
-          description: The display name of the integration instance.
-          type: string
-          example: AWS (prod)
-          maxLength: 120
-          minLength: 1
-        description:
-          description: Optionally provide a description of the integration instance.
-          type: string
-          maxLength: 2048
-          nullable: true
-        labels:
-          $ref: '#/components/schemas/Labels'
-        config:
-          $ref: '#/components/schemas/IntegrationInstanceConfig'
-      additionalProperties: false
-      required:
-      - integration_name
-      - name
-      - display_name
-      - config
-  responses:
-    IntegrationInstanceResponse:
-      description: A response containing a single integration instance object.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/IntegrationInstance'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListIntegrationInstancesResponse:
-      description: A paginated list response for a collection of integration instances.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/IntegrationInstance'
-            additionalProperties: false
-            required:
-            - meta
-            - data
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
   parameters:
     PageSize:
       name: page[size]
@@ -892,6 +892,13 @@ components:
         type: integer
         example: 1
       x-speakeasy-terraform-ignore: true
+    IntegrationInstanceSort:
+      name: sort
+      description: "Sorts a collection of integration instances. Supported sort attributes are:\n\n\n  - `display_name`\n  - `name`\n  - `created_at`\n  - `updated_at`\n  - `integration.display_name`\n\nDefault sort is `integration.display_name` in ascending order.\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
     IntegrationInstanceFilter:
       name: filter
       description: Filters a collection of integration instances.
@@ -900,26 +907,19 @@ components:
       style: deepObject
       schema:
         $ref: '#/components/schemas/IntegrationInstanceFilterParameters'
-    IntegrationInstanceSort:
-      name: sort
-      description: "Sorts a collection of integration instances. Supported sort attributes are:\n\n\n  - `display_name`\n  - `name`\n  - `created_at`\n  - `updated_at`\n  - `integration.display_name`\n\nDefault sort is `integration.display_name` in ascending order.\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
   requestBodies:
-    UpdateIntegrationInstanceRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/UpdateIntegrationInstance'
     CreateIntegrationInstanceRequest:
       required: true
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CreateIntegrationInstance'
+    UpdateIntegrationInstanceRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateIntegrationInstance'
   securitySchemes:
     personalAccessToken:
       type: http

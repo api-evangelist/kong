@@ -205,6 +205,21 @@ paths:
       - Applications
 components:
   schemas:
+    AvailableScopes:
+      description: Possible developer selectable scopes for an application. Only present when using DCR Provider that supports it.
+      type: array
+      items:
+        type: string
+      example:
+      - scope1
+      - scope2
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     ListApplicationDevelopersResponse:
       type: object
       properties:
@@ -238,42 +253,40 @@ components:
       - data
       - meta
       title: ListApplicationDevelopersResponse
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    ListCredentialsResponse:
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-        data:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
           type: array
-          items:
-            $ref: '#/components/schemas/CredentialListItem'
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
       required:
-      - data
-      - meta
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
+      - field
+      - reason
+      - rule
+      - choices
     UpdateApplicationRequest:
       type: object
       properties:
@@ -281,98 +294,8 @@ components:
           $ref: '#/components/schemas/ApplicationOwner'
       additionalProperties: false
       title: UpdateApplicationRequest
-    ClientSecretCredentialListItem:
-      description: Client secret credential returned when listing credentials.
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - client_secret
-          readOnly: true
-        id:
-          description: Credential identifier
-          type: string
-        display_name:
-          description: May not be available for all Client Credentials applications
-          type: string
-          nullable: true
-        client_id:
-          description: OAuth2 client identifier
-          type: string
-          readOnly: true
-        created_at:
-          description: Creation timestamp, if available
-          type: string
-          format: date-time
-          nullable: true
-          readOnly: true
-        expires_at:
-          description: Expiration timestamp, if applicable
-          type: string
-          format: date-time
-          nullable: true
-          readOnly: true
-      additionalProperties: false
-      required:
-      - type
-      - id
-      - client_id
-      - created_at
-    Application:
-      example:
-        id: b15e2460-ba40-431d-9df0-4957fcffacda
-        labels:
-          env: test
-        name: App 1
-        description: An easy to manage app in a Konnect developer portal
-        registration_count: 4
-        portal:
-          id: 95606071-49c7-4c2e-ae49-8a86d72a8110
-        auth_strategy:
-          id: 45606071-49c7-4c2e-ae49-8a86d72a8110
-          name: API Key
-          credential_type: key_auth
-          key_names:
-          - apikey
-        created_at: '2022-12-22T19:09:30.712Z'
-        updated_at: '2022-12-22T19:09:30.712Z'
-        owner:
-          id: 8cd9feff-b4da-4a9f-ba49-cbe83c75ff22
-          type: developer
-      oneOf:
-      - $ref: '#/components/schemas/ClientCredentialsApplication'
-      - $ref: '#/components/schemas/KeyAuthApplication'
-      title: Application
-    LabelsUpdate:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-        nullable: true
-      maxProperties: 50
-      nullable: true
-      writeOnly: true
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
+    GetApplicationResponse:
+      $ref: '#/components/schemas/Application'
     ListApplicationsResponse:
       type: object
       properties:
@@ -431,143 +354,31 @@ components:
       required:
       - data
       - meta
-    ApplicationOwner:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/ApplicationOwnerType'
-        id:
-          $ref: '#/components/schemas/ApplicationOwnerId'
-      additionalProperties: false
-      required:
-      - type
-      - id
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    ApplicationDeveloperDetailed:
-      description: List of developers that have a registered application.
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: true
-        email:
-          type: string
-          format: email
-          example: developer@email.com
-          maxLength: 250
-        full_name:
-          type: string
-          example: API Developer
-          maxLength: 250
-          pattern: ^[\w \W]+$
+    Application:
       example:
-        id: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-        email: user@email.com
-        full_name: API Developer
-      additionalProperties: false
-      required:
-      - id
-      title: ApplicationDeveloperDetailed
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    CredentialListItem:
-      type: object
-      discriminator:
-        propertyName: type
+        id: b15e2460-ba40-431d-9df0-4957fcffacda
+        labels:
+          env: test
+        name: App 1
+        description: An easy to manage app in a Konnect developer portal
+        registration_count: 4
+        portal:
+          id: 95606071-49c7-4c2e-ae49-8a86d72a8110
+        auth_strategy:
+          id: 45606071-49c7-4c2e-ae49-8a86d72a8110
+          name: API Key
+          credential_type: key_auth
+          key_names:
+          - apikey
+        created_at: '2022-12-22T19:09:30.712Z'
+        updated_at: '2022-12-22T19:09:30.712Z'
+        owner:
+          id: 8cd9feff-b4da-4a9f-ba49-cbe83c75ff22
+          type: developer
       oneOf:
-      - $ref: '#/components/schemas/ApiKeyCredentialListItem'
-      - $ref: '#/components/schemas/ClientSecretCredentialListItem'
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    GetApplicationResponse:
-      $ref: '#/components/schemas/Application'
+      - $ref: '#/components/schemas/ClientCredentialsApplication'
+      - $ref: '#/components/schemas/KeyAuthApplication'
+      title: Application
     ClientCredentialsApplication:
       type: object
       properties:
@@ -638,38 +449,262 @@ components:
       - labels
       - granted_scopes
       title: Client Credentials Application
-    UnauthorizedError:
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    ApplicationOwnerType:
+      description: The type of the owner of the application. Can be `developer` (individual developer) or `team`.
+      type: string
+      enum:
+      - developer
+      - team
+      x-speakeasy-unknown-values: allow
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CredentialListItem:
+      type: object
+      discriminator:
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/ApiKeyCredentialListItem'
+      - $ref: '#/components/schemas/ClientSecretCredentialListItem'
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 401
+            example: 404
           title:
-            example: Unauthorized
+            example: Not Found
           type:
-            example: https://httpstatuses.com/401
+            example: https://httpstatuses.com/404
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Invalid credentials
-    AvailableScopes:
-      description: Possible developer selectable scopes for an application. Only present when using DCR Provider that supports it.
-      type: array
-      items:
-        type: string
-      example:
-      - scope1
-      - scope2
-    FilterApplications:
-      type: object
-      properties:
-        developer_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        team_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
+            example: Not found
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
     KeyAuthApplication:
       type: object
       properties:
@@ -737,60 +772,168 @@ components:
       - registration_count
       - labels
       title: Key Auth Application
-    BaseError:
-      description: standard error
+    ListCredentialsResponse:
       type: object
       properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CredentialListItem'
+      additionalProperties: false
       required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
+      - data
+      - meta
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    ApplicationDeveloperDetailed:
+      description: List of developers that have a registered application.
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: true
+        email:
+          type: string
+          format: email
+          example: developer@email.com
+          maxLength: 250
+        full_name:
+          type: string
+          example: API Developer
+          maxLength: 250
+          pattern: ^[\w \W]+$
+      example:
+        id: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+        email: user@email.com
+        full_name: API Developer
+      additionalProperties: false
+      required:
+      - id
+      title: ApplicationDeveloperDetailed
+    AuthStrategyClientCredentials:
+      description: Client Credential Auth strategy that the application uses.
+      type: object
+      properties:
+        id:
+          description: The Application Auth Strategy ID.
+          type: string
+          format: uuid
+          example: b9e81174-b5bb-4638-a3c3-8afe61a0abf8
+          readOnly: true
+        name:
+          type: string
+          example: name
+          default: name
+        credential_type:
+          type: string
+          enum:
+          - client_credentials
+          - self_managed_client_credentials
+          x-speakeasy-unknown-values: allow
+        auth_methods:
+          $ref: '#/components/schemas/AuthMethods'
+        available_scopes:
+          $ref: '#/components/schemas/AvailableScopes'
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - credential_type
+      - auth_methods
+    ClientSecretCredentialListItem:
+      description: Client secret credential returned when listing credentials.
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - client_secret
+          readOnly: true
+        id:
+          description: Credential identifier
+          type: string
+        display_name:
+          description: May not be available for all Client Credentials applications
+          type: string
+          nullable: true
+        client_id:
+          description: OAuth2 client identifier
+          type: string
+          readOnly: true
+        created_at:
+          description: Creation timestamp, if available
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        expires_at:
+          description: Expiration timestamp, if applicable
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+      additionalProperties: false
+      required:
+      - type
+      - id
+      - client_id
+      - created_at
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
     AuthStrategyKeyAuth:
       description: KeyAuth Auth strategy that the application uses.
       type: object
@@ -836,171 +979,26 @@ components:
       - name
       - credential_type
       - key_names
-    ApplicationOwnerType:
-      description: The type of the owner of the application. Can be `developer` (individual developer) or `team`.
-      type: string
-      enum:
-      - developer
-      - team
-      x-speakeasy-unknown-values: allow
-    AuthMethods:
-      type: array
-      items:
-        description: Auth Methods enabled for this strategy
-        type: string
-      example:
-      - bearer
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
       required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    AuthStrategyClientCredentials:
-      description: Client Credential Auth strategy that the application uses.
-      type: object
-      properties:
-        id:
-          description: The Application Auth Strategy ID.
-          type: string
-          format: uuid
-          example: b9e81174-b5bb-4638-a3c3-8afe61a0abf8
-          readOnly: true
-        name:
-          type: string
-          example: name
-          default: name
-        credential_type:
-          type: string
-          enum:
-          - client_credentials
-          - self_managed_client_credentials
-          x-speakeasy-unknown-values: allow
-        auth_methods:
-          $ref: '#/components/schemas/AuthMethods'
-        available_scopes:
-          $ref: '#/components/schemas/AvailableScopes'
-      additionalProperties: false
-      required:
-      - id
-      - name
-      - credential_type
-      - auth_methods
+      - number
+      - size
+      - total
     ApiKeyCredentialListItem:
       description: API key credential returned when listing credentials.
       type: object
@@ -1035,6 +1033,49 @@ components:
       - id
       - display_name
       - created_at
+    ApplicationOwner:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ApplicationOwnerType'
+        id:
+          $ref: '#/components/schemas/ApplicationOwnerId'
+      additionalProperties: false
+      required:
+      - type
+      - id
+    LabelsUpdate:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+        nullable: true
+      maxProperties: 50
+      nullable: true
+      writeOnly: true
+    ApplicationOwnerId:
+      description: The ID of the owner of the application. When type is `developer`, this is the developer ID. When type is `team`, this is the team ID.
+      type: string
+      format: uuid
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
     InvalidParameterStandard:
       type: object
       properties:
@@ -1055,82 +1096,47 @@ components:
       required:
       - field
       - reason
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
+    FilterApplications:
       type: object
       properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    ApplicationOwnerId:
-      description: The ID of the owner of the application. When type is `developer`, this is the developer ID. When type is `team`, this is the team ID.
-      type: string
-      format: uuid
+        developer_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        team_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+    AuthMethods:
+      type: array
+      items:
+        description: Auth Methods enabled for this strategy
+        type: string
+      example:
+      - bearer
   responses:
-    ListApplicationDevelopers:
-      description: A paginated list developers of an application.
+    GetApplication:
+      description: Details about an application in a portal.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ListApplicationDevelopersResponse'
+            $ref: '#/components/schemas/GetApplicationResponse'
     ListApplications:
       description: A paginated list of applications in a portal.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ListApplicationsResponse'
-    ListApplicationCredentials:
-      description: A paginated list of credentials for an application.
+    ListApplicationDevelopers:
+      description: A paginated list developers of an application.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ListCredentialsResponse'
+            $ref: '#/components/schemas/ListApplicationDevelopersResponse'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -1157,24 +1163,18 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    GetApplication:
-      description: Details about an application in a portal.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GetApplicationResponse'
     Forbidden:
       description: Forbidden
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
-    NotFound:
-      description: Not Found
+    ListApplicationCredentials:
+      description: A paginated list of credentials for an application.
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/NotFoundError'
+            $ref: '#/components/schemas/ListCredentialsResponse'
   parameters:
     PageSize:
       name: page[size]
@@ -1196,6 +1196,15 @@ components:
         type: integer
         example: 1
       x-speakeasy-terraform-ignore: true
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
     SortApplicationDevelopers:
       name: sort
       description: "Sorts a set of developers for an application. Supported sort attributes are:\n\n\n  - id\n"
@@ -1211,15 +1220,6 @@ components:
       schema:
         type: string
         format: uuid
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
     SortApplications:
       name: sort
       description: "Sorts a collection of applications. Supported sort attributes are:\n  - created_at\n  - developer_id\n  - name\n"

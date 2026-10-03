@@ -170,6 +170,209 @@ paths:
       - Application Registrations
 components:
   schemas:
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    ApplicationRegistration:
+      description: A application's registration for a specific version of an API.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        status:
+          $ref: '#/components/schemas/ApplicationRegistrationStatus'
+        api:
+          description: Details about the API the application is registered to.
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              $ref: '#/components/schemas/UUID'
+            name:
+              description: The name of the API the application is registered to.
+              type: string
+            version:
+              description: The version of the API the application is registered to.
+              type: string
+              nullable: true
+            entity_type:
+              $ref: '#/components/schemas/EntityType'
+          required:
+          - id
+          - name
+          - version
+          - entity_type
+        application:
+          description: Details about the application the registration is part of.
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              $ref: '#/components/schemas/UUID'
+            name:
+              description: The name of the application the registration is part of.
+              type: string
+          required:
+          - id
+          - name
+      example:
+        id: c300cc33-2d33-4754-b086-a98e0fcd36fb
+        status: approved
+        application:
+          id: c15e2460-ba40-431d-9df0-4957fcff7cda
+          name: App 1
+        api:
+          id: 86f637b7-cd95-478b-9b02-d770618f641c
+          name: Great Stuff
+          version: v1
+          entity_type: api
+        created_at: '2022-12-22T20:13:07.305Z'
+        updated_at: '2022-12-22T20:13:36.710Z'
+      additionalProperties: false
+      required:
+      - id
+      - created_at
+      - updated_at
+      - status
+      - api
+      - application
+      title: ApplicationRegistration
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -179,6 +382,210 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    EntityType:
+      description: The type of entity that is being published. Can be either an API or an API Package.
+      type: string
+      example: api
+      enum:
+      - api
+      - api_package
+      title: Entity Type
+      x-speakeasy-unknown-values: allow
+    UpdateApplicationRegistrationResponse:
+      $ref: '#/components/schemas/ApplicationRegistration'
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
     UpdateApplicationRegistrationRequest:
       type: object
       properties:
@@ -188,6 +595,41 @@ components:
         status: rejected
       additionalProperties: false
       title: UpdateApplicationRegistrationRequest
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    GetApplicationRegistrationResponse:
+      $ref: '#/components/schemas/ApplicationRegistration'
+    ApplicationRegistrationStatus:
+      description: 'The status of an application registration request. Each registration is linked to a single API, and application credentials will not grant access to the API until the registration is approved.
+
+        Pending, revoked, and rejected registrations will not provide access to the API.'
+      type: string
+      example: approved
+      enum:
+      - approved
+      - pending
+      - revoked
+      - rejected
+      title: ApplicationRegistrationStatus
+      x-speakeasy-unknown-values: allow
     UuidFieldFilter:
       description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
@@ -271,391 +713,6 @@ components:
       - data
       - meta
       title: ListApplicationRegistrationsResponse
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    ApplicationRegistrationStatus:
-      description: 'The status of an application registration request. Each registration is linked to a single API, and application credentials will not grant access to the API until the registration is approved.
-
-        Pending, revoked, and rejected registrations will not provide access to the API.'
-      type: string
-      example: approved
-      enum:
-      - approved
-      - pending
-      - revoked
-      - rejected
-      title: ApplicationRegistrationStatus
-      x-speakeasy-unknown-values: allow
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    ApplicationRegistration:
-      description: A application's registration for a specific version of an API.
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        status:
-          $ref: '#/components/schemas/ApplicationRegistrationStatus'
-        api:
-          description: Details about the API the application is registered to.
-          type: object
-          additionalProperties: false
-          properties:
-            id:
-              $ref: '#/components/schemas/UUID'
-            name:
-              description: The name of the API the application is registered to.
-              type: string
-            version:
-              description: The version of the API the application is registered to.
-              type: string
-              nullable: true
-            entity_type:
-              $ref: '#/components/schemas/EntityType'
-          required:
-          - id
-          - name
-          - version
-          - entity_type
-        application:
-          description: Details about the application the registration is part of.
-          type: object
-          additionalProperties: false
-          properties:
-            id:
-              $ref: '#/components/schemas/UUID'
-            name:
-              description: The name of the application the registration is part of.
-              type: string
-          required:
-          - id
-          - name
-      example:
-        id: c300cc33-2d33-4754-b086-a98e0fcd36fb
-        status: approved
-        application:
-          id: c15e2460-ba40-431d-9df0-4957fcff7cda
-          name: App 1
-        api:
-          id: 86f637b7-cd95-478b-9b02-d770618f641c
-          name: Great Stuff
-          version: v1
-          entity_type: api
-        created_at: '2022-12-22T20:13:07.305Z'
-        updated_at: '2022-12-22T20:13:36.710Z'
-      additionalProperties: false
-      required:
-      - id
-      - created_at
-      - updated_at
-      - status
-      - api
-      - application
-      title: ApplicationRegistration
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    EntityType:
-      description: The type of entity that is being published. Can be either an API or an API Package.
-      type: string
-      example: api
-      enum:
-      - api
-      - api_package
-      title: Entity Type
-      x-speakeasy-unknown-values: allow
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
     InvalidParameterStandard:
       type: object
       properties:
@@ -676,70 +733,85 @@ components:
       required:
       - field
       - reason
-    UpdateApplicationRegistrationResponse:
-      $ref: '#/components/schemas/ApplicationRegistration'
-    GetApplicationRegistrationResponse:
-      $ref: '#/components/schemas/ApplicationRegistration'
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
+  parameters:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
+    SortApplicationRegistrations:
+      name: sort
+      description: "Sorts a set of registrations for an application. Supported sort attributes are:\n\n\n  - created_at\n  - updated_at\n  - status\n"
+      in: query
+      required: false
+      schema:
+        type: string
+    ApplicationId:
+      name: applicationId
+      in: path
+      required: true
+      description: ID of the application.
+      schema:
+        type: string
+        format: uuid
+    RegistrationId:
+      name: registrationId
+      in: path
+      required: true
+      description: ID of the application registration.
+      schema:
+        type: string
+        format: uuid
+    SortListAllApplicationRegistrations:
+      name: sort
+      description: "Sorts a collection of application registrations. Supported sort attributes are:\n\n\n  - created_at\n  - updated_at\n  - developer_id\n  - status\n"
+      in: query
+      required: false
+      schema:
+        type: string
   responses:
-    GetApplicationRegistration:
-      description: Details about an application registration.
+    ListApplicationRegistrations:
+      description: A paginated list of application registrations.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GetApplicationRegistrationResponse'
+            $ref: '#/components/schemas/ListApplicationRegistrationsResponse'
+    UpdateApplicationRegistration:
+      description: Details about the application registration being updated.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateApplicationRegistrationResponse'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -772,84 +844,12 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
-    UpdateApplicationRegistration:
-      description: Details about the application registration being updated.
+    GetApplicationRegistration:
+      description: Details about an application registration.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UpdateApplicationRegistrationResponse'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    ListApplicationRegistrations:
-      description: A paginated list of application registrations.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ListApplicationRegistrationsResponse'
-  parameters:
-    RegistrationId:
-      name: registrationId
-      in: path
-      required: true
-      description: ID of the application registration.
-      schema:
-        type: string
-        format: uuid
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    SortListAllApplicationRegistrations:
-      name: sort
-      description: "Sorts a collection of application registrations. Supported sort attributes are:\n\n\n  - created_at\n  - updated_at\n  - developer_id\n  - status\n"
-      in: query
-      required: false
-      schema:
-        type: string
-    SortApplicationRegistrations:
-      name: sort
-      description: "Sorts a set of registrations for an application. Supported sort attributes are:\n\n\n  - created_at\n  - updated_at\n  - status\n"
-      in: query
-      required: false
-      schema:
-        type: string
-    ApplicationId:
-      name: applicationId
-      in: path
-      required: true
-      description: ID of the application.
-      schema:
-        type: string
-        format: uuid
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
+            $ref: '#/components/schemas/GetApplicationRegistrationResponse'
   requestBodies:
     UpdateApplicationRegistration:
       description: Update an application registration.

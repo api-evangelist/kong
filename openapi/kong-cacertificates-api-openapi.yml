@@ -327,6 +327,35 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
+  responses:
+    HTTP401Error:
+      description: Unauthorized
+      content:
+        application/json:
+          examples:
+            DuplicateApiKey:
+              summary: Duplicate API key found
+              value:
+                message: Duplicate API key found
+                status: 401
+            InvalidAuthCred:
+              summary: Invalid authentication credentials
+              value:
+                message: Unauthorized
+                status: 401
+            NoAPIKey:
+              summary: No API key found
+              value:
+                message: No API key found in request
+                status: 401
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
+    HTTP401Error_2:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GatewayUnauthorizedError'
   schemas:
     GatewayUnauthorizedError:
       type: object
@@ -384,6 +413,9 @@ components:
       additionalProperties: false
       required:
       - cert
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
     CACertificate_2:
       description: A CA certificate object represents a trusted CA. These objects are used by Kong to verify the validity of a client or server certificate.
       type: object
@@ -432,9 +464,6 @@ components:
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
   parameters:
     CACertificateId:
       description: ID of the CA Certificate to lookup
@@ -454,16 +483,6 @@ components:
         default: 100
         maximum: 1000
         minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
     PaginationOffset:
       allowEmptyValue: true
       description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
@@ -487,35 +506,16 @@ components:
       required: true
       schema:
         type: string
-  responses:
-    HTTP401Error:
-      description: Unauthorized
-      content:
-        application/json:
-          examples:
-            DuplicateApiKey:
-              summary: Duplicate API key found
-              value:
-                message: Duplicate API key found
-                status: 401
-            InvalidAuthCred:
-              summary: Invalid authentication credentials
-              value:
-                message: Unauthorized
-                status: 401
-            NoAPIKey:
-              summary: No API key found
-              value:
-                message: No API key found in request
-                status: 401
-          schema:
-            $ref: '#/components/schemas/GatewayUnauthorizedError'
-    HTTP401Error_2:
-      description: Unauthorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GatewayUnauthorizedError'
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
   securitySchemes:
     adminToken:
       in: header

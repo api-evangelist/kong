@@ -376,183 +376,107 @@ paths:
       tags:
       - OpenMeter Customers
 components:
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    Gone:
+      description: Gone
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/GoneError'
   schemas:
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    BillingCustomer:
-      description: Customers can be individuals or organizations that can subscribe to plans and have access to features.
+    BillingAppCustomerData:
+      description: App customer data.
       type: object
       properties:
-        id:
-          description: ULID (Universally Unique Lexicographically Sortable Identifier).
-          type: string
-          example: 01G65Z755AFWAKHE12NY0CQ9FH
-          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
-          readOnly: true
-          title: ULID
-        name:
-          description: 'Display name of the resource.
-
-
-            Between 1 and 256 characters.'
-          type: string
-          maxLength: 256
-          minLength: 1
-        description:
-          description: 'Optional description of the resource.
-
-
-            Maximum 1024 characters.'
-          type: string
-          maxLength: 1024
-        labels:
-          $ref: '#/components/schemas/Labels'
-        created_at:
-          description: An ISO-8601 timestamp representation of entity creation date.
-          type: string
-          format: date-time
-          example: '2023-01-01T01:01:01.001Z'
-          readOnly: true
-          title: RFC3339 Date-Time
-        updated_at:
-          description: An ISO-8601 timestamp representation of entity last update date.
-          type: string
-          format: date-time
-          example: '2023-01-01T01:01:01.001Z'
-          readOnly: true
-          title: RFC3339 Date-Time
-        deleted_at:
-          description: An ISO-8601 timestamp representation of entity deletion date.
-          type: string
-          format: date-time
-          example: '2023-01-01T01:01:01.001Z'
-          readOnly: true
-          title: RFC3339 Date-Time
-        key:
-          $ref: '#/components/schemas/ExternalResourceKey'
-        usage_attribution:
-          description: Mapping to attribute metered usage to the customer by the event subject.
+        stripe:
+          description: Used if the customer has a linked Stripe app.
           type: object
           properties:
-            subject_keys:
-              description: 'The subjects that are attributed to the customer.
-
-                Can be empty when no usage event subjects are associated with the customer.'
-              type: array
-              items:
-                $ref: '#/components/schemas/UsageAttributionSubjectKey'
-              minItems: 0
-              title: Subject Keys
-          required:
-          - subject_keys
-          title: Usage Attribution
-        primary_email:
-          description: The primary email address of the customer.
-          type: string
-          title: Primary Email
-        currency:
-          description: 'Currency of the customer.
-
-            Used for billing, tax and invoicing.'
-          type: string
-          example: USD
-          maxLength: 3
-          minLength: 3
-          pattern: ^[A-Z]{3}$
-          title: Currency
-        billing_address:
-          description: 'The billing address of the customer.
-
-            Used for tax and invoicing.'
+            customer_id:
+              description: The Stripe customer ID used.
+              type: string
+              example: cus_1234567890
+              title: Stripe customer ID
+            default_payment_method_id:
+              description: The Stripe default payment method ID.
+              type: string
+              example: pm_1234567890
+              title: Stripe default payment method ID
+            labels:
+              description: Labels for this Stripe integration on the customer.
+              type: object
+              example:
+                env: test
+              additionalProperties:
+                type: string
+                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                minLength: 1
+                maxLength: 63
+              maxProperties: 50
+              title: Labels
+          title: Stripe
+        external_invoicing:
+          description: Used if the customer has a linked external invoicing app.
           type: object
           properties:
-            country:
-              description: Country code in [ISO 3166-1](https://www.iso.org/iso-3166-country-codes.html) alpha-2 format.
-              type: string
-              example: US
-              maxLength: 2
-              minLength: 2
-              pattern: ^[A-Z]{2}$
-              title: Country
-            postal_code:
-              description: Postal code.
-              type: string
-              title: Postal Code
-            state:
-              description: State or province.
-              type: string
-              title: State
-            city:
-              description: City.
-              type: string
-              title: City
-            line1:
-              description: First line of the address.
-              type: string
-              title: Line 1
-            line2:
-              description: Second line of the address.
-              type: string
-              title: Line 2
-            phone_number:
-              description: Phone number.
-              type: string
-              title: Phone Number
-          title: Billing Address
-      required:
-      - id
-      - name
-      - created_at
-      - updated_at
-      - key
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
-    InvalidParameterDependentItem:
+            labels:
+              description: Labels for this external invoicing integration on the customer.
+              type: object
+              example:
+                env: test
+              additionalProperties:
+                type: string
+                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                minLength: 1
+                maxLength: 63
+              maxProperties: 50
+              title: Labels
+          title: External invoicing
+    InvalidParameterChoiceItem:
       type: object
       properties:
         field:
@@ -563,17 +487,18 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - dependent_fields
-          nullable: true
+          - enum
+          nullable: false
           readOnly: true
         reason:
           type: string
           example: is a required field
           readOnly: true
-        dependents:
+        choices:
           type: array
           items: {}
-          nullable: true
+          minItems: 1
+          nullable: false
           readOnly: true
           uniqueItems: true
         source:
@@ -582,233 +507,9 @@ components:
       additionalProperties: false
       required:
       - field
-      - rule
-      - reason
-      - dependents
-    GoneError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 410
-          title:
-            example: Gone
-          type:
-            example: https://httpstatuses.com/410
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Gone
-    UpsertCustomerBillingDataRequest:
-      description: CustomerBillingData upsert request.
-      type: object
-      properties:
-        billing_profile:
-          description: 'The billing profile for the customer.
-
-
-            If not provided, the default billing profile will be used.'
-          type: object
-          properties:
-            id:
-              description: The ID of the billing profile.
-              type: string
-              example: 01G65Z755AFWAKHE12NY0CQ9FH
-              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
-              title: ULID
-          required:
-          - id
-          title: Billing profile
-        app_data:
-          description: App customer data.
-          type: object
-          properties:
-            stripe:
-              description: Used if the customer has a linked Stripe app.
-              type: object
-              properties:
-                customer_id:
-                  description: The Stripe customer ID used.
-                  type: string
-                  example: cus_1234567890
-                  title: Stripe customer ID
-                default_payment_method_id:
-                  description: The Stripe default payment method ID.
-                  type: string
-                  example: pm_1234567890
-                  title: Stripe default payment method ID
-                labels:
-                  description: Labels for this Stripe integration on the customer.
-                  type: object
-                  example:
-                    env: test
-                  additionalProperties:
-                    type: string
-                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                    minLength: 1
-                    maxLength: 63
-                  maxProperties: 50
-                  title: Labels
-              title: Stripe
-            external_invoicing:
-              description: Used if the customer has a linked external invoicing app.
-              type: object
-              properties:
-                labels:
-                  description: Labels for this external invoicing integration on the customer.
-                  type: object
-                  example:
-                    env: test
-                  additionalProperties:
-                    type: string
-                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                    minLength: 1
-                    maxLength: 63
-                  maxProperties: 50
-                  title: Labels
-              title: External invoicing
-          title: App customer data
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
       - reason
       - rule
-      - minimum
-    BillingCustomerStripeCreateCustomerPortalSessionRequest:
-      description: 'Request to create a Stripe Customer Portal Session for the customer.
-
-
-        Useful to redirect the customer to the Stripe Customer Portal to manage their payment methods,
-
-        change their billing address and access their invoice history.
-
-        Only returns URL if the customer billing profile is linked to a stripe app and customer.'
-      type: object
-      properties:
-        stripe_options:
-          description: Options for configuring the Stripe Customer Portal Session.
-          type: object
-          properties:
-            configuration_id:
-              description: 'The ID of an existing [Stripe configuration](https://docs.stripe.com/api/customer_portal/configurations) to use for this session,
-
-                describing its functionality and features.
-
-                If not specified, the session uses the default configuration.'
-              type: string
-            locale:
-              description: 'The IETF [language tag](https://docs.stripe.com/api/customer_portal/sessions/create#create_portal_session-locale) of the locale customer portal is displayed in.
-
-                If blank or `auto`, the customer''s preferred_locales or browser''s locale is used.'
-              type: string
-            return_url:
-              description: 'The [URL to redirect](https://docs.stripe.com/api/customer_portal/sessions/create#create_portal_session-return_url) the customer to after they have completed
-
-                their requested actions.'
-              type: string
-      required:
-      - stripe_options
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
+      - choices
     BillingCustomerStripeCreateCheckoutSessionRequest:
       description: 'Request to create a Stripe Checkout Session for the customer.
 
@@ -1063,138 +764,40 @@ components:
                   x-speakeasy-unknown-values: allow
       required:
       - stripe_options
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    BillingCustomerData:
-      description: Billing customer data.
+    BillingCustomerStripeCreateCustomerPortalSessionRequest:
+      description: 'Request to create a Stripe Customer Portal Session for the customer.
+
+
+        Useful to redirect the customer to the Stripe Customer Portal to manage their payment methods,
+
+        change their billing address and access their invoice history.
+
+        Only returns URL if the customer billing profile is linked to a stripe app and customer.'
       type: object
       properties:
-        billing_profile:
-          description: 'The billing profile for the customer.
-
-
-            If not provided, the default billing profile will be used.'
+        stripe_options:
+          description: Options for configuring the Stripe Customer Portal Session.
           type: object
           properties:
-            id:
-              description: The ID of the billing profile.
+            configuration_id:
+              description: 'The ID of an existing [Stripe configuration](https://docs.stripe.com/api/customer_portal/configurations) to use for this session,
+
+                describing its functionality and features.
+
+                If not specified, the session uses the default configuration.'
               type: string
-              example: 01G65Z755AFWAKHE12NY0CQ9FH
-              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
-              title: ULID
-          required:
-          - id
-          title: Billing profile
-        app_data:
-          description: App customer data.
-          type: object
-          properties:
-            stripe:
-              description: Used if the customer has a linked Stripe app.
-              type: object
-              properties:
-                customer_id:
-                  description: The Stripe customer ID used.
-                  type: string
-                  example: cus_1234567890
-                  title: Stripe customer ID
-                default_payment_method_id:
-                  description: The Stripe default payment method ID.
-                  type: string
-                  example: pm_1234567890
-                  title: Stripe default payment method ID
-                labels:
-                  description: Labels for this Stripe integration on the customer.
-                  type: object
-                  example:
-                    env: test
-                  additionalProperties:
-                    type: string
-                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                    minLength: 1
-                    maxLength: 63
-                  maxProperties: 50
-                  title: Labels
-              title: Stripe
-            external_invoicing:
-              description: Used if the customer has a linked external invoicing app.
-              type: object
-              properties:
-                labels:
-                  description: Labels for this external invoicing integration on the customer.
-                  type: object
-                  example:
-                    env: test
-                  additionalProperties:
-                    type: string
-                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                    minLength: 1
-                    maxLength: 63
-                  maxProperties: 50
-                  title: Labels
-              title: External invoicing
-          title: App customer data
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
+            locale:
+              description: 'The IETF [language tag](https://docs.stripe.com/api/customer_portal/sessions/create#create_portal_session-locale) of the locale customer portal is displayed in.
+
+                If blank or `auto`, the customer''s preferred_locales or browser''s locale is used.'
+              type: string
+            return_url:
+              description: 'The [URL to redirect](https://docs.stripe.com/api/customer_portal/sessions/create#create_portal_session-return_url) the customer to after they have completed
+
+                their requested actions.'
+              type: string
       required:
-      - field
-      - reason
-      - rule
-      - choices
+      - stripe_options
     BillingAppStripeCreateCheckoutSessionResult:
       description: 'Result of creating a Stripe Checkout Session.
 
@@ -1293,6 +896,171 @@ components:
       - setup_intent_id
       - created_at
       - mode
+    UpsertAppCustomerDataRequest:
+      description: AppCustomerData upsert request.
+      type: object
+      properties:
+        stripe:
+          description: Used if the customer has a linked Stripe app.
+          type: object
+          properties:
+            customer_id:
+              description: The Stripe customer ID used.
+              type: string
+              example: cus_1234567890
+              title: Stripe customer ID
+            default_payment_method_id:
+              description: The Stripe default payment method ID.
+              type: string
+              example: pm_1234567890
+              title: Stripe default payment method ID
+            labels:
+              description: Labels for this Stripe integration on the customer.
+              type: object
+              example:
+                env: test
+              additionalProperties:
+                type: string
+                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                minLength: 1
+                maxLength: 63
+              maxProperties: 50
+              title: Labels
+          title: Stripe
+        external_invoicing:
+          description: Used if the customer has a linked external invoicing app.
+          type: object
+          properties:
+            labels:
+              description: Labels for this external invoicing integration on the customer.
+              type: object
+              example:
+                env: test
+              additionalProperties:
+                type: string
+                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                minLength: 1
+                maxLength: 63
+              maxProperties: 50
+              title: Labels
+          title: External invoicing
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    BillingAppStripeCreateCustomerPortalSessionResult:
+      description: 'Result of creating a [Stripe Customer Portal Session](https://docs.stripe.com/api/customer_portal/sessions/object).
+
+
+        Contains all the information needed to redirect the customer to the Stripe Customer Portal.'
+      type: object
+      properties:
+        id:
+          description: 'The ID of the customer portal session.
+
+
+            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-id'
+          type: string
+        stripe_customer_id:
+          description: The ID of the stripe customer.
+          type: string
+        configuration_id:
+          description: 'Configuration used to customize the customer portal.
+
+
+            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-configuration'
+          type: string
+        livemode:
+          description: 'Livemode.
+
+
+            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-livemode'
+          type: boolean
+        created_at:
+          description: 'Created at.
+
+
+            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-created'
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          title: RFC3339 Date-Time
+        return_url:
+          description: 'Return URL.
+
+
+            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-return_url'
+          type: string
+        locale:
+          description: 'The IETF language tag of the locale customer portal is displayed in.
+
+
+            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-locale'
+          type: string
+        url:
+          description: 'The URL to redirect the customer to after they have completed
+
+            their requested actions.'
+          type: string
+      required:
+      - id
+      - stripe_customer_id
+      - configuration_id
+      - livemode
+      - created_at
+      - return_url
+      - locale
+      - url
     InvalidParameters:
       description: invalid parameters
       type: array
@@ -1306,16 +1074,181 @@ components:
       minItems: 1
       nullable: false
       uniqueItems: true
-    ULID:
-      description: ULID (Universally Unique Lexicographically Sortable Identifier).
-      type: string
-      example: 01G65Z755AFWAKHE12NY0CQ9FH
-      pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
-      title: ULID
-    CreateCustomerRequest:
-      description: Customer create request.
+    PaginatedMeta:
+      description: returns the pagination information
       type: object
       properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    CustomerPagePaginatedResponse:
+      description: Page paginated response.
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillingCustomer'
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+      required:
+      - data
+      - meta
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    GoneError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 410
+          title:
+            example: Gone
+          type:
+            example: https://httpstatuses.com/410
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Gone
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    ListCustomersParamsFilter:
+      description: Filter options for listing customers.
+      type: object
+      properties:
+        key:
+          description: Filter customers by key.
+          type: object
+          additionalProperties: false
+          properties:
+            eq:
+              type: string
+            contains:
+              type: string
+            ocontains:
+              type: string
+            oeq:
+              type: string
+            neq:
+              type: string
+          required:
+          - contains
+          - ocontains
+          - oeq
+          - neq
+          title: StringFieldNEQFilter
+        name:
+          description: Filter customers by name.
+          type: object
+          additionalProperties: false
+          properties:
+            eq:
+              type: string
+            contains:
+              type: string
+            ocontains:
+              type: string
+            oeq:
+              type: string
+            neq:
+              type: string
+          required:
+          - contains
+          - ocontains
+          - oeq
+          - neq
+          title: StringFieldNEQFilter
+        primary_email:
+          description: Filter customers by primary email.
+          type: object
+          additionalProperties: false
+          properties:
+            eq:
+              type: string
+            contains:
+              type: string
+            ocontains:
+              type: string
+            oeq:
+              type: string
+            neq:
+              type: string
+          required:
+          - contains
+          - ocontains
+          - oeq
+          - neq
+          title: StringFieldNEQFilter
+    BillingCustomer:
+      description: Customers can be individuals or organizations that can subscribe to plans and have access to features.
+      type: object
+      properties:
+        id:
+          description: ULID (Universally Unique Lexicographically Sortable Identifier).
+          type: string
+          example: 01G65Z755AFWAKHE12NY0CQ9FH
+          pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+          readOnly: true
+          title: ULID
         name:
           description: 'Display name of the resource.
 
@@ -1333,6 +1266,27 @@ components:
           maxLength: 1024
         labels:
           $ref: '#/components/schemas/Labels'
+        created_at:
+          description: An ISO-8601 timestamp representation of entity creation date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        updated_at:
+          description: An ISO-8601 timestamp representation of entity last update date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
+        deleted_at:
+          description: An ISO-8601 timestamp representation of entity deletion date.
+          type: string
+          format: date-time
+          example: '2023-01-01T01:01:01.001Z'
+          readOnly: true
+          title: RFC3339 Date-Time
         key:
           $ref: '#/components/schemas/ExternalResourceKey'
         usage_attribution:
@@ -1405,21 +1359,26 @@ components:
               title: Phone Number
           title: Billing Address
       required:
+      - id
       - name
+      - created_at
+      - updated_at
       - key
-    CustomerPagePaginatedResponse:
-      description: Page paginated response.
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/BillingCustomer'
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-      required:
-      - data
-      - meta
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -1435,28 +1394,22 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Forbidden
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    ExternalResourceKey:
-      description: ExternalResourceKey is a unique string that is used to identify a resource in an external system.
-      type: string
-      example: 019ae40f-4258-7f15-9491-842f42a7d6ac
-      maxLength: 256
-      minLength: 1
-      title: External Resource Key
-    UsageAttributionSubjectKey:
-      description: Subject key.
-      type: string
-      minLength: 1
-    InvalidParameterStandard:
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterDependentItem:
       type: object
       properties:
         field:
@@ -1464,264 +1417,78 @@ components:
           example: name
           readOnly: true
         rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
+          description: invalid parameters rules
           type: string
-          example: body
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
         reason:
           type: string
           example: is a required field
           readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
       required:
       - field
+      - rule
       - reason
-    BillingAppStripeCreateCustomerPortalSessionResult:
-      description: 'Result of creating a [Stripe Customer Portal Session](https://docs.stripe.com/api/customer_portal/sessions/object).
-
-
-        Contains all the information needed to redirect the customer to the Stripe Customer Portal.'
+      - dependents
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
       type: object
-      properties:
-        id:
-          description: 'The ID of the customer portal session.
-
-
-            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-id'
-          type: string
-        stripe_customer_id:
-          description: The ID of the stripe customer.
-          type: string
-        configuration_id:
-          description: 'Configuration used to customize the customer portal.
-
-
-            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-configuration'
-          type: string
-        livemode:
-          description: 'Livemode.
-
-
-            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-livemode'
-          type: boolean
-        created_at:
-          description: 'Created at.
-
-
-            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-created'
-          type: string
-          format: date-time
-          example: '2023-01-01T01:01:01.001Z'
-          title: RFC3339 Date-Time
-        return_url:
-          description: 'Return URL.
-
-
-            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-return_url'
-          type: string
-        locale:
-          description: 'The IETF language tag of the locale customer portal is displayed in.
-
-
-            See: https://docs.stripe.com/api/customer_portal/sessions/object#portal_session_object-locale'
-          type: string
-        url:
-          description: 'The URL to redirect the customer to after they have completed
-
-            their requested actions.'
-          type: string
-      required:
-      - id
-      - stripe_customer_id
-      - configuration_id
-      - livemode
-      - created_at
-      - return_url
-      - locale
-      - url
-    UpsertAppCustomerDataRequest:
-      description: AppCustomerData upsert request.
-      type: object
-      properties:
-        stripe:
-          description: Used if the customer has a linked Stripe app.
-          type: object
-          properties:
-            customer_id:
-              description: The Stripe customer ID used.
-              type: string
-              example: cus_1234567890
-              title: Stripe customer ID
-            default_payment_method_id:
-              description: The Stripe default payment method ID.
-              type: string
-              example: pm_1234567890
-              title: Stripe default payment method ID
-            labels:
-              description: Labels for this Stripe integration on the customer.
-              type: object
-              example:
-                env: test
-              additionalProperties:
-                type: string
-                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                minLength: 1
-                maxLength: 63
-              maxProperties: 50
-              title: Labels
-          title: Stripe
-        external_invoicing:
-          description: Used if the customer has a linked external invoicing app.
-          type: object
-          properties:
-            labels:
-              description: Labels for this external invoicing integration on the customer.
-              type: object
-              example:
-                env: test
-              additionalProperties:
-                type: string
-                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                minLength: 1
-                maxLength: 63
-              maxProperties: 50
-              title: Labels
-          title: External invoicing
-    ListCustomersParamsFilter:
-      description: Filter options for listing customers.
-      type: object
-      properties:
-        key:
-          description: Filter customers by key.
-          type: object
-          additionalProperties: false
-          properties:
-            eq:
-              type: string
-            contains:
-              type: string
-            ocontains:
-              type: string
-            oeq:
-              type: string
-            neq:
-              type: string
-          required:
-          - contains
-          - ocontains
-          - oeq
-          - neq
-          title: StringFieldNEQFilter
-        name:
-          description: Filter customers by name.
-          type: object
-          additionalProperties: false
-          properties:
-            eq:
-              type: string
-            contains:
-              type: string
-            ocontains:
-              type: string
-            oeq:
-              type: string
-            neq:
-              type: string
-          required:
-          - contains
-          - ocontains
-          - oeq
-          - neq
-          title: StringFieldNEQFilter
-        primary_email:
-          description: Filter customers by primary email.
-          type: object
-          additionalProperties: false
-          properties:
-            eq:
-              type: string
-            contains:
-              type: string
-            ocontains:
-              type: string
-            oeq:
-              type: string
-            neq:
-              type: string
-          required:
-          - contains
-          - ocontains
-          - oeq
-          - neq
-          title: StringFieldNEQFilter
-    BillingAppCustomerData:
-      description: App customer data.
-      type: object
-      properties:
-        stripe:
-          description: Used if the customer has a linked Stripe app.
-          type: object
-          properties:
-            customer_id:
-              description: The Stripe customer ID used.
-              type: string
-              example: cus_1234567890
-              title: Stripe customer ID
-            default_payment_method_id:
-              description: The Stripe default payment method ID.
-              type: string
-              example: pm_1234567890
-              title: Stripe default payment method ID
-            labels:
-              description: Labels for this Stripe integration on the customer.
-              type: object
-              example:
-                env: test
-              additionalProperties:
-                type: string
-                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                minLength: 1
-                maxLength: 63
-              maxProperties: 50
-              title: Labels
-          title: Stripe
-        external_invoicing:
-          description: Used if the customer has a linked external invoicing app.
-          type: object
-          properties:
-            labels:
-              description: Labels for this external invoicing integration on the customer.
-              type: object
-              example:
-                env: test
-              additionalProperties:
-                type: string
-                pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-                minLength: 1
-                maxLength: 63
-              maxProperties: 50
-              title: Labels
-          title: External invoicing
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    ULID:
+      description: ULID (Universally Unique Lexicographically Sortable Identifier).
+      type: string
+      example: 01G65Z755AFWAKHE12NY0CQ9FH
+      pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+      title: ULID
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -1847,57 +1614,290 @@ components:
           title: Billing Address
       required:
       - name
-  responses:
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    Gone:
-      description: Gone
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/GoneError'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    BillingCustomerData:
+      description: Billing customer data.
+      type: object
+      properties:
+        billing_profile:
+          description: 'The billing profile for the customer.
+
+
+            If not provided, the default billing profile will be used.'
+          type: object
+          properties:
+            id:
+              description: The ID of the billing profile.
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              title: ULID
+          required:
+          - id
+          title: Billing profile
+        app_data:
+          description: App customer data.
+          type: object
+          properties:
+            stripe:
+              description: Used if the customer has a linked Stripe app.
+              type: object
+              properties:
+                customer_id:
+                  description: The Stripe customer ID used.
+                  type: string
+                  example: cus_1234567890
+                  title: Stripe customer ID
+                default_payment_method_id:
+                  description: The Stripe default payment method ID.
+                  type: string
+                  example: pm_1234567890
+                  title: Stripe default payment method ID
+                labels:
+                  description: Labels for this Stripe integration on the customer.
+                  type: object
+                  example:
+                    env: test
+                  additionalProperties:
+                    type: string
+                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                    minLength: 1
+                    maxLength: 63
+                  maxProperties: 50
+                  title: Labels
+              title: Stripe
+            external_invoicing:
+              description: Used if the customer has a linked external invoicing app.
+              type: object
+              properties:
+                labels:
+                  description: Labels for this external invoicing integration on the customer.
+                  type: object
+                  example:
+                    env: test
+                  additionalProperties:
+                    type: string
+                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                    minLength: 1
+                    maxLength: 63
+                  maxProperties: 50
+                  title: Labels
+              title: External invoicing
+          title: App customer data
+    ExternalResourceKey:
+      description: ExternalResourceKey is a unique string that is used to identify a resource in an external system.
+      type: string
+      example: 019ae40f-4258-7f15-9491-842f42a7d6ac
+      maxLength: 256
+      minLength: 1
+      title: External Resource Key
+    CreateCustomerRequest:
+      description: Customer create request.
+      type: object
+      properties:
+        name:
+          description: 'Display name of the resource.
+
+
+            Between 1 and 256 characters.'
+          type: string
+          maxLength: 256
+          minLength: 1
+        description:
+          description: 'Optional description of the resource.
+
+
+            Maximum 1024 characters.'
+          type: string
+          maxLength: 1024
+        labels:
+          $ref: '#/components/schemas/Labels'
+        key:
+          $ref: '#/components/schemas/ExternalResourceKey'
+        usage_attribution:
+          description: Mapping to attribute metered usage to the customer by the event subject.
+          type: object
+          properties:
+            subject_keys:
+              description: 'The subjects that are attributed to the customer.
+
+                Can be empty when no usage event subjects are associated with the customer.'
+              type: array
+              items:
+                $ref: '#/components/schemas/UsageAttributionSubjectKey'
+              minItems: 0
+              title: Subject Keys
+          required:
+          - subject_keys
+          title: Usage Attribution
+        primary_email:
+          description: The primary email address of the customer.
+          type: string
+          title: Primary Email
+        currency:
+          description: 'Currency of the customer.
+
+            Used for billing, tax and invoicing.'
+          type: string
+          example: USD
+          maxLength: 3
+          minLength: 3
+          pattern: ^[A-Z]{3}$
+          title: Currency
+        billing_address:
+          description: 'The billing address of the customer.
+
+            Used for tax and invoicing.'
+          type: object
+          properties:
+            country:
+              description: Country code in [ISO 3166-1](https://www.iso.org/iso-3166-country-codes.html) alpha-2 format.
+              type: string
+              example: US
+              maxLength: 2
+              minLength: 2
+              pattern: ^[A-Z]{2}$
+              title: Country
+            postal_code:
+              description: Postal code.
+              type: string
+              title: Postal Code
+            state:
+              description: State or province.
+              type: string
+              title: State
+            city:
+              description: City.
+              type: string
+              title: City
+            line1:
+              description: First line of the address.
+              type: string
+              title: Line 1
+            line2:
+              description: Second line of the address.
+              type: string
+              title: Line 2
+            phone_number:
+              description: Phone number.
+              type: string
+              title: Phone Number
+          title: Billing Address
+      required:
+      - name
+      - key
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    UpsertCustomerBillingDataRequest:
+      description: CustomerBillingData upsert request.
+      type: object
+      properties:
+        billing_profile:
+          description: 'The billing profile for the customer.
+
+
+            If not provided, the default billing profile will be used.'
+          type: object
+          properties:
+            id:
+              description: The ID of the billing profile.
+              type: string
+              example: 01G65Z755AFWAKHE12NY0CQ9FH
+              pattern: ^[0-7][0-9A-HJKMNP-TV-Z]{25}$
+              title: ULID
+          required:
+          - id
+          title: Billing profile
+        app_data:
+          description: App customer data.
+          type: object
+          properties:
+            stripe:
+              description: Used if the customer has a linked Stripe app.
+              type: object
+              properties:
+                customer_id:
+                  description: The Stripe customer ID used.
+                  type: string
+                  example: cus_1234567890
+                  title: Stripe customer ID
+                default_payment_method_id:
+                  description: The Stripe default payment method ID.
+                  type: string
+                  example: pm_1234567890
+                  title: Stripe default payment method ID
+                labels:
+                  description: Labels for this Stripe integration on the customer.
+                  type: object
+                  example:
+                    env: test
+                  additionalProperties:
+                    type: string
+                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                    minLength: 1
+                    maxLength: 63
+                  maxProperties: 50
+                  title: Labels
+              title: Stripe
+            external_invoicing:
+              description: Used if the customer has a linked external invoicing app.
+              type: object
+              properties:
+                labels:
+                  description: Labels for this external invoicing integration on the customer.
+                  type: object
+                  example:
+                    env: test
+                  additionalProperties:
+                    type: string
+                    pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+                    minLength: 1
+                    maxLength: 63
+                  maxProperties: 50
+                  title: Labels
+              title: External invoicing
+          title: App customer data
+    UsageAttributionSubjectKey:
+      description: Subject key.
+      type: string
+      minLength: 1
   parameters:
     PagePaginationQuery:
       name: page

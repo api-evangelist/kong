@@ -476,6 +476,75 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
+  parameters:
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    SNIIdOrName:
+      description: ID or name of the SNI to lookup
+      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
+      in: path
+      name: SNIIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    CertificateId:
+      description: ID of the Certificate to lookup
+      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
+      in: path
+      name: CertificateId
+      required: true
+      schema:
+        type: string
+    SNIId:
+      description: ID of the SNI to lookup
+      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
+      in: path
+      name: SNIId
+      required: true
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
   schemas:
     GatewayUnauthorizedError:
       type: object
@@ -530,6 +599,9 @@ components:
       required:
       - name
       - certificate
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
     SNIWithoutParents:
       description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
       type: object
@@ -569,6 +641,9 @@ components:
       additionalProperties: false
       required:
       - name
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
     SNI_2:
       description: An SNI object represents a many-to-one mapping of hostnames to a certificate. That is, a certificate object can have many hostnames associated with it; when Kong receives an SSL request, it uses the SNI field in the Client Hello to lookup the certificate object based on the SNI associated with the certificate.
       type: object
@@ -611,12 +686,6 @@ components:
       required:
       - name
       - certificate
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
-      type: string
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -646,75 +715,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    SNIIdOrName:
-      description: ID or name of the SNI to lookup
-      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
-      in: path
-      name: SNIIdOrName
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    CertificateId:
-      description: ID of the Certificate to lookup
-      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
-      in: path
-      name: CertificateId
-      required: true
-      schema:
-        type: string
-    SNIId:
-      description: ID of the SNI to lookup
-      example: 64c17a1a-b7d7-4a65-a5a4-42e4a7016e7f
-      in: path
-      name: SNIId
-      required: true
-      schema:
-        type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
   securitySchemes:
     adminToken:
       in: header

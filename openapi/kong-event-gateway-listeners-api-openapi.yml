@@ -147,137 +147,73 @@ paths:
       tags:
       - Event Gateway Listeners
 components:
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    ListEventGatewayListenersResponse:
+      description: A paginated list response for a collection of Event Gateway listeners.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayListener'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   schemas:
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    EventGatewayListener:
-      description: Listeners are used to expose virtual clusters to clients.
-      type: object
-      properties:
-        id:
-          description: The unique identifier of the listener.
-          type: string
-          format: uuid
-          x-speakeasy-param-suppress-computed-diff: true
-        name:
-          description: The unique name of the listener.
-          type: string
-          maxLength: 255
-          minLength: 1
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the listener.
-          type: string
-          default: ''
-          maxLength: 512
-        addresses:
-          $ref: '#/components/schemas/EventGatewayListenerAddresses'
-        ports:
-          $ref: '#/components/schemas/EventGatewayListenerPorts'
-        labels:
-          $ref: '#/components/schemas/Labels'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      required:
-      - id
-      - name
-      - addresses
-      - ports
-      - created_at
-      - updated_at
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    EventGatewayListenerPort:
-      oneOf:
-      - type: string
-        pattern: ^(\d{1,5}|\d{1,5}-\d{1,5})$
-        description: A port or a range of ports in the format 9092 or 9092-9094.
-      - type: integer
-        minimum: 1
-        maximum: 65535
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    EventGatewayListenerAddresses:
-      description: "Which address or addresses to listen on.\n`0.0.0.0` means all addresses on the host.\n`::` means all addresses on the host in IPv6.\n\n  If `0.0.0.0` or `::` is used, there can't be other extra addresses defined.\n  WARNING: there are use cases where listening on all addresses is insecure. So use this with caution.\n\n  `localhost` means only the localhost ipv4 address.\n"
-      type: array
-      items:
-        type: string
-        minLength: 1
-      minItems: 1
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
       type: string
       format: date-time
       example: '2022-11-04T20:10:06.927Z'
       readOnly: true
       x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterDependentItem:
+    InvalidParameterChoiceItem:
       type: object
       properties:
         field:
@@ -288,17 +224,18 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - dependent_fields
-          nullable: true
+          - enum
+          nullable: false
           readOnly: true
         reason:
           type: string
           example: is a required field
           readOnly: true
-        dependents:
+        choices:
           type: array
           items: {}
-          nullable: true
+          minItems: 1
+          nullable: false
           readOnly: true
           uniqueItems: true
         source:
@@ -307,9 +244,15 @@ components:
       additionalProperties: false
       required:
       - field
-      - rule
       - reason
-      - dependents
+      - rule
+      - choices
+    EventGatewayListenerPorts:
+      description: "Which port or ports to listen on.\nThere can be multiple ways to define ports:\n  - as a single port, e.g. 9092\n  - as a range of ports, e.g. 9092-9094\n\nIt's possible to combine both, e.g. [9092, \"9093-9095\", 9096].\n"
+      type: array
+      items:
+        $ref: '#/components/schemas/EventGatewayListenerPort'
+      minItems: 1
     StringFieldContainsFilter:
       description: Filters on the given string field value by fuzzy match.
       type: object
@@ -320,50 +263,6 @@ components:
       required:
       - contains
       title: StringFieldContainsFilter
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
     CursorMetaPage:
       type: object
       properties:
@@ -393,21 +292,13 @@ components:
       - size
       - next
       - previous
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     BaseError:
       description: standard error
       type: object
@@ -462,6 +353,172 @@ components:
       - instance
       - detail
       title: Error
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    EventGatewayListener:
+      description: Listeners are used to expose virtual clusters to clients.
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the listener.
+          type: string
+          format: uuid
+          x-speakeasy-param-suppress-computed-diff: true
+        name:
+          description: The unique name of the listener.
+          type: string
+          maxLength: 255
+          minLength: 1
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the listener.
+          type: string
+          default: ''
+          maxLength: 512
+        addresses:
+          $ref: '#/components/schemas/EventGatewayListenerAddresses'
+        ports:
+          $ref: '#/components/schemas/EventGatewayListenerPorts'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - addresses
+      - ports
+      - created_at
+      - updated_at
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    StringFieldEqualsFilter:
+      description: Filters on the given string field value by exact match.
+      properties:
+        eq:
+          type: string
+      title: StringFieldEqualsFilter
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -491,7 +548,34 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    InvalidParameterMaximumLength:
       type: object
       properties:
         field:
@@ -502,57 +586,36 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - enum
+          - max_length
+          - max_items
+          - max
           nullable: false
           readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
       - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
+      - maximum
+    EventGatewayListenerPort:
+      oneOf:
+      - type: string
+        pattern: ^(\d{1,5}|\d{1,5}-\d{1,5})$
+        description: A port or a range of ports in the format 9092 or 9092-9094.
+      - type: integer
+        minimum: 1
+        maximum: 65535
     CursorMeta:
       description: Pagination metadata.
       type: object
@@ -561,6 +624,13 @@ components:
           $ref: '#/components/schemas/CursorMetaPage'
       required:
       - page
+    EventGatewayListenerAddresses:
+      description: "Which address or addresses to listen on.\n`0.0.0.0` means all addresses on the host.\n`::` means all addresses on the host in IPv6.\n\n  If `0.0.0.0` or `::` is used, there can't be other extra addresses defined.\n  WARNING: there are use cases where listening on all addresses is insecure. So use this with caution.\n\n  `localhost` means only the localhost ipv4 address.\n"
+      type: array
+      items:
+        type: string
+        minLength: 1
+      minItems: 1
     InvalidParameterStandard:
       type: object
       properties:
@@ -581,76 +651,6 @@ components:
       required:
       - field
       - reason
-    StringFieldEqualsFilter:
-      description: Filters on the given string field value by exact match.
-      properties:
-        eq:
-          type: string
-      title: StringFieldEqualsFilter
-    EventGatewayListenerPorts:
-      description: "Which port or ports to listen on.\nThere can be multiple ways to define ports:\n  - as a single port, e.g. 9092\n  - as a range of ports, e.g. 9092-9094\n\nIt's possible to combine both, e.g. [9092, \"9093-9095\", 9096].\n"
-      type: array
-      items:
-        $ref: '#/components/schemas/EventGatewayListenerPort'
-      minItems: 1
-  responses:
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListEventGatewayListenersResponse:
-      description: A paginated list response for a collection of Event Gateway listeners.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayListener'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
   parameters:
     PageSize:
       name: page[size]
@@ -675,15 +675,6 @@ components:
       description: Filter listeners returned in the response.
       required: false
       style: deepObject
-    gatewayId:
-      name: gatewayId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your Gateway.
     PageAfter:
       name: page[after]
       description: Request the next page of data, starting with the item after this parameter.
@@ -693,9 +684,18 @@ components:
       schema:
         type: string
         example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    gatewayId:
+      name: gatewayId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your Gateway.
   requestBodies:
-    CreateEventGatewayListenerRequest:
-      description: The request schema for creating a listener.
+    UpdateEventGatewayListenerRequest:
+      description: The request schema for updating a listener.
       content:
         application/json:
           schema:
@@ -722,8 +722,8 @@ components:
             - name
             - addresses
             - ports
-    UpdateEventGatewayListenerRequest:
-      description: The request schema for updating a listener.
+    CreateEventGatewayListenerRequest:
+      description: The request schema for creating a listener.
       content:
         application/json:
           schema:

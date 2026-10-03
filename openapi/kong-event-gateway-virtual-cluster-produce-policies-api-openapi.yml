@@ -240,34 +240,252 @@ paths:
       tags:
       - Event Gateway Virtual Cluster Produce Policies
 components:
+  responses:
+    ListProducePoliciesResponse:
+      description: 'A paginated list response for a collection of produce policies associated with an Event Gateway virtual cluster.
+
+        '
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventGatewayPolicy'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    EventGatewayPolicyChainResponse:
+      description: A response containing the list of policies in order of execution.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              policies:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayPolicyReference'
+            required:
+            - policies
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   schemas:
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    SchemaRegistryReferenceById:
+    EventGatewayProduceSchemaValidationPolicySchemaRegistryConfig:
+      description: The configuration of the produce schema validation policy when using a schema registry.
       type: object
       properties:
-        id:
-          description: The unique identifier of the schema registry.
+        schema_registry:
+          $ref: '#/components/schemas/SchemaRegistryReference'
+        key_validation_action:
+          $ref: '#/components/schemas/ProduceKeyValidationAction'
+        value_validation_action:
+          $ref: '#/components/schemas/ProduceValueValidationAction'
+        type:
           type: string
-          format: uuid
-          minLength: 1
+          const: confluent_schema_registry
       required:
-      - id
-    EventGatewayEncryptPolicy:
-      description: Encrypts Kafka records or keys using AES_256_GCM. Keys are therefore 256 bits long.
+      - type
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    EventGatewayProduceSchemaValidationPolicyJsonConfig:
+      description: The configuration of the produce schema validation policy when using JSON parsing without schema.
+      type: object
+      properties:
+        schema_registry:
+          $ref: '#/components/schemas/SchemaRegistryReference'
+        key_validation_action:
+          $ref: '#/components/schemas/ProduceKeyValidationAction'
+        value_validation_action:
+          $ref: '#/components/schemas/ProduceValueValidationAction'
+        type:
+          type: string
+          const: json
+      required:
+      - type
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    EventGatewayModifyHeadersPolicy:
+      description: A policy that modifies headers for requests.
       type: object
       properties:
         type:
           description: The type name of the policy.
           type: string
-          const: encrypt
+          const: modify_headers
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        config:
+          description: The configuration of the modify headers policy.
+          type: object
+          properties:
+            actions:
+              description: Actions are run in sequential order and act on individual headers.
+              type: array
+              items:
+                $ref: '#/components/schemas/EventGatewayModifyHeaderAction'
+              minItems: 1
+        condition:
+          description: 'A string containing the boolean expression that determines whether the policy is applied.
+
+
+            When the policy is applied as a child policy of schema_validation, the expression can also reference
+
+            `record.value` fields.
+
+            '
+          type: string
+          example: record.value.content.foo.bar == "a-value"
+          default: ''
+          maxLength: 1000
+          x-expression:
+            type: boolean
+            fields:
+            - name: context.auth.principal.name
+              type: string
+              description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
+            - name: context.auth.type
+              type: string
+              description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
+
+                '
+            - name: context.topic.name
+              type: string
+              description: The name of the topic.
+            - name: record.headers
+              type: object
+              description: An associative array of header key value pairs.
+            - name: record.value.validated
+              type: boolean
+              description: Indicates whether the record value was successfully validated.
+            - name: record.value.content
+              type: object
+              description: The content of the record value.
+      required:
+      - type
+      - config
+      title: Modify Headers
+    EventGatewayParsedRecordEncryptFieldsConfig:
+      description: The configuration of the encrypt parsed record policy.
+      type: object
+      properties:
+        failure_mode:
+          $ref: '#/components/schemas/ProduceFailureMode'
+        encrypt_fields:
+          description: Selects which fields to encrypt and with what keys.
+          type: array
+          items:
+            $ref: '#/components/schemas/EventGatewayParsedRecordEncryptionSelector'
+          minItems: 1
+      required:
+      - failure_mode
+      - encrypt_fields
+    ProduceKeyValidationAction:
+      description: "Defines a behavior when record key is not valid.\n* reject - rejects a batch for topic partition. Only available for produce.\n* mark - marks a record with kong/server header and client ID value\n\n\n  to help to identify the clients violating schema.\n"
+      type: string
+      enum:
+      - reject
+      - mark
+      x-speakeasy-unknown-values: allow
+    EventGatewayProduceSchemaValidationPolicy:
+      description: A policy that validates produce messages against a schema registry.
+      type: object
+      properties:
+        type:
+          description: The type name of the policy.
+          type: string
+          const: schema_validation
           maxLength: 255
           minLength: 1
         name:
@@ -289,7 +507,7 @@ components:
         config:
           description: The configuration of the policy.
           type: object
-          $ref: '#/components/schemas/EventGatewayEncryptConfig'
+          $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicyConfig'
         condition:
           description: A string containing the boolean expression that determines whether the policy is applied.
           type: string
@@ -316,80 +534,213 @@ components:
       required:
       - type
       - config
-      title: Encrypt
-    EventGatewayProduceSchemaValidationPolicyJsonConfig:
-      description: The configuration of the produce schema validation policy when using JSON parsing without schema.
+      title: Schema Validation
+    EncryptionKeyStatic:
+      description: 'A static encryption key.
+
+        '
       type: object
       properties:
-        schema_registry:
-          $ref: '#/components/schemas/SchemaRegistryReference'
-        key_validation_action:
-          $ref: '#/components/schemas/ProduceKeyValidationAction'
-        value_validation_action:
-          $ref: '#/components/schemas/ProduceValueValidationAction'
         type:
           type: string
-          const: json
+          const: static
+        key:
+          $ref: '#/components/schemas/EncryptionKeyStaticReference'
       required:
       - type
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      - key
+    EventGatewayParsedRecordEncryptFieldsPolicy:
+      description: 'Encrypts fields of parsed Kafka records using AES_256_GCM. Keys are therefore 256 bits long.
+
+
+        Note this policy can only be used as a child of a `EventGatewayProduceSchemaValidationPolicy` policy.
+
+        '
       type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    EventGatewayPolicyPatch:
-      description: The schema of the policy to patch it.
       properties:
+        type:
+          description: The type name of the policy.
+          type: string
+          const: encrypt_fields
+          maxLength: 255
+          minLength: 1
         name:
           description: A unique user-defined name of the policy.
           type: string
           maxLength: 255
-          minLength: 1
-          nullable: true
-          pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
         description:
           description: A human-readable description of the policy.
           type: string
+          default: ''
           maxLength: 512
-          nullable: true
         enabled:
           description: Whether the policy is enabled.
           type: boolean
-        condition:
-          description: A string containing the boolean expression that determines whether the policy is applied.
-          type: string
-          example: context.topic.name.endsWith('my_suffix')
-          maxLength: 1000
-          nullable: true
-          x-expression:
-            type: boolean
+          default: true
         labels:
           $ref: '#/components/schemas/Labels'
-    ProduceValueValidationAction:
-      description: "Defines a behavior when record value is not valid.\n* reject - rejects a batch for topic partition. Only available for produce.\n* mark - marks a record with kong/server header and client ID value\n\n\n  to help to identify the clients violating schema.\n"
-      type: string
-      enum:
-      - reject
-      - mark
-      x-speakeasy-unknown-values: allow
-    EncryptionKeyStaticReferenceById:
-      description: A static encryption key reference by ID.
+        config:
+          description: The configuration of the policy.
+          type: object
+          $ref: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsConfig'
+        condition:
+          description: 'A string containing the boolean expression that determines whether the policy is applied.
+
+
+            When the policy is applied as a child policy of schema_validation, the expression can also reference
+
+            `record.value` fields.
+
+            '
+          type: string
+          example: record.value.content.foo.bar == "a-value"
+          default: ''
+          maxLength: 1000
+          x-expression:
+            type: boolean
+            fields:
+            - name: context.auth.principal.name
+              type: string
+              description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
+            - name: context.auth.type
+              type: string
+              description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
+
+                '
+            - name: context.topic.name
+              type: string
+              description: The name of the topic.
+            - name: record.headers
+              type: object
+              description: An associative array of header key value pairs.
+            - name: record.value.validated
+              type: boolean
+              description: Indicates whether the record value was successfully validated.
+            - name: record.value.content
+              type: object
+              description: The content of the record value.
+      required:
+      - type
+      - config
+      title: Encrypt Parsed Record
+    EventGatewayProducePolicyCreate:
+      description: The typed schema of the produce policy to modify it.
+      discriminator:
+        propertyName: type
+        mapping:
+          modify_headers: '#/components/schemas/EventGatewayModifyHeadersPolicyCreate'
+          schema_validation: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
+          encrypt: '#/components/schemas/EventGatewayEncryptPolicy'
+          encrypt_fields: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicyCreate'
+      oneOf:
+      - $ref: '#/components/schemas/EventGatewayModifyHeadersPolicyCreate'
+      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
+      - $ref: '#/components/schemas/EventGatewayEncryptPolicy'
+      - $ref: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicyCreate'
+    EventGatewayModifyHeaderRemoveAction:
+      description: An action that removes a header by key.
       type: object
       properties:
-        id:
-          description: The ID of the static key defined in the key source.
+        op:
           type: string
-          format: uuid
-          minLength: 1
+          const: remove
+        key:
+          description: The key of the header to remove.
+          type: string
       required:
-      - id
+      - op
+      - key
+    EncryptionFailureMode:
+      description: 'Describes how to handle failing encryption or decryption.
+
+        Use `error` if the record should be rejected if encryption or decryption fails.
+
+        Use `passthrough` to ignore encryption or decryption failure and continue proxying the record.
+
+        '
+      type: string
+      enum:
+      - error
+      - passthrough
+      x-speakeasy-unknown-values: allow
+    EventGatewayProduceSchemaValidationPolicyConfig:
+      description: The configuration of the produce schema validation policy.
+      discriminator:
+        propertyName: type
+        mapping:
+          confluent_schema_registry: '#/components/schemas/EventGatewayProduceSchemaValidationPolicySchemaRegistryConfig'
+          json: '#/components/schemas/EventGatewayProduceSchemaValidationPolicyJsonConfig'
+      oneOf:
+      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicySchemaRegistryConfig'
+      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicyJsonConfig'
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    SchemaRegistryReference:
+      description: A reference to a schema Registry.
+      oneOf:
+      - $ref: '#/components/schemas/SchemaRegistryReferenceById'
+      - $ref: '#/components/schemas/SchemaRegistryReferenceByName'
+      x-terraform-preferred: '#/components/schemas/SchemaRegistryReferenceById'
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
     EventGatewayParsedRecordEncryptFieldsPolicyCreate:
       description: 'Encrypts fields of parsed Kafka records using AES_256_GCM. Keys are therefore 256 bits long.
 
@@ -470,123 +821,56 @@ components:
       - config
       - parent_policy_id
       title: Encrypt Parsed Record Fields
-    NotFoundError:
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
+        required:
+        - invalid_parameters
         properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    SchemaRegistryReferenceByName:
-      description: Reference a schema registry by its unique name.
-      type: object
-      properties:
-        name:
-          description: The unique name of the schema registry.
-          type: string
-          maxLength: 255
-          minLength: 1
-      required:
-      - name
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    EventGatewayParsedRecordEncryptFieldsConfig:
-      description: The configuration of the encrypt parsed record policy.
-      type: object
-      properties:
-        failure_mode:
-          $ref: '#/components/schemas/ProduceFailureMode'
-        encrypt_fields:
-          description: Selects which fields to encrypt and with what keys.
-          type: array
-          items:
-            $ref: '#/components/schemas/EventGatewayParsedRecordEncryptionSelector'
-          minItems: 1
-      required:
-      - failure_mode
-      - encrypt_fields
-    EventGatewayProducePolicyUpdate:
-      description: The typed schema of the produce policy to modify it.
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    EncryptionKey:
+      description: 'The key to use for encryption.
+
+        '
       discriminator:
         propertyName: type
         mapping:
-          modify_headers: '#/components/schemas/EventGatewayModifyHeadersPolicy'
-          schema_validation: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
-          encrypt: '#/components/schemas/EventGatewayEncryptPolicy'
-          encrypt_fields: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicy'
+          aws: '#/components/schemas/EncryptionKeyAWS'
+          static: '#/components/schemas/EncryptionKeyStatic'
       oneOf:
-      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
-      - $ref: '#/components/schemas/EventGatewayModifyHeadersPolicy'
-      - $ref: '#/components/schemas/EventGatewayEncryptPolicy'
-      - $ref: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicy'
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+      - $ref: '#/components/schemas/EncryptionKeyAWS'
+      - $ref: '#/components/schemas/EncryptionKeyStatic'
+    ProduceFailureMode:
+      description: 'Describes how to handle a failure in a policy applied to produced records.
+
+        * `reject` - rejects the record batch.
+
+        * `passthrough` - passes the record silently to the backend cluster even though policy execution failed.
+
+        * `mark` - passes the record to the backend cluster but marks it with a `kong/policy-failure-<id>` header whose value is the reason for the policy failure (truncated to 512 characters).
+
+        '
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    EventGatewayProduceSchemaValidationPolicySchemaRegistryConfig:
-      description: The configuration of the produce schema validation policy when using a schema registry.
-      type: object
-      properties:
-        schema_registry:
-          $ref: '#/components/schemas/SchemaRegistryReference'
-        key_validation_action:
-          $ref: '#/components/schemas/ProduceKeyValidationAction'
-        value_validation_action:
-          $ref: '#/components/schemas/ProduceValueValidationAction'
-        type:
-          type: string
-          const: confluent_schema_registry
-      required:
-      - type
+      enum:
+      - reject
+      - passthrough
+      - mark
+      x-speakeasy-unknown-values: allow
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -624,553 +908,6 @@ components:
       - reason
       - rule
       - minimum
-    ProduceFailureMode:
-      description: 'Describes how to handle a failure in a policy applied to produced records.
-
-        * `reject` - rejects the record batch.
-
-        * `passthrough` - passes the record silently to the backend cluster even though policy execution failed.
-
-        * `mark` - passes the record to the backend cluster but marks it with a `kong/policy-failure-<id>` header whose value is the reason for the policy failure (truncated to 512 characters).
-
-        '
-      type: string
-      enum:
-      - reject
-      - passthrough
-      - mark
-      x-speakeasy-unknown-values: allow
-    EventGatewayModifyHeadersPolicy:
-      description: A policy that modifies headers for requests.
-      type: object
-      properties:
-        type:
-          description: The type name of the policy.
-          type: string
-          const: modify_headers
-          maxLength: 255
-          minLength: 1
-        name:
-          description: A unique user-defined name of the policy.
-          type: string
-          maxLength: 255
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the policy.
-          type: string
-          default: ''
-          maxLength: 512
-        enabled:
-          description: Whether the policy is enabled.
-          type: boolean
-          default: true
-        labels:
-          $ref: '#/components/schemas/Labels'
-        config:
-          description: The configuration of the modify headers policy.
-          type: object
-          properties:
-            actions:
-              description: Actions are run in sequential order and act on individual headers.
-              type: array
-              items:
-                $ref: '#/components/schemas/EventGatewayModifyHeaderAction'
-              minItems: 1
-        condition:
-          description: 'A string containing the boolean expression that determines whether the policy is applied.
-
-
-            When the policy is applied as a child policy of schema_validation, the expression can also reference
-
-            `record.value` fields.
-
-            '
-          type: string
-          example: record.value.content.foo.bar == "a-value"
-          default: ''
-          maxLength: 1000
-          x-expression:
-            type: boolean
-            fields:
-            - name: context.auth.principal.name
-              type: string
-              description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
-            - name: context.auth.type
-              type: string
-              description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
-
-                '
-            - name: context.topic.name
-              type: string
-              description: The name of the topic.
-            - name: record.headers
-              type: object
-              description: An associative array of header key value pairs.
-            - name: record.value.validated
-              type: boolean
-              description: Indicates whether the record value was successfully validated.
-            - name: record.value.content
-              type: object
-              description: The content of the record value.
-      required:
-      - type
-      - config
-      title: Modify Headers
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    EventGatewayModifyHeaderAction:
-      description: An action that modifies a header.
-      discriminator:
-        propertyName: op
-        mapping:
-          remove: '#/components/schemas/EventGatewayModifyHeaderRemoveAction'
-          set: '#/components/schemas/EventGatewayModifyHeaderSetAction'
-      oneOf:
-      - $ref: '#/components/schemas/EventGatewayModifyHeaderRemoveAction'
-      - $ref: '#/components/schemas/EventGatewayModifyHeaderSetAction'
-    SchemaRegistryReference:
-      description: A reference to a schema Registry.
-      oneOf:
-      - $ref: '#/components/schemas/SchemaRegistryReferenceById'
-      - $ref: '#/components/schemas/SchemaRegistryReferenceByName'
-      x-terraform-preferred: '#/components/schemas/SchemaRegistryReferenceById'
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    EncryptionRecordPart:
-      description: '* key - encrypt the record key
-
-        * value - encrypt the record value
-
-        '
-      type: string
-      enum:
-      - key
-      - value
-      x-speakeasy-unknown-values: allow
-    EventGatewayProduceSchemaValidationPolicyConfig:
-      description: The configuration of the produce schema validation policy.
-      discriminator:
-        propertyName: type
-        mapping:
-          confluent_schema_registry: '#/components/schemas/EventGatewayProduceSchemaValidationPolicySchemaRegistryConfig'
-          json: '#/components/schemas/EventGatewayProduceSchemaValidationPolicyJsonConfig'
-      oneOf:
-      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicySchemaRegistryConfig'
-      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicyJsonConfig'
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    EventGatewayModifyHeaderSetAction:
-      description: An action that sets a header key and value.
-      type: object
-      properties:
-        op:
-          type: string
-          const: set
-        key:
-          description: The key of the header to set.
-          type: string
-        value:
-          description: The value of the header to set.
-          type: string
-      required:
-      - op
-      - key
-      - value
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    EventGatewayEncryptConfig:
-      description: The configuration of the encrypt policy.
-      type: object
-      properties:
-        failure_mode:
-          $ref: '#/components/schemas/EncryptionFailureMode'
-        part_of_record:
-          description: Describes the parts of a record to encrypt.
-          type: array
-          items:
-            $ref: '#/components/schemas/EncryptionRecordPart'
-          minItems: 1
-        encryption_key:
-          $ref: '#/components/schemas/EncryptionKey'
-      required:
-      - failure_mode
-      - part_of_record
-      - encryption_key
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    EventGatewayProducePolicyCreate:
-      description: The typed schema of the produce policy to modify it.
-      discriminator:
-        propertyName: type
-        mapping:
-          modify_headers: '#/components/schemas/EventGatewayModifyHeadersPolicyCreate'
-          schema_validation: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
-          encrypt: '#/components/schemas/EventGatewayEncryptPolicy'
-          encrypt_fields: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicyCreate'
-      oneOf:
-      - $ref: '#/components/schemas/EventGatewayModifyHeadersPolicyCreate'
-      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
-      - $ref: '#/components/schemas/EventGatewayEncryptPolicy'
-      - $ref: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicyCreate'
-    EventGatewayPolicyReference:
-      description: The unique identifier of the policy.
-      type: string
-      format: uuid
-    EventGatewayPolicy:
-      description: A policy associated with an Event Gateway.
-      type: object
-      properties:
-        type:
-          description: The type name of the policy.
-          type: string
-          maxLength: 255
-          minLength: 1
-        name:
-          description: A unique user-defined name of the policy.
-          type: string
-          maxLength: 255
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the policy.
-          type: string
-          default: ''
-          maxLength: 512
-        enabled:
-          description: Whether the policy is enabled.
-          type: boolean
-          default: true
-        labels:
-          $ref: '#/components/schemas/Labels'
-        id:
-          description: The unique identifier of the policy.
-          type: string
-          format: uuid
-        config:
-          description: The configuration of the policy.
-          type: object
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        parent_policy_id:
-          description: The unique identifier of the parent policy, if any.
-          type: string
-          format: uuid
-          nullable: true
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        condition:
-          description: A string containing the boolean expression that determines whether the policy is applied.
-          type: string
-          default: ''
-          maxLength: 1000
-          x-expression:
-            type: boolean
-            fields: []
-      required:
-      - type
-      - id
-      - created_at
-      - updated_at
-    EventGatewayProduceSchemaValidationPolicy:
-      description: A policy that validates produce messages against a schema registry.
-      type: object
-      properties:
-        type:
-          description: The type name of the policy.
-          type: string
-          const: schema_validation
-          maxLength: 255
-          minLength: 1
-        name:
-          description: A unique user-defined name of the policy.
-          type: string
-          maxLength: 255
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the policy.
-          type: string
-          default: ''
-          maxLength: 512
-        enabled:
-          description: Whether the policy is enabled.
-          type: boolean
-          default: true
-        labels:
-          $ref: '#/components/schemas/Labels'
-        config:
-          description: The configuration of the policy.
-          type: object
-          $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicyConfig'
-        condition:
-          description: A string containing the boolean expression that determines whether the policy is applied.
-          type: string
-          example: context.topic.name.endsWith("my_suffix") && record.headers["x-flag"] == "a-value"
-          default: ''
-          maxLength: 1000
-          x-expression:
-            type: boolean
-            fields:
-            - name: context.auth.principal.name
-              type: string
-              description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
-            - name: context.auth.type
-              type: string
-              description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
-
-                '
-            - name: context.topic.name
-              type: string
-              description: The name of the topic.
-            - name: record.headers
-              type: object
-              description: An associative array of header key value pairs.
-      required:
-      - type
-      - config
-      title: Schema Validation
-    ProduceKeyValidationAction:
-      description: "Defines a behavior when record key is not valid.\n* reject - rejects a batch for topic partition. Only available for produce.\n* mark - marks a record with kong/server header and client ID value\n\n\n  to help to identify the clients violating schema.\n"
-      type: string
-      enum:
-      - reject
-      - mark
-      x-speakeasy-unknown-values: allow
-    EventGatewayParsedRecordEncryptFieldsPolicy:
-      description: 'Encrypts fields of parsed Kafka records using AES_256_GCM. Keys are therefore 256 bits long.
-
-
-        Note this policy can only be used as a child of a `EventGatewayProduceSchemaValidationPolicy` policy.
-
-        '
-      type: object
-      properties:
-        type:
-          description: The type name of the policy.
-          type: string
-          const: encrypt_fields
-          maxLength: 255
-          minLength: 1
-        name:
-          description: A unique user-defined name of the policy.
-          type: string
-          maxLength: 255
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the policy.
-          type: string
-          default: ''
-          maxLength: 512
-        enabled:
-          description: Whether the policy is enabled.
-          type: boolean
-          default: true
-        labels:
-          $ref: '#/components/schemas/Labels'
-        config:
-          description: The configuration of the policy.
-          type: object
-          $ref: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsConfig'
-        condition:
-          description: 'A string containing the boolean expression that determines whether the policy is applied.
-
-
-            When the policy is applied as a child policy of schema_validation, the expression can also reference
-
-            `record.value` fields.
-
-            '
-          type: string
-          example: record.value.content.foo.bar == "a-value"
-          default: ''
-          maxLength: 1000
-          x-expression:
-            type: boolean
-            fields:
-            - name: context.auth.principal.name
-              type: string
-              description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
-            - name: context.auth.type
-              type: string
-              description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
-
-                '
-            - name: context.topic.name
-              type: string
-              description: The name of the topic.
-            - name: record.headers
-              type: object
-              description: An associative array of header key value pairs.
-            - name: record.value.validated
-              type: boolean
-              description: Indicates whether the record value was successfully validated.
-            - name: record.value.content
-              type: object
-              description: The content of the record value.
-      required:
-      - type
-      - config
-      title: Encrypt Parsed Record
-    EncryptionKeyStaticReferenceByName:
-      description: A static encryption key reference by name.
-      type: object
-      properties:
-        name:
-          description: The name of the static key defined in the key source.
-          type: string
-          maxLength: 255
-          minLength: 1
-      required:
-      - name
-      x-speakeasy-name-override: ReferenceByName
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
     EventGatewayParsedRecordEncryptionSelector:
       description: Selects fields of a parsed record for encryption and defines what key to encrypt them with.
       type: object
@@ -1230,27 +967,21 @@ components:
       required:
       - paths
       - encryption_key
-    EncryptionFailureMode:
-      description: 'Describes how to handle failing encryption or decryption.
-
-        Use `error` if the record should be rejected if encryption or decryption fails.
-
-        Use `passthrough` to ignore encryption or decryption failure and continue proxying the record.
-
-        '
-      type: string
-      enum:
-      - error
-      - passthrough
-      x-speakeasy-unknown-values: allow
-    EncryptionKeyStaticReference:
-      description: 'A static encryption key reference, either by ID or by value.
-
-        '
-      anyOf:
-      - $ref: '#/components/schemas/EncryptionKeyStaticReferenceById'
-      - $ref: '#/components/schemas/EncryptionKeyStaticReferenceByName'
-      x-terraform-preferred: '#/components/schemas/EncryptionKeyStaticReferenceById'
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     MoveEventGatewayPolicy:
       description: Defines the position of a policy relative to the policy chain.
       type: object
@@ -1262,7 +993,22 @@ components:
           minimum: 0
       required:
       - index
-    InvalidParameterStandard:
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameterDependentItem:
       type: object
       properties:
         field:
@@ -1270,18 +1016,318 @@ components:
           example: name
           readOnly: true
         rule:
-          $ref: '#/components/schemas/InvalidRules'
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    EventGatewayPolicyPatch:
+      description: The schema of the policy to patch it.
+      properties:
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          minLength: 1
+          nullable: true
+          pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          maxLength: 512
+          nullable: true
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+        condition:
+          description: A string containing the boolean expression that determines whether the policy is applied.
+          type: string
+          example: context.topic.name.endsWith('my_suffix')
+          maxLength: 1000
+          nullable: true
+          x-expression:
+            type: boolean
+        labels:
+          $ref: '#/components/schemas/Labels'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
         reason:
           type: string
-          example: is a required field
+          example: must not have more than 8 characters
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
+      - rule
+      - maximum
+    SchemaRegistryReferenceByName:
+      description: Reference a schema registry by its unique name.
+      type: object
+      properties:
+        name:
+          description: The unique name of the schema registry.
+          type: string
+          maxLength: 255
+          minLength: 1
+      required:
+      - name
+    ProduceValueValidationAction:
+      description: "Defines a behavior when record value is not valid.\n* reject - rejects a batch for topic partition. Only available for produce.\n* mark - marks a record with kong/server header and client ID value\n\n\n  to help to identify the clients violating schema.\n"
+      type: string
+      enum:
+      - reject
+      - mark
+      x-speakeasy-unknown-values: allow
+    EventGatewayModifyHeaderSetAction:
+      description: An action that sets a header key and value.
+      type: object
+      properties:
+        op:
+          type: string
+          const: set
+        key:
+          description: The key of the header to set.
+          type: string
+        value:
+          description: The value of the header to set.
+          type: string
+      required:
+      - op
+      - key
+      - value
+    EventGatewayEncryptConfig:
+      description: The configuration of the encrypt policy.
+      type: object
+      properties:
+        failure_mode:
+          $ref: '#/components/schemas/EncryptionFailureMode'
+        part_of_record:
+          description: Describes the parts of a record to encrypt.
+          type: array
+          items:
+            $ref: '#/components/schemas/EncryptionRecordPart'
+          minItems: 1
+        encryption_key:
+          $ref: '#/components/schemas/EncryptionKey'
+      required:
+      - failure_mode
+      - part_of_record
+      - encryption_key
+    EncryptionRecordPart:
+      description: '* key - encrypt the record key
+
+        * value - encrypt the record value
+
+        '
+      type: string
+      enum:
+      - key
+      - value
+      x-speakeasy-unknown-values: allow
+    EventGatewayPolicyReference:
+      description: The unique identifier of the policy.
+      type: string
+      format: uuid
+    SchemaRegistryReferenceById:
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the schema registry.
+          type: string
+          format: uuid
+          minLength: 1
+      required:
+      - id
+    EventGatewayModifyHeaderAction:
+      description: An action that modifies a header.
+      discriminator:
+        propertyName: op
+        mapping:
+          remove: '#/components/schemas/EventGatewayModifyHeaderRemoveAction'
+          set: '#/components/schemas/EventGatewayModifyHeaderSetAction'
+      oneOf:
+      - $ref: '#/components/schemas/EventGatewayModifyHeaderRemoveAction'
+      - $ref: '#/components/schemas/EventGatewayModifyHeaderSetAction'
+    EventGatewayProducePolicyUpdate:
+      description: The typed schema of the produce policy to modify it.
+      discriminator:
+        propertyName: type
+        mapping:
+          modify_headers: '#/components/schemas/EventGatewayModifyHeadersPolicy'
+          schema_validation: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
+          encrypt: '#/components/schemas/EventGatewayEncryptPolicy'
+          encrypt_fields: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicy'
+      oneOf:
+      - $ref: '#/components/schemas/EventGatewayProduceSchemaValidationPolicy'
+      - $ref: '#/components/schemas/EventGatewayModifyHeadersPolicy'
+      - $ref: '#/components/schemas/EventGatewayEncryptPolicy'
+      - $ref: '#/components/schemas/EventGatewayParsedRecordEncryptFieldsPolicy'
+    EncryptionKeyStaticReferenceById:
+      description: A static encryption key reference by ID.
+      type: object
+      properties:
+        id:
+          description: The ID of the static key defined in the key source.
+          type: string
+          format: uuid
+          minLength: 1
+      required:
+      - id
+    EventGatewayEncryptPolicy:
+      description: Encrypts Kafka records or keys using AES_256_GCM. Keys are therefore 256 bits long.
+      type: object
+      properties:
+        type:
+          description: The type name of the policy.
+          type: string
+          const: encrypt
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        config:
+          description: The configuration of the policy.
+          type: object
+          $ref: '#/components/schemas/EventGatewayEncryptConfig'
+        condition:
+          description: A string containing the boolean expression that determines whether the policy is applied.
+          type: string
+          example: context.topic.name.endsWith("my_suffix") && record.headers["x-flag"] == "a-value"
+          default: ''
+          maxLength: 1000
+          x-expression:
+            type: boolean
+            fields:
+            - name: context.auth.principal.name
+              type: string
+              description: Name of authenticated principal. Username in case of PLAIN/SCRAM, `sub` claim in case of OAUTHBEARER.
+            - name: context.auth.type
+              type: string
+              description: 'The matched authentication type from a virtual cluster: anonymous, sasl_plain, sasl_scram_sha256, sasl_scram_sha512, sasl_oauth_bearer.
+
+                '
+            - name: context.topic.name
+              type: string
+              description: The name of the topic.
+            - name: record.headers
+              type: object
+              description: An associative array of header key value pairs.
+      required:
+      - type
+      - config
+      title: Encrypt
     EventGatewayModifyHeadersPolicyCreate:
       description: A policy that modifies headers for requests.
       type: object
@@ -1362,6 +1408,14 @@ components:
       - type
       - config
       title: Modify headers
+    EncryptionKeyStaticReference:
+      description: 'A static encryption key reference, either by ID or by value.
+
+        '
+      anyOf:
+      - $ref: '#/components/schemas/EncryptionKeyStaticReferenceById'
+      - $ref: '#/components/schemas/EncryptionKeyStaticReferenceByName'
+      x-terraform-preferred: '#/components/schemas/EncryptionKeyStaticReferenceById'
     EncryptionKeyAWS:
       description: 'The AWS KMS key to use for encryption.
 
@@ -1383,34 +1437,73 @@ components:
       required:
       - type
       - arn
-    EventGatewayModifyHeaderRemoveAction:
-      description: An action that removes a header by key.
-      type: object
-      properties:
-        op:
-          type: string
-          const: remove
-        key:
-          description: The key of the header to remove.
-          type: string
-      required:
-      - op
-      - key
-    EncryptionKeyStatic:
-      description: 'A static encryption key.
-
-        '
+    EventGatewayPolicy:
+      description: A policy associated with an Event Gateway.
       type: object
       properties:
         type:
+          description: The type name of the policy.
           type: string
-          const: static
-        key:
-          $ref: '#/components/schemas/EncryptionKeyStaticReference'
+          maxLength: 255
+          minLength: 1
+        name:
+          description: A unique user-defined name of the policy.
+          type: string
+          maxLength: 255
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the policy.
+          type: string
+          default: ''
+          maxLength: 512
+        enabled:
+          description: Whether the policy is enabled.
+          type: boolean
+          default: true
+        labels:
+          $ref: '#/components/schemas/Labels'
+        id:
+          description: The unique identifier of the policy.
+          type: string
+          format: uuid
+        config:
+          description: The configuration of the policy.
+          type: object
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        parent_policy_id:
+          description: The unique identifier of the parent policy, if any.
+          type: string
+          format: uuid
+          nullable: true
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        condition:
+          description: A string containing the boolean expression that determines whether the policy is applied.
+          type: string
+          default: ''
+          maxLength: 1000
+          x-expression:
+            type: boolean
+            fields: []
       required:
       - type
-      - key
-    InvalidParameterMaximumLength:
+      - id
+      - created_at
+      - updated_at
+    EncryptionKeyStaticReferenceByName:
+      description: A static encryption key reference by name.
+      type: object
+      properties:
+        name:
+          description: The name of the static key defined in the key source.
+          type: string
+          maxLength: 255
+          minLength: 1
+      required:
+      - name
+      x-speakeasy-name-override: ReferenceByName
+    InvalidParameterStandard:
       type: object
       properties:
         field:
@@ -1418,172 +1511,18 @@ components:
           example: name
           readOnly: true
         rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
+          $ref: '#/components/schemas/InvalidRules'
         source:
           type: string
           example: body
         reason:
           type: string
-          example: must not have more than 8 characters
+          example: is a required field
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
-      - rule
-      - maximum
-    EncryptionKey:
-      description: 'The key to use for encryption.
-
-        '
-      discriminator:
-        propertyName: type
-        mapping:
-          aws: '#/components/schemas/EncryptionKeyAWS'
-          static: '#/components/schemas/EncryptionKeyStatic'
-      oneOf:
-      - $ref: '#/components/schemas/EncryptionKeyAWS'
-      - $ref: '#/components/schemas/EncryptionKeyStatic'
-  parameters:
-    EventGatewayPolicyListFilter:
-      schema:
-        type: object
-        properties:
-          parent_policy_id:
-            description: The ID of the parent policy.
-            type: string
-      in: query
-      name: filter
-      description: Filter policies returned in the response.
-      required: false
-      style: deepObject
-    EventGatewayPolicyAfter:
-      schema:
-        type: string
-        format: uuid
-      in: query
-      name: after
-      x-speakeasy-terraform-ignore: true
-      description: 'Determines the id of the existing policy the new policy should be inserted after. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
-
-        '
-      required: false
-    EventGatewayPolicyBefore:
-      schema:
-        type: string
-        format: uuid
-      in: query
-      name: before
-      x-speakeasy-terraform-ignore: true
-      description: 'Determines the id of the existing policy the new policy should be inserted before. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
-
-        '
-      required: false
-    policyId:
-      name: policyId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of the policy.
-    virtualClusterId:
-      schema:
-        type: string
-        format: uuid
-      name: virtualClusterId
-      in: path
-      required: true
-      description: The ID of the Virtual Cluster.
-    gatewayId:
-      name: gatewayId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your Gateway.
-  responses:
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    EventGatewayPolicyChainResponse:
-      description: A response containing the list of policies in order of execution.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              policies:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayPolicyReference'
-            required:
-            - policies
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    ListProducePoliciesResponse:
-      description: 'A paginated list response for a collection of produce policies associated with an Event Gateway virtual cluster.
-
-        '
-      content:
-        application/json:
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/EventGatewayPolicy'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
   requestBodies:
     CreateEventGatewayProducePolicyRequest:
       description: The request schema for creating a produce policy.
@@ -1591,12 +1530,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/EventGatewayProducePolicyCreate'
-    UpdateEventGatewayProducePolicyRequest:
-      description: The request schema for updating a produce policy.
+    PatchEventGatewayPolicyRequest:
+      description: The request schema for patching a policy.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/EventGatewayProducePolicyUpdate'
+            $ref: '#/components/schemas/EventGatewayPolicyPatch'
     UpdateEventGatewayPolicyChainRequest:
       description: The request schema for updating the policy chain.
       content:
@@ -1610,12 +1549,73 @@ components:
                   $ref: '#/components/schemas/EventGatewayPolicyReference'
             required:
             - policies
-    PatchEventGatewayPolicyRequest:
-      description: The request schema for patching a policy.
+    UpdateEventGatewayProducePolicyRequest:
+      description: The request schema for updating a produce policy.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/EventGatewayPolicyPatch'
+            $ref: '#/components/schemas/EventGatewayProducePolicyUpdate'
+  parameters:
+    EventGatewayPolicyAfter:
+      schema:
+        type: string
+        format: uuid
+      in: query
+      name: after
+      x-speakeasy-terraform-ignore: true
+      description: 'Determines the id of the existing policy the new policy should be inserted after. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
+
+        '
+      required: false
+    virtualClusterId:
+      schema:
+        type: string
+        format: uuid
+      name: virtualClusterId
+      in: path
+      required: true
+      description: The ID of the Virtual Cluster.
+    policyId:
+      name: policyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of the policy.
+    EventGatewayPolicyBefore:
+      schema:
+        type: string
+        format: uuid
+      in: query
+      name: before
+      x-speakeasy-terraform-ignore: true
+      description: 'Determines the id of the existing policy the new policy should be inserted before. Either ''before'' or ''after'' can be provided, when both are omitted the new policy is added to the end of the chain. When both are provided, the request fails with a 400 Bad Request.
+
+        '
+      required: false
+    gatewayId:
+      name: gatewayId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your Gateway.
+    EventGatewayPolicyListFilter:
+      schema:
+        type: object
+        properties:
+          parent_policy_id:
+            description: The ID of the parent policy.
+            type: string
+      in: query
+      name: filter
+      description: Filter policies returned in the response.
+      required: false
+      style: deepObject
   securitySchemes:
     personalAccessToken:
       type: http

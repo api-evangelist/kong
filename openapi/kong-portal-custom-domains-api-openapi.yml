@@ -114,88 +114,38 @@ paths:
       - Portal Custom Domains
 components:
   schemas:
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    PortalCustomDomainCnameStatus:
-      type: string
-      enum:
-      - verified
-      - pending
-      readOnly: true
-      title: PortalCustomDomainCnameStatus
-      x-speakeasy-unknown-values: allow
-    InvalidParameterMaximumLength:
+    PortalCustomDomain:
       type: object
       properties:
-        field:
+        hostname:
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
+        enabled:
+          type: boolean
+        ssl:
+          $ref: '#/components/schemas/PortalCustomDomainSSL'
+        cname_status:
+          $ref: '#/components/schemas/PortalCustomDomainCnameStatus'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
       additionalProperties: false
       required:
-      - field
-      - reason
-      - rule
-      - maximum
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    CreatePortalCustomDomainSSLStandard:
-      properties:
-        domain_verification_method:
-          type: string
-          const: http
-      additionalProperties: false
-      required:
-      - domain_verification_method
-      title: http
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
+      - hostname
+      - enabled
+      - ssl
+      - cname_status
+      - created_at
+      - updated_at
+      title: PortalCustomDomain
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
       type: string
       format: date-time
       example: '2022-11-04T20:10:06.927Z'
       readOnly: true
       x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterDependentItem:
+    InvalidParameterChoiceItem:
       type: object
       properties:
         field:
@@ -206,17 +156,18 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - dependent_fields
-          nullable: true
+          - enum
+          nullable: false
           readOnly: true
         reason:
           type: string
           example: is a required field
           readOnly: true
-        dependents:
+        choices:
           type: array
           items: {}
-          nullable: true
+          minItems: 1
+          nullable: false
           readOnly: true
           uniqueItems: true
         source:
@@ -225,16 +176,9 @@ components:
       additionalProperties: false
       required:
       - field
-      - rule
       - reason
-      - dependents
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+      - rule
+      - choices
     PortalCustomDomainSSL:
       type: object
       properties:
@@ -267,71 +211,22 @@ components:
       - domain_verification_method
       - verification_status
       title: PortalCustomDomainSSL
-    InvalidParameterMinimumLength:
+    UpdatePortalCustomDomainRequest:
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
+        enabled:
+          type: boolean
+        ssl:
+          $ref: '#/components/schemas/UpdatePortalCustomDomainSSL'
       additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    PortalCustomDomainVerificationMethod:
+      title: UpdatePortalCustomDomainRequest
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
       type: string
-      enum:
-      - http
-      - custom_certificate
-      title: PortalCustomDomainVerificationMethod
-      x-speakeasy-unknown-values: allow
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    PortalCustomDomainValidationErrors:
-      type: array
-      items:
-        type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
       readOnly: true
-      title: PortalCustomDomainValidationErrors
+      x-speakeasy-param-suppress-computed-diff: true
     BaseError:
       description: standard error
       type: object
@@ -386,12 +281,174 @@ components:
       - instance
       - detail
       title: Error
-    CreatePortalCustomDomainSSL:
+    PortalCustomDomainValidationErrors:
+      type: array
+      items:
+        type: string
+      readOnly: true
+      title: PortalCustomDomainValidationErrors
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    CreatePortalCustomDomainSSLWithCustomCertificate:
+      properties:
+        domain_verification_method:
+          type: string
+          const: custom_certificate
+        custom_certificate:
+          description: Custom certificate to be used for the SSL termination.
+          type: string
+        custom_private_key:
+          description: Custom certificate private key to be used for the SSL termination.
+          type: string
+        skip_ca_check:
+          description: 'Advanced option. If true, the custom certificate is served exactly as provided, without attempting to bundle against a public trust store. Required for certificates issued by an internal/private CA.
+
+            '
+          type: boolean
+          default: false
+      additionalProperties: false
+      required:
+      - domain_verification_method
+      - custom_certificate
+      - custom_private_key
+      title: custom_certificate
+    InvalidParameterMinimumLength:
       type: object
-      oneOf:
-      - $ref: '#/components/schemas/CreatePortalCustomDomainSSLWithCustomCertificate'
-      - $ref: '#/components/schemas/CreatePortalCustomDomainSSLStandard'
-      title: CreatePortalCustomDomainSSL
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    UpdatePortalCustomDomainSSL:
+      type: object
+      properties:
+        custom_certificate:
+          description: Custom certificate to be used for the SSL termination.
+          type: string
+        custom_private_key:
+          description: Custom certificate private key to be used for the SSL termination.
+          type: string
+        skip_ca_check:
+          description: 'Advanced option. If true, the custom certificate is served exactly as provided, without attempting to bundle against a public trust store. Required for certificates issued by an internal/private CA.
+
+            '
+          type: boolean
+          default: false
+      additionalProperties: false
+      title: UpdatePortalCustomDomainSSL
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -421,7 +478,38 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    PortalCustomDomainVerificationMethod:
+      type: string
+      enum:
+      - http
+      - custom_certificate
+      title: PortalCustomDomainVerificationMethod
+      x-speakeasy-unknown-values: allow
+    CreatePortalCustomDomainSSLStandard:
+      properties:
+        domain_verification_method:
+          type: string
+          const: http
+      additionalProperties: false
+      required:
+      - domain_verification_method
+      title: http
+    InvalidParameterMaximumLength:
       type: object
       properties:
         field:
@@ -432,98 +520,42 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - enum
+          - max_length
+          - max_items
+          - max
           nullable: false
           readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
       - rule
-      - choices
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    UpdatePortalCustomDomainSSL:
+      - maximum
+    PortalCustomDomainCnameStatus:
+      type: string
+      enum:
+      - verified
+      - pending
+      readOnly: true
+      title: PortalCustomDomainCnameStatus
+      x-speakeasy-unknown-values: allow
+    CreatePortalCustomDomainSSL:
       type: object
-      properties:
-        custom_certificate:
-          description: Custom certificate to be used for the SSL termination.
-          type: string
-        custom_private_key:
-          description: Custom certificate private key to be used for the SSL termination.
-          type: string
-        skip_ca_check:
-          description: 'Advanced option. If true, the custom certificate is served exactly as provided, without attempting to bundle against a public trust store. Required for certificates issued by an internal/private CA.
-
-            '
-          type: boolean
-          default: false
-      additionalProperties: false
-      title: UpdatePortalCustomDomainSSL
-    PortalCustomDomain:
-      type: object
-      properties:
-        hostname:
-          type: string
-        enabled:
-          type: boolean
-        ssl:
-          $ref: '#/components/schemas/PortalCustomDomainSSL'
-        cname_status:
-          $ref: '#/components/schemas/PortalCustomDomainCnameStatus'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      required:
-      - hostname
-      - enabled
-      - ssl
-      - cname_status
-      - created_at
-      - updated_at
-      title: PortalCustomDomain
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
+      oneOf:
+      - $ref: '#/components/schemas/CreatePortalCustomDomainSSLWithCustomCertificate'
+      - $ref: '#/components/schemas/CreatePortalCustomDomainSSLStandard'
+      title: CreatePortalCustomDomainSSL
     PortalCustomDomainVerificationStatus:
       type: string
       enum:
@@ -533,38 +565,6 @@ components:
       readOnly: true
       title: PortalCustomDomainVerificationStatus
       x-speakeasy-unknown-values: allow
-    CreatePortalCustomDomainSSLWithCustomCertificate:
-      properties:
-        domain_verification_method:
-          type: string
-          const: custom_certificate
-        custom_certificate:
-          description: Custom certificate to be used for the SSL termination.
-          type: string
-        custom_private_key:
-          description: Custom certificate private key to be used for the SSL termination.
-          type: string
-        skip_ca_check:
-          description: 'Advanced option. If true, the custom certificate is served exactly as provided, without attempting to bundle against a public trust store. Required for certificates issued by an internal/private CA.
-
-            '
-          type: boolean
-          default: false
-      additionalProperties: false
-      required:
-      - domain_verification_method
-      - custom_certificate
-      - custom_private_key
-      title: custom_certificate
-    UpdatePortalCustomDomainRequest:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-        ssl:
-          $ref: '#/components/schemas/UpdatePortalCustomDomainSSL'
-      additionalProperties: false
-      title: UpdatePortalCustomDomainRequest
     InvalidParameterStandard:
       type: object
       properties:
@@ -600,7 +600,34 @@ components:
       - enabled
       - ssl
       title: CreatePortalCustomDomainRequest
+  requestBodies:
+    UpdatePortalCustomDomain:
+      description: Create a portal custom domain.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdatePortalCustomDomainRequest'
+    CreatePortalCustomDomain:
+      description: Create a portal custom domain.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatePortalCustomDomainRequest'
   responses:
+    PortalCustomDomain:
+      description: Portal custom domain
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PortalCustomDomain'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -633,33 +660,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
-    PortalCustomDomain:
-      description: Portal custom domain
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PortalCustomDomain'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-  requestBodies:
-    UpdatePortalCustomDomain:
-      description: Create a portal custom domain.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/UpdatePortalCustomDomainRequest'
-    CreatePortalCustomDomain:
-      description: Create a portal custom domain.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CreatePortalCustomDomainRequest'
   parameters:
     PortalId:
       schema:

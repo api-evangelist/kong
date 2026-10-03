@@ -208,63 +208,144 @@ paths:
       tags:
       - Control Plane Groups
 components:
-  schemas:
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
+  responses:
+    Internal:
+      description: Internal
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BaseError'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    GetGroupStatus:
+      description: Status of a control plane group, including existing conflicts.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              item:
+                $ref: '#/components/schemas/GroupStatus'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    ServiceUnavailable:
+      description: Service Unavailable
+      content:
+        application/problem+json:
+          schema:
+            description: Error response for temporary service unavailability.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                format: int32
+                example: 503
+                enum:
+                - 503
+                x-go-type: int32
+              title:
+                description: The error response code.
+                type: string
+                example: Service Unavailable
+              instance:
+                description: The Konnect traceback code
+                type: string
+                example: konnect:trace:2287285207635123011
+              detail:
+                description: Details about the error.
+                type: string
+                example: Could not retrieve permissions to check resource accessibility.
+            required:
+            - status
+            - title
+            - instance
+            title: ServiceUnavailableError
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    GetGroupMemberStatus:
+      description: Determines the group membership status of a control plane.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GroupMemberStatus'
+    ListGroupMemberships:
+      description: A paginated list response for a collection of control plane group memberships.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorPaginatedMetaWithSizeAndTotal'
+              data:
+                description: Array of control planes summary who are a child to this control plane group.
+                type: array
+                items:
+                  $ref: '#/components/schemas/ControlPlane'
+            required:
+            - meta
+            - data
+  parameters:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
         type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    GroupConflictResource:
-      description: A resource causing a conflict in a control plane group.
-      type: object
-      properties:
-        id:
-          description: The ID of the resource.
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: true
-        type:
-          description: The type of the resource.
-          type: string
-          example: service
-          readOnly: true
-      required:
-      - id
-      - type
-      title: GroupConflictResource
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidParameterDependentItem:
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+  schemas:
+    InvalidParameterChoiceItem:
       type: object
       properties:
         field:
@@ -275,17 +356,18 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - dependent_fields
-          nullable: true
+          - enum
+          nullable: false
           readOnly: true
         reason:
           type: string
           example: is a required field
           readOnly: true
-        dependents:
+        choices:
           type: array
           items: {}
-          nullable: true
+          minItems: 1
+          nullable: false
           readOnly: true
           uniqueItems: true
         source:
@@ -294,9 +376,31 @@ components:
       additionalProperties: false
       required:
       - field
-      - rule
       - reason
-      - dependents
+      - rule
+      - choices
+    GroupConflict:
+      description: The Group Conflict object contains information about a conflict in a control plane group.
+      type: object
+      properties:
+        cluster_id:
+          description: The ID of a control plane member of a control plane group.
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: true
+        description:
+          description: The description of the conflict.
+          type: string
+          example: 'conflicting entity found: ID=38d790ad-8b08-4ff5-a074-2e1e9e64d8bd, Name=foo'
+          readOnly: true
+        resource:
+          $ref: '#/components/schemas/GroupConflictResource'
+      required:
+      - cluster_id
+      - description
+      - resource
+      title: GroupConflict
     CursorPaginatedMetaWithSizeAndTotal:
       description: returns the pagination information
       type: object
@@ -306,54 +410,6 @@ components:
       required:
       - page
       title: CursorPaginatedMetaWithSizeAndTotal
-    ProxyURLs:
-      description: Array of proxy URLs associated with reaching the data-planes connected to a control-plane.
-      type: array
-      items:
-        $ref: '#/components/schemas/ProxyURL'
-      format: set
-      example:
-      - host: example.com
-        port: 443
-        protocol: https
-      title: ProxyURLs
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
     ControlPlane:
       x-speakeasy-entity: GatewayControlPlane
       description: The control plane object contains information about a Kong control plane.
@@ -453,43 +509,60 @@ components:
       - updated_at
       - description
       - labels
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    GroupConflict:
-      description: The Group Conflict object contains information about a conflict in a control plane group.
+    GroupStatus:
+      description: The Group Status object contains information about the status of a control plane group.
       type: object
       properties:
-        cluster_id:
-          description: The ID of a control plane member of a control plane group.
+        id:
+          description: The control plane group ID.
           type: string
           format: uuid
           example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
           readOnly: true
-        description:
-          description: The description of the conflict.
+        created_at:
+          description: An ISO-8604 timestamp representation of control plane group status creation date.
           type: string
-          example: 'conflicting entity found: ID=38d790ad-8b08-4ff5-a074-2e1e9e64d8bd, Name=foo'
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
           readOnly: true
-        resource:
-          $ref: '#/components/schemas/GroupConflictResource'
+        updated_at:
+          description: An ISO-8604 timestamp representation of control plane group status update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupConflict'
+          maxItems: 256
+        state:
+          description: The state of the control plane group.
+          type: string
+          example: CONFLICT
+          enum:
+          - OK
+          - CONFLICT
+          - UNKNOWN
+          readOnly: true
+          x-speakeasy-unknown-values: allow
       required:
-      - cluster_id
-      - description
-      - resource
-      title: GroupConflict
+      - id
+      - created_at
+      - updated_at
+      - state
+      title: GroupStatus
+    ProxyURLs:
+      description: Array of proxy URLs associated with reaching the data-planes connected to a control-plane.
+      type: array
+      items:
+        $ref: '#/components/schemas/ProxyURL'
+      format: set
+      example:
+      - host: example.com
+        port: 443
+        protocol: https
+      title: ProxyURLs
     BaseError:
       description: standard error
       type: object
@@ -544,6 +617,177 @@ components:
       - instance
       - detail
       title: Error
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    GroupMembership:
+      x-speakeasy-entity: GatewayControlPlaneMembership
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            properties:
+              id:
+                type: string
+      required:
+      - members
+    GroupConflictResource:
+      description: A resource causing a conflict in a control plane group.
+      type: object
+      properties:
+        id:
+          description: The ID of the resource.
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: true
+        type:
+          description: The type of the resource.
+          type: string
+          example: service
+          readOnly: true
+      required:
+      - id
+      - type
+      title: GroupConflictResource
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -573,7 +817,19 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    InvalidParameterChoiceItem:
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    InvalidParameterMaximumLength:
       type: object
       properties:
         field:
@@ -584,29 +840,28 @@ components:
           description: invalid parameters rules
           type: string
           enum:
-          - enum
+          - max_length
+          - max_items
+          - max
           nullable: false
           readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
       - rule
-      - choices
+      - maximum
     CursorMetaWithSizeAndTotal:
       type: object
       properties:
@@ -626,112 +881,6 @@ components:
       required:
       - size
       - next
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    GroupMembership:
-      x-speakeasy-entity: GatewayControlPlaneMembership
-      type: object
-      properties:
-        members:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            properties:
-              id:
-                type: string
-      required:
-      - members
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    GroupStatus:
-      description: The Group Status object contains information about the status of a control plane group.
-      type: object
-      properties:
-        id:
-          description: The control plane group ID.
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: true
-        created_at:
-          description: An ISO-8604 timestamp representation of control plane group status creation date.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-        updated_at:
-          description: An ISO-8604 timestamp representation of control plane group status update date.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-        conflicts:
-          type: array
-          items:
-            $ref: '#/components/schemas/GroupConflict'
-          maxItems: 256
-        state:
-          description: The state of the control plane group.
-          type: string
-          example: CONFLICT
-          enum:
-          - OK
-          - CONFLICT
-          - UNKNOWN
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-      required:
-      - id
-      - created_at
-      - updated_at
-      - state
-      title: GroupStatus
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
     ProxyURL:
       description: Proxy URL associated with reaching the data-planes connected to a control-plane.
       type: object
@@ -767,7 +916,7 @@ components:
       required:
       - is_member
       title: GroupMemberStatus
-    InvalidParameterMaximumLength:
+    InvalidParameterStandard:
       type: object
       properties:
         field:
@@ -775,186 +924,37 @@ components:
           example: name
           readOnly: true
         rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
+          $ref: '#/components/schemas/InvalidRules'
         source:
           type: string
           example: body
         reason:
           type: string
-          example: must not have more than 8 characters
+          example: is a required field
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
-      - rule
-      - maximum
   requestBodies:
-    GroupMembershipUpsert:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupMembership'
-      description: Request body for upserting a list of child control planes to a control plane group membership.
-    GroupMembershipRemove:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupMembership'
-      description: Request body for removing a list of child control planes from a control plane group membership.
     GroupMembershipAdd:
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/GroupMembership'
       description: Request body for adding a list of child control planes to a control plane group membership.
-  parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-  responses:
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ServiceUnavailable:
-      description: Service Unavailable
-      content:
-        application/problem+json:
-          schema:
-            description: Error response for temporary service unavailability.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                format: int32
-                example: 503
-                enum:
-                - 503
-                x-go-type: int32
-              title:
-                description: The error response code.
-                type: string
-                example: Service Unavailable
-              instance:
-                description: The Konnect traceback code
-                type: string
-                example: konnect:trace:2287285207635123011
-              detail:
-                description: Details about the error.
-                type: string
-                example: Could not retrieve permissions to check resource accessibility.
-            required:
-            - status
-            - title
-            - instance
-            title: ServiceUnavailableError
-    Internal:
-      description: Internal
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BaseError'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    GetGroupStatus:
-      description: Status of a control plane group, including existing conflicts.
+    GroupMembershipRemove:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              item:
-                $ref: '#/components/schemas/GroupStatus'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    ListGroupMemberships:
-      description: A paginated list response for a collection of control plane group memberships.
+            $ref: '#/components/schemas/GroupMembership'
+      description: Request body for removing a list of child control planes from a control plane group membership.
+    GroupMembershipUpsert:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorPaginatedMetaWithSizeAndTotal'
-              data:
-                description: Array of control planes summary who are a child to this control plane group.
-                type: array
-                items:
-                  $ref: '#/components/schemas/ControlPlane'
-            required:
-            - meta
-            - data
-    GetGroupMemberStatus:
-      description: Determines the group membership status of a control plane.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupMemberStatus'
+            $ref: '#/components/schemas/GroupMembership'
+      description: Request body for upserting a list of child control planes to a control plane group membership.
   securitySchemes:
     personalAccessToken:
       type: http

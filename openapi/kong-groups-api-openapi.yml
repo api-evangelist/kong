@@ -176,16 +176,6 @@ paths:
       - Groups
 components:
   schemas:
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
     GroupRole:
       x-speakeasy-entity: GroupRole
       type: object
@@ -231,6 +221,16 @@ components:
         jq: ".\n| if .group != null and .group.id != null\n  then . + { group_id: .group.id }\n  else .\n  end\n| if .rbac_role != null and .rbac_role.id != null\n  then . + { role_id: .rbac_role.id }\n  else .\n  end\n| if .workspace != null and (.workspace | type) == \"object\" and .workspace.id != null\n  then .workspace = .workspace.id\n  else .\n  end\n| del(.group, .rbac_role)\n"
       x-speakeasy-transform-to-api:
         jq: ".\n| if .workspace != null\n  then . + { workspace_id: .workspace }\n  else .\n  end\n| if .role_id != null\n  then . + { rbac_role_id: .role_id }\n  else .\n  end\n| del(.group_id, .role_id, .workspace, .group, .rbac_role)\n"
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     Group:
       x-speakeasy-entity: Group
       type: object
@@ -263,23 +263,7 @@ components:
       additionalProperties: false
       required:
       - name
-  requestBodies:
-    GroupRoleRequest:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GroupRole'
-      description: Request body schema for assigning or updating roles for a group.
   parameters:
-    GroupId:
-      description: ID of the Group to lookup
-      example: ''
-      in: path
-      name: GroupId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
     GroupRoleId:
       description: ID of the Group to lookup
       example: ''
@@ -289,6 +273,22 @@ components:
       schema:
         type: string
       x-speakeasy-name-override: group_id
+    GroupId:
+      description: ID of the Group to lookup
+      example: ''
+      in: path
+      name: GroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+  requestBodies:
+    GroupRoleRequest:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GroupRole'
+      description: Request body schema for assigning or updating roles for a group.
   responses:
     HTTP401Error:
       description: Unauthorized

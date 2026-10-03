@@ -108,6 +108,19 @@ paths:
       - Event Gateway Nodes
 components:
   schemas:
+    EventGatewayNodeError:
+      description: An error reported by an event gateway node.
+      type: object
+      properties:
+        name:
+          description: The name of the error.
+          type: string
+        message:
+          description: The error message.
+          type: string
+      required:
+      - name
+      - message
     BaseError:
       description: standard error
       type: object
@@ -162,27 +175,6 @@ components:
       - instance
       - detail
       title: Error
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    EventGatewayNodeError:
-      description: An error reported by an event gateway node.
-      type: object
-      properties:
-        name:
-          description: The name of the error.
-          type: string
-        message:
-          description: The error message.
-          type: string
-      required:
-      - name
-      - message
     CursorMetaPage:
       type: object
       properties:
@@ -212,6 +204,29 @@ components:
       - size
       - next
       - previous
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
     GatewayNode:
       type: object
       properties:
@@ -257,36 +272,6 @@ components:
       - last_seen_at
       - created_at
       - updated_at
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -302,6 +287,21 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Forbidden
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
   responses:
     EventGatewayNodeStatus:
       description: The status of an event gateway node.
@@ -321,23 +321,6 @@ components:
             required:
             - config_applied_at
             - config_version
-    ListEventGatewayNodeErrorsResponse:
-      description: A list of errors reported by an event gateway node.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayNodeError'
-            additionalProperties: false
-            required:
-            - meta
-            - data
     Unauthorized:
       description: Unauthorized
       content:
@@ -364,6 +347,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     ListEventGatewayNodesResponse:
       description: A paginated list response for a collection of nodes associated with an Event Gateway.
       content:
@@ -377,18 +366,29 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/GatewayNode'
+    ListEventGatewayNodeErrorsResponse:
+      description: A list of errors reported by an event gateway node.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayNodeError'
+            additionalProperties: false
+            required:
+            - meta
+            - data
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
   parameters:
     PageSize:
       name: page[size]
@@ -409,6 +409,14 @@ components:
         format: uuid
         example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
       description: The UUID of your Gateway.
+    eventGatewayNodeId:
+      schema:
+        type: string
+        format: uuid
+      name: eventGatewayNodeId
+      in: path
+      required: true
+      description: The ID of the Event Gateway Node.
     PageAfter:
       name: page[after]
       description: Request the next page of data, starting with the item after this parameter.
@@ -418,14 +426,6 @@ components:
       schema:
         type: string
         example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-    eventGatewayNodeId:
-      schema:
-        type: string
-        format: uuid
-      name: eventGatewayNodeId
-      in: path
-      required: true
-      description: The ID of the Event Gateway Node.
   securitySchemes:
     personalAccessToken:
       type: http

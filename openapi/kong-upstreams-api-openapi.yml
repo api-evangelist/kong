@@ -337,6 +337,67 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
+  parameters:
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    UpstreamIdOrName:
+      description: ID or name of the Upstream to lookup
+      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
+      in: path
+      name: UpstreamIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    UpstreamId:
+      description: ID of the Upstream to lookup
+      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
+      in: path
+      name: UpstreamId
+      required: true
+      schema:
+        type: string
   schemas:
     GatewayUnauthorizedError:
       type: object
@@ -905,6 +966,9 @@ components:
       additionalProperties: false
       required:
       - name
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
     Upstream_2:
       description: The upstream object represents a virtual hostname and can be used to loadbalance incoming requests over multiple services (targets). So for example an upstream named `service.v1.xyz` for a Service object whose `host` is `service.v1.xyz`. Requests for this Service would be proxied to the targets defined within the upstream. An upstream also includes a [health checker][healthchecks], which is able to enable and disable targets based on their ability or inability to serve requests. The configuration for the health checker is stored in the upstream object, and applies to all of its targets.
       type: object
@@ -1469,9 +1533,6 @@ components:
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -1501,67 +1562,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    UpstreamIdOrName:
-      description: ID or name of the Upstream to lookup
-      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
-      in: path
-      name: UpstreamIdOrName
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    UpstreamId:
-      description: ID of the Upstream to lookup
-      example: 426d620c-7058-4ae6-aacc-f85a3204a2c5
-      in: path
-      name: UpstreamId
-      required: true
-      schema:
-        type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
   securitySchemes:
     adminToken:
       in: header

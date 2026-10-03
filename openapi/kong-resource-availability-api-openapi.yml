@@ -44,26 +44,67 @@ paths:
       x-speakeasy-group: CloudGateways
 components:
   schemas:
-    ServerlessV1Providers:
-      description: List of supported cloud providers that run serverless v1 cloud gateway instances.
+    Providers:
+      description: List of supported cloud providers that run cloud gateway instances.
       type: array
       items:
-        $ref: '#/components/schemas/ServerlessV1Provider'
-      title: Serverless V1 Providers
-    InstanceTypeName:
-      description: Instance type name to indicate capacity.
+        $ref: '#/components/schemas/Provider'
+      title: Providers
+    ProviderRegionId:
+      description: Region ID for cloud provider region.
       type: string
-      enum:
-      - small
-      - medium
-      - large
-      x-speakeasy-unknown-values: allow
-    ServerlessV1ProviderName:
-      description: Name of cloud provider.
+      example: us-east-2
+      title: Provider Region ID
+    ServerlessV1ProviderRegionId:
+      description: Region ID for serverless v1 cloud provider region.
       type: string
-      example: aws
-      enum:
-      - aws
+      example: us
+      title: Serverless V1 Provider Region ID
+    Provider:
+      description: Description of cloud provider that runs cloud gateway instances.
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/ProviderName'
+        regions:
+          $ref: '#/components/schemas/ProviderRegions'
+      additionalProperties: false
+      required:
+      - provider
+      - regions
+      title: Provider
+    AvailabilityDocument:
+      description: Document containing availability information for configurations.
+      type: object
+      properties:
+        versions:
+          $ref: '#/components/schemas/VersionList'
+        instance_types:
+          $ref: '#/components/schemas/InstanceTypes'
+        providers:
+          $ref: '#/components/schemas/Providers'
+        serverless_v1_providers:
+          $ref: '#/components/schemas/ServerlessV1Providers'
+      additionalProperties: false
+      required:
+      - versions
+      - instance_types
+      - providers
+      - serverless_v1_providers
+      title: Availability Document
+    ServerlessV1Provider:
+      description: Description of cloud provider that runs serverless v1 cloud gateway instances.
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/ServerlessV1ProviderName'
+        regions:
+          $ref: '#/components/schemas/ServerlessV1ProviderRegions'
+      additionalProperties: false
+      required:
+      - provider
+      - regions
+      title: Serverless V1 Provider
     ProviderRegion:
       description: Region ID and human-readable name for a cloud provider region.
       type: object
@@ -116,106 +157,6 @@ components:
       - cidr_blocks
       - reserved_cidr_blocks
       title: Provider Region
-    ProviderRegions:
-      description: List of available regions to run cloud gateway instances on for a given cloud provider.
-      type: array
-      items:
-        $ref: '#/components/schemas/ProviderRegion'
-      title: Provider Regions
-    GatewayVersion:
-      description: Supported gateway version. For serverless.v1 kind of cloud gateways, this field should be omitted.
-      type: string
-      example: '3.2'
-      title: Gateway Version
-    ServerlessV1ProviderRegions:
-      description: List of available regions to run serverless v1 cloud gateway instances on for a given cloud provider.
-      type: array
-      items:
-        $ref: '#/components/schemas/ServerlessV1ProviderRegion'
-      title: Serverless V1 Provider Regions
-    Provider:
-      description: Description of cloud provider that runs cloud gateway instances.
-      type: object
-      properties:
-        provider:
-          $ref: '#/components/schemas/ProviderName'
-        regions:
-          $ref: '#/components/schemas/ProviderRegions'
-      additionalProperties: false
-      required:
-      - provider
-      - regions
-      title: Provider
-    ProviderRegionId:
-      description: Region ID for cloud provider region.
-      type: string
-      example: us-east-2
-      title: Provider Region ID
-    ServerlessV1ProviderRegionId:
-      description: Region ID for serverless v1 cloud provider region.
-      type: string
-      example: us
-      title: Serverless V1 Provider Region ID
-    ProviderRegionName:
-      description: 'Human-readable name for cloud provider region. The list of available provider regions can be retrieved via the
-
-        availability endpoint `/v2/cloud-gateways/availability.json`.
-
-        '
-      type: string
-      example: N. Virginia
-      title: Provider Region Name
-    AvailabilityDocument:
-      description: Document containing availability information for configurations.
-      type: object
-      properties:
-        versions:
-          $ref: '#/components/schemas/VersionList'
-        instance_types:
-          $ref: '#/components/schemas/InstanceTypes'
-        providers:
-          $ref: '#/components/schemas/Providers'
-        serverless_v1_providers:
-          $ref: '#/components/schemas/ServerlessV1Providers'
-      additionalProperties: false
-      required:
-      - versions
-      - instance_types
-      - providers
-      - serverless_v1_providers
-      title: Availability Document
-    InstanceTypes:
-      description: List of supported instance types, along with their associated resource parameters and pricing.
-      type: array
-      items:
-        $ref: '#/components/schemas/InstanceType'
-      title: Instance Types
-    Providers:
-      description: List of supported cloud providers that run cloud gateway instances.
-      type: array
-      items:
-        $ref: '#/components/schemas/Provider'
-      title: Providers
-    ServerlessV1Provider:
-      description: Description of cloud provider that runs serverless v1 cloud gateway instances.
-      type: object
-      properties:
-        provider:
-          $ref: '#/components/schemas/ServerlessV1ProviderName'
-        regions:
-          $ref: '#/components/schemas/ServerlessV1ProviderRegions'
-      additionalProperties: false
-      required:
-      - provider
-      - regions
-      title: Serverless V1 Provider
-    VersionList:
-      description: List of supported gateway versions for cloud gateways.
-      type: array
-      items:
-        $ref: '#/components/schemas/GatewayVersion'
-      readOnly: true
-      title: Version List
     ProviderName:
       description: Name of cloud provider.
       type: string
@@ -226,16 +167,6 @@ components:
       - gcp
       title: Provider Name
       x-speakeasy-unknown-values: allow
-    ServerlessV1ProviderRegion:
-      description: Region ID and human-readable name for a cloud provider region.
-      type: object
-      properties:
-        region:
-          $ref: '#/components/schemas/ServerlessV1ProviderRegionId'
-      additionalProperties: false
-      required:
-      - region
-      title: Serverless V1 Provider Region
     InstanceType:
       description: Resource parameters and pricing of a given supported instance type.
       type: object
@@ -265,6 +196,75 @@ components:
       - v_cpu
       - gb_memory
       title: Instance Type
+    VersionList:
+      description: List of supported gateway versions for cloud gateways.
+      type: array
+      items:
+        $ref: '#/components/schemas/GatewayVersion'
+      readOnly: true
+      title: Version List
+    InstanceTypes:
+      description: List of supported instance types, along with their associated resource parameters and pricing.
+      type: array
+      items:
+        $ref: '#/components/schemas/InstanceType'
+      title: Instance Types
+    InstanceTypeName:
+      description: Instance type name to indicate capacity.
+      type: string
+      enum:
+      - small
+      - medium
+      - large
+      x-speakeasy-unknown-values: allow
+    ServerlessV1ProviderName:
+      description: Name of cloud provider.
+      type: string
+      example: aws
+      enum:
+      - aws
+    GatewayVersion:
+      description: Supported gateway version. For serverless.v1 kind of cloud gateways, this field should be omitted.
+      type: string
+      example: '3.2'
+      title: Gateway Version
+    ServerlessV1ProviderRegion:
+      description: Region ID and human-readable name for a cloud provider region.
+      type: object
+      properties:
+        region:
+          $ref: '#/components/schemas/ServerlessV1ProviderRegionId'
+      additionalProperties: false
+      required:
+      - region
+      title: Serverless V1 Provider Region
+    ServerlessV1Providers:
+      description: List of supported cloud providers that run serverless v1 cloud gateway instances.
+      type: array
+      items:
+        $ref: '#/components/schemas/ServerlessV1Provider'
+      title: Serverless V1 Providers
+    ServerlessV1ProviderRegions:
+      description: List of available regions to run serverless v1 cloud gateway instances on for a given cloud provider.
+      type: array
+      items:
+        $ref: '#/components/schemas/ServerlessV1ProviderRegion'
+      title: Serverless V1 Provider Regions
+    ProviderRegions:
+      description: List of available regions to run cloud gateway instances on for a given cloud provider.
+      type: array
+      items:
+        $ref: '#/components/schemas/ProviderRegion'
+      title: Provider Regions
+    ProviderRegionName:
+      description: 'Human-readable name for cloud provider region. The list of available provider regions can be retrieved via the
+
+        availability endpoint `/v2/cloud-gateways/availability.json`.
+
+        '
+      type: string
+      example: N. Virginia
+      title: Provider Region Name
   responses:
     RetrieveCloudGatewaysAvailabilityDocumentResponse:
       description: Response format for retrieving the cloud gateways availability JSON document.

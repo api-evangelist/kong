@@ -334,6 +334,81 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
+  parameters:
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    ServiceIdOrName:
+      description: ID or name of the Service to lookup
+      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
+      in: path
+      name: ServiceIdOrName
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    NameEqualsFilter:
+      description: Filter routes by their name.
+      example: john
+      in: query
+      name: filter[name][eq]
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    NameContainsFilter:
+      description: Filter routes by a substring of the name.
+      example: john
+      in: query
+      name: filter[name][contains]
+      schema:
+        type: string
+    ServiceId:
+      description: ID of the Service to lookup
+      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
+      in: path
+      name: ServiceId
+      required: true
+      schema:
+        type: string
   schemas:
     GatewayUnauthorizedError:
       type: object
@@ -492,6 +567,9 @@ components:
       additionalProperties: false
       required:
       - host
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
     Service_2:
       description: Service entities, as the name implies, are abstractions of each of your own upstream services. Examples of Services would be a data transformation microservice, a billing API, etc. The main attribute of a Service is its URL (where Kong should proxy traffic to), which can be set as a single string or by specifying its `protocol`, `host`, `port` and `path` individually. Services are associated to Routes (a Service can have many Routes associated with it). Routes are entry-points in Kong and define rules to match client requests. Once a Route is matched, Kong proxies the request to its associated Service. See the [Proxy Reference][proxy-reference] for a detailed explanation of how Kong proxies traffic.
       type: object
@@ -642,9 +720,6 @@ components:
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
   responses:
     HTTP401Error:
       description: Unauthorized
@@ -674,81 +749,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
-  parameters:
-    ServiceIdOrName:
-      description: ID or name of the Service to lookup
-      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
-      in: path
-      name: ServiceIdOrName
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    NameContainsFilter:
-      description: Filter routes by a substring of the name.
-      example: john
-      in: query
-      name: filter[name][contains]
-      schema:
-        type: string
-    ServiceId:
-      description: ID of the Service to lookup
-      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
-      in: path
-      name: ServiceId
-      required: true
-      schema:
-        type: string
-    NameEqualsFilter:
-      description: Filter routes by their name.
-      example: john
-      in: query
-      name: filter[name][eq]
-      schema:
-        type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
   securitySchemes:
     adminToken:
       in: header
