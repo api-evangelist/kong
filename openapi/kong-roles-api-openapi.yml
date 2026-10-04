@@ -293,82 +293,65 @@ paths:
       - Roles
 components:
   schemas:
-    InvalidParameterChoiceItem:
-      type: object
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    StringFieldEqualsFilter:
+      description: Filters on the given string field value by exact match.
       properties:
-        field:
+        eq:
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    AssignedRole:
-      description: An assigned role is a role that has been assigned to a user or team.
-      type: object
-      properties:
-        id:
-          description: The ID of the role assignment.
-          type: string
-          format: uuid
-          example: eaf7adf1-32c8-4bbf-b960-d1f8456afe67
-        role_name:
-          description: Name of the role being assigned.
-          type: string
-          example: Viewer
-        entity_id:
-          description: A RBAC entity ID.
-          type: string
-          format: uuid
-          example: 817d0422-45c9-4d88-8d64-45aef05c1ae7
-        entity_type_name:
-          description: Name of the entity type the role is being assigned to.
-          type: string
-          example: Control Planes
-        entity_region:
-          description: Region of the entity.
-          type: string
-          example: eu
-          enum:
-          - us
-          - eu
-          - au
-          - me
-          - in
-          - sg
-          - '*'
-          x-speakeasy-unknown-values: allow
-      example:
-        id: 54cc6168-ebb1-4300-8168-d62a0dd08fc8
-        role_name: Viewer
-        entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
-        entity_type_name: Control Planes
-        entity_region: us
-      title: AssignedRole
+      title: StringFieldEqualsFilter
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     BaseError:
       description: standard error
       type: object
@@ -423,19 +406,6 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -446,15 +416,75 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
-    BadRequestError:
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -492,6 +522,63 @@ components:
       - reason
       - rule
       - minimum
+    AssignedRole:
+      description: An assigned role is a role that has been assigned to a user or team.
+      type: object
+      properties:
+        id:
+          description: The ID of the role assignment.
+          type: string
+          format: uuid
+          example: eaf7adf1-32c8-4bbf-b960-d1f8456afe67
+        role_name:
+          description: Name of the role being assigned.
+          type: string
+          example: Viewer
+        entity_id:
+          description: A RBAC entity ID.
+          type: string
+          format: uuid
+          example: 817d0422-45c9-4d88-8d64-45aef05c1ae7
+        entity_type_name:
+          description: Name of the entity type the role is being assigned to.
+          type: string
+          example: Control Planes
+        entity_region:
+          description: Region of the entity.
+          type: string
+          example: eu
+          enum:
+          - us
+          - eu
+          - au
+          - me
+          - in
+          - sg
+          - '*'
+          x-speakeasy-unknown-values: allow
+      example:
+        id: 54cc6168-ebb1-4300-8168-d62a0dd08fc8
+        role_name: Viewer
+        entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
+        entity_type_name: Control Planes
+        entity_region: us
+      title: AssignedRole
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -525,86 +612,26 @@ components:
       - rule
       - reason
       - dependents
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    StringFieldEqualsFilter:
-      description: Filters on the given string field value by exact match.
+    InvalidParameterStandard:
+      type: object
       properties:
-        eq:
+        field:
           type: string
-      title: StringFieldEqualsFilter
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -638,170 +665,47 @@ components:
       - reason
       - rule
       - maximum
-    ConflictError:
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 409
+            example: 403
           title:
-            example: Conflict
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/409
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Conflict
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-  requestBodies:
-    AssignRole:
-      content:
-        application/json:
-          schema:
-            description: An assigned role is a role that has been assigned to a user or team.
-            type: object
-            properties:
-              role_name:
-                description: The desired role.
-                type: string
-                example: Viewer
-                enum:
-                - Admin
-                - Appearance Maintainer
-                - Application Registration
-                - Certificate Admin
-                - Cloud Gateway Cluster Admin
-                - Cloud Gateway Cluster Viewer
-                - Consumer Admin
-                - Connector
-                - Creator
-                - Debug Session Creator
-                - Deployer
-                - Discovery Admin
-                - Discovery Viewer
-                - Editor
-                - Gateway Service Admin
-                - Integration Admin
-                - Integration Viewer
-                - Key Admin
-                - Maintainer
-                - Network Admin
-                - Network Creator
-                - Network Viewer
-                - Plugin Admin
-                - Plugins Admin
-                - Product Publisher
-                - Publisher
-                - Route Admin
-                - SNI Admin
-                - Scorecard Admin
-                - Scorecard Viewer
-                - Service Admin
-                - Service Creator
-                - Service Viewer
-                - Upstream Admin
-                - Vault Admin
-                - Viewer
-                - Registration Approver
-                - Content Editor
-                - Add On Admin
-                - Add On Viewer
-                x-speakeasy-unknown-values: allow
-              entity_id:
-                description: The ID of the entity.
-                type: string
-                format: uuid
-                example: e67490ce-44dc-4cbd-b65e-b52c746fc26a
-              entity_type_name:
-                description: The type of entity.
-                type: string
-                example: Control Planes
-                enum:
-                - Add Ons
-                - APIs
-                - API Products
-                - Application Auth Strategies
-                - Audit Logs
-                - Control Planes
-                - Dashboards
-                - DCR Providers
-                - Identity
-                - Mesh Control Planes
-                - Networks
-                - Portals
-                - Reports
-                - Service Hub
-                x-speakeasy-unknown-values: allow
-              entity_region:
-                description: Region of the team.
-                type: string
-                example: eu
-                enum:
-                - us
-                - eu
-                - au
-                - me
-                - in
-                - sg
-                - '*'
-                x-speakeasy-unknown-values: allow
-      description: The request schema for assigning a role.
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
   responses:
-    AssignedRoleCollection:
-      description: A paginated list response for a collection of assigned roles.
+    IdentityNotFound:
+      description: Not Found
       content:
-        application/json:
+        application/problem+json:
           schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                description: An Array
-                type: array
-                items:
-                  $ref: '#/components/schemas/AssignedRole'
-            title: Assigned Role Collection Response
+            $ref: '#/components/schemas/NotFoundError'
+    IdentityBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     Roles:
       description: The predefined, or system managed, roles.
       content:
@@ -1457,42 +1361,138 @@ components:
                 - name
                 - roles
             title: Roles Response
-    AssignedRoleSingle:
-      description: A get action response of a single assigned role.
+    AssignedRoleCollection:
+      description: A paginated list response for a collection of assigned roles.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/AssignedRole'
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                description: An Array
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssignedRole'
+            title: Assigned Role Collection Response
     IdentityUnauthenticated:
       description: Unauthenticated
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/UnauthorizedError'
-    IdentityBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    IdentityPermissionDenied:
-      description: Permission denied
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    IdentityNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
     IdentityConflict:
       description: Conflict
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ConflictError'
+    AssignedRoleSingle:
+      description: A get action response of a single assigned role.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AssignedRole'
+    IdentityPermissionDenied:
+      description: Permission denied
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  requestBodies:
+    AssignRole:
+      content:
+        application/json:
+          schema:
+            description: An assigned role is a role that has been assigned to a user or team.
+            type: object
+            properties:
+              role_name:
+                description: The desired role.
+                type: string
+                example: Viewer
+                enum:
+                - Admin
+                - Appearance Maintainer
+                - Application Registration
+                - Certificate Admin
+                - Cloud Gateway Cluster Admin
+                - Cloud Gateway Cluster Viewer
+                - Consumer Admin
+                - Connector
+                - Creator
+                - Debug Session Creator
+                - Deployer
+                - Discovery Admin
+                - Discovery Viewer
+                - Editor
+                - Gateway Service Admin
+                - Integration Admin
+                - Integration Viewer
+                - Key Admin
+                - Maintainer
+                - Network Admin
+                - Network Creator
+                - Network Viewer
+                - Plugin Admin
+                - Plugins Admin
+                - Product Publisher
+                - Publisher
+                - Route Admin
+                - SNI Admin
+                - Scorecard Admin
+                - Scorecard Viewer
+                - Service Admin
+                - Service Creator
+                - Service Viewer
+                - Upstream Admin
+                - Vault Admin
+                - Viewer
+                - Registration Approver
+                - Content Editor
+                - Add On Admin
+                - Add On Viewer
+                x-speakeasy-unknown-values: allow
+              entity_id:
+                description: The ID of the entity.
+                type: string
+                format: uuid
+                example: e67490ce-44dc-4cbd-b65e-b52c746fc26a
+              entity_type_name:
+                description: The type of entity.
+                type: string
+                example: Control Planes
+                enum:
+                - Add Ons
+                - APIs
+                - API Products
+                - Application Auth Strategies
+                - Audit Logs
+                - Control Planes
+                - Dashboards
+                - DCR Providers
+                - Identity
+                - Mesh Control Planes
+                - Networks
+                - Portals
+                - Reports
+                - Service Hub
+                x-speakeasy-unknown-values: allow
+              entity_region:
+                description: Region of the team.
+                type: string
+                example: eu
+                enum:
+                - us
+                - eu
+                - au
+                - me
+                - in
+                - sg
+                - '*'
+                x-speakeasy-unknown-values: allow
+      description: The request schema for assigning a role.
   securitySchemes:
     personalAccessToken:
       type: http

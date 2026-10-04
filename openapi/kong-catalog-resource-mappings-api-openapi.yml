@@ -116,6 +116,56 @@ paths:
       - Catalog Resource Mappings
 components:
   schemas:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    CatalogResourceConfig:
+      description: 'JSON object representing the properties used to identify the resource in the third-party system.
+
+        The schema depends on the resource type and is dynamically registered at runtime.
+
+        '
+      type: object
+      example:
+        control_plane_id: ccadfb0a-56cd-4f74-955d-aec1d87157c8
+        gateway_service_id: 94896d05-0c4d-45eb-aae3-de754885dd58
+      additionalProperties: true
+      x-speakeasy-type-override: any
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     CreateCatalogResourceMappingResourceByConfig:
       type: object
       properties:
@@ -133,337 +183,37 @@ components:
       - type
       - config
       title: CreateCatalogResourceMappingResourceByConfig
-    CatalogServiceRef:
-      description: Short-hand descriptor of a catalog service.
-      type: object
-      properties:
-        id:
-          description: The service ID.
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-        name:
-          description: 'The machine name of the service that uniquely identifies it within the catalog.
-
-            '
-          type: string
-          example: user-svc
-        display_name:
-          description: The display name of the service.
-          type: string
-          example: User Service
-      required:
-      - id
-      - name
-      - display_name
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    StringFieldFilterExact:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    IntegrationInstanceRef:
-      description: Short-hand descriptor of an integration instance.
-      type: object
-      properties:
-        id:
-          description: The integration instance ID.
-          type: string
-          format: uuid
-          example: 772b9caf-ddbc-4f4f-8aa4-8dfbbe420351
-        name:
-          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
-
-            '
-          type: string
-          example: aws-lambda-prod
-          pattern: ^[0-9a-z.-]+$
-        display_name:
-          description: The display name of the integration instance.
-          type: string
-          example: AWS (prod)
-      required:
-      - id
-      - name
-      - display_name
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    CatalogResourceType:
-      description: 'The resource type. Available resource types are compiled from the integrations installed within the catalog.
-
-        '
-      type: string
-      example: gateway_svc
-      maxLength: 120
-      minLength: 1
-    CatalogResourceRef:
-      description: Short-hand descriptor of a catalog resource.
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/CatalogResourceId'
-        name:
-          description: The name of the resource.
-          type: string
-          nullable: true
-        integration:
-          $ref: '#/components/schemas/IntegrationRef'
-        type:
-          $ref: '#/components/schemas/CatalogResourceType'
-        config:
-          $ref: '#/components/schemas/CatalogResourceConfig'
-      required:
-      - id
-      - name
-      - type
-      - config
-      - integration
-    CatalogResourceId:
-      description: The resource ID.
-      type: string
-      format: base64url
-      example: 4UdXnoaDYYJsH_Ir
-      maxLength: 16
-      minLength: 16
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    CatalogResourceMapping:
-      description: Describes a mapping between a catalog resource and a service.
-      type: object
-      properties:
-        id:
-          description: The resource mapping ID.
-          type: string
-          format: uuid
-          example: d277faad-ed4e-4c56-a0fb-acce065dee34
-        resource:
-          $ref: '#/components/schemas/CatalogResourceRef'
-        service:
-          $ref: '#/components/schemas/CatalogServiceRef'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-      required:
-      - id
-      - resource
-      - service
-      - created_at
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    BadRequestError:
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    IntegrationRef:
-      description: Short-hand descriptor of an integration installed within the catalog.
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    CreateCatalogResourceMapping:
       type: object
       properties:
-        name:
+        service:
+          description: The `id` or `name` of the service to map the resource to.
           type: string
-          example: gateway-manager
-        display_name:
-          type: string
-          example: gateway-manager
-        instance:
-          $ref: '#/components/schemas/IntegrationInstanceRef'
-      required:
-      - name
-      - display_name
-      - instance
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
+          example: user-svc
+          x-speakeasy-name-override: service_id
+        resource:
+          oneOf:
+          - $ref: '#/components/schemas/CatalogResourceId'
+          - $ref: '#/components/schemas/CreateCatalogResourceMappingResourceByConfig'
       additionalProperties: false
       required:
-      - field
-      - reason
-      - rule
-      - minimum
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
+      - service
+      - resource
     CatalogResourceConfigFieldFilter:
       description: "Filters on the resource's `config` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[config.control_plane_id]`\n  - `filter[config.gateway_service_id][neq]=cedbd134-fc5c-4d44-9e38-ccd2a0c6e0ae`\n"
       type: object
@@ -485,84 +235,6 @@ components:
       - oeq
       - neq
       title: CatalogResourceConfigFieldFilter
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     DateTimeFieldFilter:
       description: Filters on the given datetime (RFC-3339) field value.
       oneOf:
@@ -622,35 +294,408 @@ components:
         required:
         - gte
       title: DateTimeFieldFilter
-    InvalidRules:
-      description: invalid parameters rules
+    CatalogServiceRef:
+      description: Short-hand descriptor of a catalog service.
+      type: object
+      properties:
+        id:
+          description: The service ID.
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+        name:
+          description: 'The machine name of the service that uniquely identifies it within the catalog.
+
+            '
+          type: string
+          example: user-svc
+        display_name:
+          description: The display name of the service.
+          type: string
+          example: User Service
+      required:
+      - id
+      - name
+      - display_name
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
       type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
+      example: created_at desc
+      title: SortQuery
+    CatalogResourceRef:
+      description: Short-hand descriptor of a catalog resource.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/CatalogResourceId'
+        name:
+          description: The name of the resource.
+          type: string
+          nullable: true
+        integration:
+          $ref: '#/components/schemas/IntegrationRef'
+        type:
+          $ref: '#/components/schemas/CatalogResourceType'
+        config:
+          $ref: '#/components/schemas/CatalogResourceConfig'
+      required:
+      - id
+      - name
       - type
-      nullable: true
+      - config
+      - integration
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CatalogResourceType:
+      description: 'The resource type. Available resource types are compiled from the integrations installed within the catalog.
+
+        '
+      type: string
+      example: gateway_svc
+      maxLength: 120
+      minLength: 1
+    IntegrationRef:
+      description: Short-hand descriptor of an integration installed within the catalog.
+      type: object
+      properties:
+        name:
+          type: string
+          example: gateway-manager
+        display_name:
+          type: string
+          example: gateway-manager
+        instance:
+          $ref: '#/components/schemas/IntegrationInstanceRef'
+      required:
+      - name
+      - display_name
+      - instance
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    CatalogResourceMapping:
+      description: Describes a mapping between a catalog resource and a service.
+      type: object
+      properties:
+        id:
+          description: The resource mapping ID.
+          type: string
+          format: uuid
+          example: d277faad-ed4e-4c56-a0fb-acce065dee34
+        resource:
+          $ref: '#/components/schemas/CatalogResourceRef'
+        service:
+          $ref: '#/components/schemas/CatalogServiceRef'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+      required:
+      - id
+      - resource
+      - service
+      - created_at
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
       readOnly: true
-      x-speakeasy-unknown-values: allow
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CatalogResourceId:
+      description: The resource ID.
+      type: string
+      format: base64url
+      example: 4UdXnoaDYYJsH_Ir
+      maxLength: 16
+      minLength: 16
+    StringFieldFilterExact:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -684,69 +729,45 @@ components:
       - reason
       - rule
       - maximum
-    CreateCatalogResourceMapping:
+    IntegrationInstanceRef:
+      description: Short-hand descriptor of an integration instance.
       type: object
       properties:
-        service:
-          description: The `id` or `name` of the service to map the resource to.
+        id:
+          description: The integration instance ID.
           type: string
-          example: user-svc
-          x-speakeasy-name-override: service_id
-        resource:
-          oneOf:
-          - $ref: '#/components/schemas/CatalogResourceId'
-          - $ref: '#/components/schemas/CreateCatalogResourceMappingResourceByConfig'
-      additionalProperties: false
+          format: uuid
+          example: 772b9caf-ddbc-4f4f-8aa4-8dfbbe420351
+        name:
+          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
+
+            '
+          type: string
+          example: aws-lambda-prod
+          pattern: ^[0-9a-z.-]+$
+        display_name:
+          description: The display name of the integration instance.
+          type: string
+          example: AWS (prod)
       required:
-      - service
-      - resource
-    CatalogResourceConfig:
-      description: 'JSON object representing the properties used to identify the resource in the third-party system.
-
-        The schema depends on the resource type and is dynamically registered at runtime.
-
-        '
-      type: object
-      example:
-        control_plane_id: ccadfb0a-56cd-4f74-955d-aec1d87157c8
-        gateway_service_id: 94896d05-0c4d-45eb-aae3-de754885dd58
-      additionalProperties: true
-      x-speakeasy-type-override: any
-    ConflictError:
+      - id
+      - name
+      - display_name
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 409
+            example: 403
           title:
-            example: Conflict
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/409
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Conflict
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
+            example: Forbidden
     CatalogResourceMappingFilterParameters:
       type: object
       properties:
@@ -788,41 +809,62 @@ components:
           - $ref: '#/components/schemas/StringFieldFilter'
         created_at:
           $ref: '#/components/schemas/DateTimeFieldFilter'
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+  parameters:
+    CatalogResourceMappingSort:
+      name: sort
+      description: "Sorts a collection of resource mappings. Supported sort attributes are:\n  - `created_at`\n\nDefault sort is `created_at` in descending order.\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    CatalogResourceMappingFilter:
+      name: filter
+      description: Filters a collection of resource mappings.
+      required: false
+      in: query
+      style: deepObject
+      schema:
+        $ref: '#/components/schemas/CatalogResourceMappingFilterParameters'
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   responses:
+    CatalogResourceMappingResponse:
+      description: A response containing a single catalog resource mapping.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CatalogResourceMapping'
     BadRequest:
       description: Bad Request
       content:
@@ -846,18 +888,18 @@ components:
             required:
             - meta
             - data
-    CatalogResourceMappingResponse:
-      description: A response containing a single catalog resource mapping.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CatalogResourceMapping'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -884,54 +926,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Conflict:
       description: Conflict
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ConflictError'
-  parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    CatalogResourceMappingFilter:
-      name: filter
-      description: Filters a collection of resource mappings.
-      required: false
-      in: query
-      style: deepObject
-      schema:
-        $ref: '#/components/schemas/CatalogResourceMappingFilterParameters'
-    CatalogResourceMappingSort:
-      name: sort
-      description: "Sorts a collection of resource mappings. Supported sort attributes are:\n  - `created_at`\n\nDefault sort is `created_at` in descending order.\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
   requestBodies:
     CreateCatalogResourceMappingRequest:
       required: true

@@ -148,40 +148,59 @@ paths:
       - Portal Audit Logs
 components:
   schemas:
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     BaseError:
       description: standard error
       type: object
@@ -236,28 +255,55 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
+    ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -295,6 +341,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -328,80 +389,26 @@ components:
       - rule
       - reason
       - dependents
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -435,80 +442,84 @@ components:
       - reason
       - rule
       - maximum
-    ConflictError:
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 409
+            example: 403
           title:
-            example: Conflict
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/409
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Conflict
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-  responses:
-    PortalWebhookBadRequest:
-      description: Bad Request
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+  parameters:
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
+  requestBodies:
+    UpdatePortalAuditLogWebhook:
+      description: The request schema to modify an portal audit log webhook.
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
             type: object
             properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
+              enabled:
+                description: Indicates if the data should be sent to the configured destination.
+                type: boolean
+                example: true
+                default: false
+              audit_log_destination_id:
+                description: ID of the audit log destination.
                 type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
+                format: uuid
+    ReplacePortalAuditLogReplayJob:
+      description: The request schema to replace a portal audit log replay job.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              start_at:
+                description: 'The start of a date-time range in RFC3339 format e.g. 2017-07-21T17:32:28Z.
+
+                  Must be within the last 7 days.'
                 type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
+                format: date-time
+              end_at:
+                description: 'The end of a date-time range in RFC3339 format e.g. 2017-07-21T17:32:28Z.
+
+                  Must be within the last 7 days.'
                 type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
+                format: date-time
+            required:
+            - start_at
+            - end_at
+  responses:
     PortalAuditLogWebhookStatus:
       description: Get response for portal audit log webhook status
       content:
@@ -545,18 +556,60 @@ components:
                 description: The last message received from the webhook. Useful for debugging.
                 type: string
                 example: Unauthenticated
+    PortalAuditLogWebhook:
+      description: Portal audit log webhook response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              enabled:
+                description: Indicates if the data should be sent to the configured audit log destination.
+                type: boolean
+                example: true
+                default: false
+              audit_log_destination_id:
+                description: ID of the audit log destination.
+                type: string
+                format: uuid
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
     Forbidden:
       description: Forbidden
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ForbiddenError'
-    PortalReplayJobConflict:
-      description: Conflict
+    Unauthorized:
+      description: Unauthorized
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/ConflictError'
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
     PortalAuditLogReplayJob:
       description: Response from fetching or updating an portal audit log replay job
       content:
@@ -596,77 +649,24 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ConflictError'
-    PortalAuditLogWebhook:
-      description: Portal audit log webhook response
+    PortalWebhookBadRequest:
+      description: Bad Request
       content:
-        application/json:
+        application/problem+json:
           schema:
-            type: object
-            properties:
-              enabled:
-                description: Indicates if the data should be sent to the configured audit log destination.
-                type: boolean
-                example: true
-                default: false
-              audit_log_destination_id:
-                description: ID of the audit log destination.
-                type: string
-                format: uuid
+            $ref: '#/components/schemas/BadRequestError'
     PortalReplayJobBadRequest:
       description: Bad Request
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/BadRequestError'
-  parameters:
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
-  requestBodies:
-    ReplacePortalAuditLogReplayJob:
-      description: The request schema to replace a portal audit log replay job.
+    PortalReplayJobConflict:
+      description: Conflict
       content:
-        application/json:
+        application/problem+json:
           schema:
-            type: object
-            properties:
-              start_at:
-                description: 'The start of a date-time range in RFC3339 format e.g. 2017-07-21T17:32:28Z.
-
-                  Must be within the last 7 days.'
-                type: string
-                format: date-time
-              end_at:
-                description: 'The end of a date-time range in RFC3339 format e.g. 2017-07-21T17:32:28Z.
-
-                  Must be within the last 7 days.'
-                type: string
-                format: date-time
-            required:
-            - start_at
-            - end_at
-    UpdatePortalAuditLogWebhook:
-      description: The request schema to modify an portal audit log webhook.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              enabled:
-                description: Indicates if the data should be sent to the configured destination.
-                type: boolean
-                example: true
-                default: false
-              audit_log_destination_id:
-                description: ID of the audit log destination.
-                type: string
-                format: uuid
+            $ref: '#/components/schemas/ConflictError'
   securitySchemes:
     personalAccessToken:
       type: http

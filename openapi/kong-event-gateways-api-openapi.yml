@@ -198,181 +198,45 @@ paths:
       tags:
       - Event Gateways
 components:
-  responses:
-    Internal:
-      description: Internal
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BaseError'
-    NotAvailable:
-      description: Service not available
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BaseError'
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    ListEventGatewaysResponse:
-      description: A paginated list response for a collection of gateways.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayInfo'
-            additionalProperties: false
-            required:
-            - meta
-            - data
-            title: ListEventGatewaysResponse
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    UpdateGatewayResponse:
-      description: A response to updating a gateway.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EventGatewayInfo'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    CreateGatewayResponse:
-      description: A response to creating a gateway.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EventGatewayInfo'
-  parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-    EventGatewayCommonFilter:
-      schema:
-        type: object
-        properties:
-          name:
-            $ref: '#/components/schemas/StringFieldContainsFilter'
-      in: query
-      name: filter
-      description: Filter documents returned in the response.
-      required: false
-      style: deepObject
   schemas:
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
-    GatewayName:
-      description: The name of the Gateway.
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      maxLength: 255
-      minLength: 1
-      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     MinRuntimeVersionUpdate:
       description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
 
@@ -384,6 +248,36 @@ components:
       type: string
       example: '1.1'
       pattern: ^\d+\.\d+$
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    MinRuntimeVersion:
+      description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
+
+        release that can be used with the entity model.
+
+        When not specified, the minimum runtime version will be pinned to the latest available release.
+
+        '
+      type: string
+      example: '1.1'
+      pattern: ^\d+\.\d+$
+    GatewayDescription:
+      description: A human-readable description of the Gateway.
+      type: string
+      maxLength: 512
     EventGatewayInfo:
       description: The gateway object contains information about a Konnect gateway.
       type: object
@@ -441,35 +335,44 @@ components:
       - virtual_clusters_total
       - min_runtime_version
       - version
-    CursorMetaPage:
+    PatchGatewayRequest:
+      description: The request schema for the patch gateway request.
       type: object
       properties:
-        first:
-          description: URI to the first page
+        name:
+          $ref: '#/components/schemas/GatewayName'
+        description:
+          description: A human-readable description of the Gateway.
           type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
+          maxLength: 512
           nullable: true
-        previous:
-          description: URI to the previous page
+        min_runtime_version:
+          description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
+
+            release that can be used with the entity model.
+
+            When not specified, the minimum runtime version will not be updated.
+
+            '
           type: string
-          format: path
+          example: '1.1'
           nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
+          pattern: ^\d+\.\d+$
+        labels:
+          description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+          type: object
+          example:
+            env: test
+          additionalProperties:
+            type: string
+            pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+            minLength: 1
+            maxLength: 63
+          maxProperties: 50
+          nullable: true
+          title: Labels
+      additionalProperties: false
+      title: PatchGatewayRequest
     BaseError:
       description: standard error
       type: object
@@ -524,70 +427,61 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    GatewayDescription:
-      description: A human-readable description of the Gateway.
+    GatewayName:
+      description: The name of the Gateway.
       type: string
-      maxLength: 512
-    BadRequestError:
+      maxLength: 255
+      minLength: 1
+      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+    ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    PatchGatewayRequest:
-      description: The request schema for the patch gateway request.
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        name:
-          $ref: '#/components/schemas/GatewayName'
-        description:
-          description: A human-readable description of the Gateway.
+        field:
           type: string
-          maxLength: 512
-          nullable: true
-        min_runtime_version:
-          description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
-
-            release that can be used with the entity model.
-
-            When not specified, the minimum runtime version will not be updated.
-
-            '
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
           type: string
-          example: '1.1'
-          nullable: true
-          pattern: ^\d+\.\d+$
-        labels:
-          description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-          type: object
-          example:
-            env: test
-          additionalProperties:
-            type: string
-            pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-            minLength: 1
-            maxLength: 63
-          maxProperties: 50
-          nullable: true
-          title: Labels
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
-      title: PatchGatewayRequest
+      required:
+      - field
+      - reason
+      - rule
+      - choices
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -625,6 +519,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -658,94 +567,28 @@ components:
       - rule
       - reason
       - dependents
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+    InvalidParameterStandard:
       type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    UpdateGatewayRequest:
-      description: The request schema for the update gateway request.
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreateGatewayRequest:
+      description: The request schema for the create gateway request.
       type: object
       properties:
         name:
@@ -753,11 +596,13 @@ components:
         description:
           $ref: '#/components/schemas/GatewayDescription'
         min_runtime_version:
-          $ref: '#/components/schemas/MinRuntimeVersionUpdate'
+          $ref: '#/components/schemas/MinRuntimeVersion'
         labels:
           $ref: '#/components/schemas/Labels'
       additionalProperties: false
-      title: UpdateGatewayRequest
+      required:
+      - name
+      title: CreateGatewayRequest
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -791,6 +636,87 @@ components:
       - reason
       - rule
       - maximum
+    UpdateGatewayRequest:
+      description: The request schema for the update gateway request.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/GatewayName'
+        description:
+          $ref: '#/components/schemas/GatewayDescription'
+        min_runtime_version:
+          $ref: '#/components/schemas/MinRuntimeVersionUpdate'
+        labels:
+          $ref: '#/components/schemas/Labels'
+      additionalProperties: false
+      title: UpdateGatewayRequest
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
+      type: object
+      properties:
+        contains:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      title: StringFieldContainsFilter
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
     CursorMeta:
       description: Pagination metadata.
       type: object
@@ -799,68 +725,142 @@ components:
           $ref: '#/components/schemas/CursorMetaPage'
       required:
       - page
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+  responses:
+    NotAvailable:
+      description: Service not available
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BaseError'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    CreateGatewayResponse:
+      description: A response to creating a gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayInfo'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    Internal:
+      description: Internal
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BaseError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    UpdateGatewayResponse:
+      description: A response to updating a gateway.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EventGatewayInfo'
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    ListEventGatewaysResponse:
+      description: A paginated list response for a collection of gateways.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayInfo'
+            additionalProperties: false
+            required:
+            - meta
+            - data
+            title: ListEventGatewaysResponse
+  parameters:
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    EventGatewayCommonFilter:
+      schema:
+        type: object
         properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    MinRuntimeVersion:
-      description: 'The minimum runtime version supported by the API. This is the lowest version of the data plane
-
-        release that can be used with the entity model.
-
-        When not specified, the minimum runtime version will be pinned to the latest available release.
-
-        '
-      type: string
-      example: '1.1'
-      pattern: ^\d+\.\d+$
-    CreateGatewayRequest:
-      description: The request schema for the create gateway request.
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/GatewayName'
-        description:
-          $ref: '#/components/schemas/GatewayDescription'
-        min_runtime_version:
-          $ref: '#/components/schemas/MinRuntimeVersion'
-        labels:
-          $ref: '#/components/schemas/Labels'
-      additionalProperties: false
-      required:
-      - name
-      title: CreateGatewayRequest
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+          name:
+            $ref: '#/components/schemas/StringFieldContainsFilter'
+      in: query
+      name: filter
+      description: Filter documents returned in the response.
+      required: false
+      style: deepObject
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   securitySchemes:
     personalAccessToken:
       type: http

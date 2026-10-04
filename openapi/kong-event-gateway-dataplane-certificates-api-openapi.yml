@@ -151,152 +151,108 @@ paths:
       tags:
       - Event Gateway DataPlane Certificates
 components:
-  responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListEventGatewayDataPlaneCertificatesResponse:
-      description: A paginated list response for a collection of certificates associated with an Event Gateway.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventGatewayDataPlaneCertificate'
   schemas:
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    CertificateMetadata:
+      description: Metadata extracted from a certificate.
       type: object
       properties:
-        field:
+        issuer:
+          description: The issuer of the certificate.
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
+        subject:
+          description: The subject of the certificate.
           type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
+        key_usages:
+          description: The key usages of the certificate.
           type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
+          items:
+            type: string
+        expiry:
+          description: The expiry date of the certificate as a unix timestamp.
+          type: integer
+          format: int64
+        san_names:
+          description: The Subject Alternative Names (SAN) of the certificate.
+          type: array
+          items:
+            type: string
+        dns_names:
+          description: The DNS names in the certificate SAN.
+          type: array
+          items:
+            type: string
+        email_addresses:
+          description: The email addresses in the certificate SAN.
+          type: array
+          items:
+            type: string
+        ip_addresses:
+          description: The IP addresses in the certificate SAN.
+          type: array
+          items:
+            type: string
+        uris:
+          description: The URIs in the certificate SAN.
+          type: array
+          items:
+            type: string
+            format: uri
+        sha256_fingerprint:
+          description: The SHA-256 fingerprint of the certificate.
           type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
     BaseError:
       description: standard error
       type: object
@@ -351,28 +307,47 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -410,6 +385,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -443,128 +433,64 @@ components:
       - rule
       - reason
       - dependents
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    CertificateMetadata:
-      description: Metadata extracted from a certificate.
+    InvalidParameterStandard:
       type: object
       properties:
-        issuer:
-          description: The issuer of the certificate.
+        field:
           type: string
-        subject:
-          description: The subject of the certificate.
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
           type: string
-        key_usages:
-          description: The key usages of the certificate.
-          type: array
-          items:
-            type: string
-        expiry:
-          description: The expiry date of the certificate as a unix timestamp.
-          type: integer
-          format: int64
-        san_names:
-          description: The Subject Alternative Names (SAN) of the certificate.
-          type: array
-          items:
-            type: string
-        dns_names:
-          description: The DNS names in the certificate SAN.
-          type: array
-          items:
-            type: string
-        email_addresses:
-          description: The email addresses in the certificate SAN.
-          type: array
-          items:
-            type: string
-        ip_addresses:
-          description: The IP addresses in the certificate SAN.
-          type: array
-          items:
-            type: string
-        uris:
-          description: The URIs in the certificate SAN.
-          type: array
-          items:
-            type: string
-            format: uri
-        sha256_fingerprint:
-          description: The SHA-256 fingerprint of the certificate.
+          example: body
+        reason:
           type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    EventGatewayDataPlaneCertificate:
+      description: A dataplane certificate.
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the certificate.
+          type: string
+          format: uuid
+        certificate:
+          description: JSON escaped string of the certificate.
+          type: string
+        name:
+          description: The name to identify of the certificate.
+          type: string
+          maxLength: 255
+          minLength: 1
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A description of the certificate.
+          type: string
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        metadata:
+          $ref: '#/components/schemas/CertificateMetadata'
+      required:
+      - id
+      - certificate
+      - created_at
+      - updated_at
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -598,37 +524,73 @@ components:
       - reason
       - rule
       - maximum
-    EventGatewayDataPlaneCertificate:
-      description: A dataplane certificate.
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
       type: object
       properties:
-        id:
-          description: The unique identifier of the certificate.
+        contains:
           type: string
-          format: uuid
-        certificate:
-          description: JSON escaped string of the certificate.
-          type: string
-        name:
-          description: The name to identify of the certificate.
-          type: string
-          maxLength: 255
-          minLength: 1
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A description of the certificate.
-          type: string
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        metadata:
-          $ref: '#/components/schemas/CertificateMetadata'
+      additionalProperties: false
       required:
-      - id
-      - certificate
-      - created_at
-      - updated_at
+      - contains
+      title: StringFieldContainsFilter
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
     CursorMeta:
       description: Pagination metadata.
       type: object
@@ -637,37 +599,7 @@ components:
           $ref: '#/components/schemas/CursorMetaPage'
       required:
       - page
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
     PageAfter:
       name: page[after]
       description: Request the next page of data, starting with the item after this parameter.
@@ -697,26 +629,75 @@ components:
         format: uuid
         example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
       description: The UUID of your Gateway.
-  requestBodies:
-    CreateEventGatewayDataPlaneCertificateRequest:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    ListEventGatewayDataPlaneCertificatesResponse:
+      description: A paginated list response for a collection of certificates associated with an Event Gateway.
       content:
         application/json:
           schema:
             type: object
             properties:
-              certificate:
-                description: JSON escaped string of the certificate.
-                type: string
-              name:
-                description: The name to identify of the certificate.
-                type: string
-              description:
-                description: A description of the certificate.
-                type: string
-                x-speakeasy-param-computed: false
-            required:
-            - certificate
-      description: Request body for creating a certificate.
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventGatewayDataPlaneCertificate'
+  requestBodies:
     UpdateEventGatewayDataPlaneCertificateRequest:
       description: The request schema for updating a dataplane certificate.
       content:
@@ -736,6 +717,25 @@ components:
                 x-speakeasy-param-computed: false
             required:
             - certificate
+    CreateEventGatewayDataPlaneCertificateRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              certificate:
+                description: JSON escaped string of the certificate.
+                type: string
+              name:
+                description: The name to identify of the certificate.
+                type: string
+              description:
+                description: A description of the certificate.
+                type: string
+                x-speakeasy-param-computed: false
+            required:
+            - certificate
+      description: Request body for creating a certificate.
   securitySchemes:
     personalAccessToken:
       type: http

@@ -189,47 +189,89 @@ paths:
       - API Specification
 components:
   schemas:
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    ValidateApiSpecRequestPayload:
       type: object
       properties:
-        field:
+        content:
+          description: 'The raw content of your API specification (OpenAPI or AsyncAPI), in json or yaml, to be validated.
+
+            '
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
       additionalProperties: false
       required:
-      - field
-      - reason
-      - rule
-      - choices
+      - content
+      title: API Specification Validation Request Payload
+    ApiSpecFilterParameters:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: API Spec Filter Parameters
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ApiSpecType:
+      description: 'The type of specification being stored. This allows us to render the specification correctly.
+
+        '
+      type: string
+      example: oas3
+      enum:
+      - oas2
+      - oas3
+      - asyncapi
+      title: API Spec Type
+      x-speakeasy-unknown-values: allow
     ValidateApiSpecSuccessResponse:
       type: object
       properties:
@@ -248,13 +290,6 @@ components:
       required:
       - validation_messages
       title: API Specification Validation Success Response
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
     BaseError:
       description: standard error
       type: object
@@ -309,48 +344,21 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    BadRequestError:
+    UnsupportedMediaTypeError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+          status:
+            example: 415
+          title:
+            example: UnsupportedMediaType
+          type:
+            example: https://httpstatuses.com/415
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: UnsupportedMediaType
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -361,6 +369,82 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -398,6 +482,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -431,81 +530,7 @@ components:
       - rule
       - reason
       - dependents
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    InvalidParameterMaximumLength:
+    InvalidParameterStandard:
       type: object
       properties:
         field:
@@ -513,111 +538,45 @@ components:
           example: name
           readOnly: true
         rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
+          $ref: '#/components/schemas/InvalidRules'
         source:
           type: string
           example: body
         reason:
           type: string
-          example: must not have more than 8 characters
+          example: is a required field
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
-      - rule
-      - maximum
-    ApiSpecFilterParameters:
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
       type: object
       properties:
-        type:
-          $ref: '#/components/schemas/StringFieldFilter'
-      title: API Spec Filter Parameters
-    UnsupportedMediaTypeError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 415
-          title:
-            example: UnsupportedMediaType
-          type:
-            example: https://httpstatuses.com/415
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: UnsupportedMediaType
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    ValidateApiSpecRequestPayload:
-      type: object
-      properties:
-        content:
-          description: 'The raw content of your API specification (OpenAPI or AsyncAPI), in json or yaml, to be validated.
-
-            '
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
           type: string
       additionalProperties: false
-      required:
-      - content
-      title: API Specification Validation Request Payload
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ApiSpecType:
-      description: 'The type of specification being stored. This allows us to render the specification correctly.
-
-        '
-      type: string
-      example: oas3
-      enum:
-      - oas2
-      - oas3
-      - asyncapi
-      title: API Spec Type
-      x-speakeasy-unknown-values: allow
     ApiSpec:
       type: object
       properties:
@@ -663,7 +622,7 @@ components:
           $ref: '#/components/schemas/UpdatedAt'
       additionalProperties: false
       title: API Specification
-    InvalidParameterStandard:
+    InvalidParameterMaximumLength:
       type: object
       properties:
         field:
@@ -671,56 +630,60 @@ components:
           example: name
           readOnly: true
         rule:
-          $ref: '#/components/schemas/InvalidRules'
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
         reason:
           type: string
-          example: is a required field
+          example: must not have more than 8 characters
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
+      - rule
+      - maximum
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    ApiSpecFilters:
-      name: filter
-      description: Filters API Specs in the response.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ApiSpecFilterParameters'
-      style: deepObject
-    ApiId:
-      schema:
-        type: string
-        format: uuid
-        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-      name: apiId
-      in: path
-      required: true
-      description: The UUID API identifier
     SpecId:
       schema:
         type: string
@@ -731,7 +694,118 @@ components:
       in: path
       required: true
       x-speakeasy-match: id
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    ApiId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiId
+      in: path
+      required: true
+      description: The UUID API identifier
+    ApiSpecFilters:
+      name: filter
+      description: Filters API Specs in the response.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApiSpecFilterParameters'
+      style: deepObject
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   responses:
+    UnsupportedMediaType:
+      description: Unsupported Media Type
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnsupportedMediaTypeError'
+    ValidateApiSpecSuccessResponse:
+      description: API specification (OpenAPI or AsyncAPI) validation successful
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidateApiSpecSuccessResponse'
+    ApiSpecHiddenConflict:
+      description: Conflict - name attribute must be unique across specifications
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiSpecConflict:
+      description: Conflict - An API may only have one specification
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    ListApiSpecResponse:
+      description: List of API specifications (OpenAPI or AsyncAPI)
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  title: API Specification Summary
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    id:
+                      description: The API specification identifier.
+                      type: string
+                      format: uuid
+                      example: 7710d5c4-d902-410b-992f-18b814155b53
+                      readOnly: true
+                    type:
+                      $ref: '#/components/schemas/ApiSpecType'
+                    created_at:
+                      $ref: '#/components/schemas/CreatedAt'
+                    updated_at:
+                      $ref: '#/components/schemas/UpdatedAt'
+                  required:
+                  - id
+                  - type
+                  - created_at
+                  - updated_at
+            additionalProperties: false
+            required:
+            - data
+            - meta
+            title: ListApiSpecResponse
     ApiSpecResponse:
       description: API specification (OpenAPI or AsyncAPI)
       content:
@@ -788,87 +862,20 @@ components:
             - updated_at
             - validation_messages
             title: API Specification
-    UnsupportedMediaType:
-      description: Unsupported Media Type
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnsupportedMediaTypeError'
     ApiNotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    ListApiSpecResponse:
-      description: List of API specifications (OpenAPI or AsyncAPI)
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  title: API Specification Summary
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    id:
-                      description: The API specification identifier.
-                      type: string
-                      format: uuid
-                      example: 7710d5c4-d902-410b-992f-18b814155b53
-                      readOnly: true
-                    type:
-                      $ref: '#/components/schemas/ApiSpecType'
-                    created_at:
-                      $ref: '#/components/schemas/CreatedAt'
-                    updated_at:
-                      $ref: '#/components/schemas/UpdatedAt'
-                  required:
-                  - id
-                  - type
-                  - created_at
-                  - updated_at
-            additionalProperties: false
-            required:
-            - data
-            - meta
-            title: ListApiSpecResponse
-    ApiSpecConflict:
-      description: Conflict - An API may only have one specification
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    ApiUnauthorized:
-      description: ApiUnauthorized
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    ApiSpecHiddenConflict:
-      description: Conflict - name attribute must be unique across specifications
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    ValidateApiSpecSuccessResponse:
-      description: API specification (OpenAPI or AsyncAPI) validation successful
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ValidateApiSpecSuccessResponse'
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
   requestBodies:
+    ValidateApiSpecRequest:
+      required: true
+      description: Specification content and type for validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidateApiSpecRequestPayload'
     CreateApiSpecRequest:
       required: true
       content:
@@ -920,13 +927,6 @@ components:
             required:
             - content
             title: API Specification
-    ValidateApiSpecRequest:
-      required: true
-      description: Specification content and type for validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ValidateApiSpecRequestPayload'
     UpdateApiSpecRequest:
       required: true
       content:

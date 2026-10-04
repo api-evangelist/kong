@@ -143,120 +143,7 @@ paths:
       tags:
       - Portal Team Membership
 components:
-  parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    DeveloperId:
-      schema:
-        type: string
-        format: uuid
-        example: d32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: developerId
-      in: path
-      required: true
-      description: ID of the developer.
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
-    TeamId:
-      x-speakeasy-match: id
-      schema:
-        type: string
-        format: uuid
-        example: d32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: teamId
-      in: path
-      required: true
-      description: ID of the team.
   schemas:
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    ListBasicDevelopersResponse:
-      description: A paginated list of basic information about a set of developers.
-      type: object
-      properties:
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/BasicDeveloper'
-      example:
-        meta:
-          page:
-            number: 1
-            size: 10
-            total: 2
-        data:
-        - id: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          email: james.woods@email.com
-          full_name: James Woods
-          active: true
-          created_at: '2022-08-17T17:46:57.52Z'
-          updated_at: '2022-10-03T17:00:00.00Z'
-        - id: 4f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          email: jill.stone@email.com
-          full_name: Jill Stone
-          active: false
-          created_at: '2022-07-17T17:46:57.52Z'
-          updated_at: '2022-10-03T17:00:00.00Z'
-      title: ListBasicDevelopersResponse
     PortalTeamResponse:
       description: Details about a developer team.
       type: object
@@ -297,6 +184,59 @@ components:
         updated_at: '2022-08-31T17:00:00.52Z'
         can_own_applications: false
       title: PortalTeamResponse
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     AddDeveloperToTeamRequest:
       description: Add a developer to a team by specifying the developer ID.
       type: object
@@ -311,6 +251,49 @@ components:
       required:
       - id
       title: AddDeveloperToTeamRequest
+    ListPortalTeamsResponse:
+      description: A paginated list of teams in a portal.
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalTeamResponse'
+      example:
+        meta:
+          page:
+            number: 1
+            size: 10
+            total: 3
+        data:
+        - id: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          name: Partner
+          description: Team with access to Partner APIs
+          created_at: '2022-02-07T17:46:57.52Z'
+          updated_at: '2022-09-25T13:00:00.00Z'
+          can_own_applications: false
+        - id: af9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          name: Internal
+          description: Team with access to Internal APIs
+          created_at: '2022-02-07T17:46:57.52Z'
+          updated_at: '2022-09-25T13:00:00.00Z'
+          can_own_applications: true
+        - id: 4f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          name: Root
+          description: Team with access to Internal Systems
+          created_at: '2022-02-07T17:46:57.52Z'
+          updated_at: '2022-09-25T13:00:00.00Z'
+          can_own_applications: true
+      required:
+      - data
+      - meta
+      title: ListPortalTeamsResponse
+    BooleanFieldFilter:
+      description: Filter by a boolean value (true/false).
+      type: boolean
+      title: BooleanFieldFilter
     BaseError:
       description: standard error
       type: object
@@ -365,39 +348,6 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -408,15 +358,105 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
-    BadRequestError:
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    ListBasicDevelopersResponse:
+      description: A paginated list of basic information about a set of developers.
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BasicDeveloper'
+      example:
+        meta:
+          page:
+            number: 1
+            size: 10
+            total: 2
+        data:
+        - id: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          email: james.woods@email.com
+          full_name: James Woods
+          active: true
+          created_at: '2022-08-17T17:46:57.52Z'
+          updated_at: '2022-10-03T17:00:00.00Z'
+        - id: 4f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          email: jill.stone@email.com
+          full_name: Jill Stone
+          active: false
+          created_at: '2022-07-17T17:46:57.52Z'
+          updated_at: '2022-10-03T17:00:00.00Z'
+      title: ListBasicDevelopersResponse
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -454,6 +494,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -487,81 +542,7 @@ components:
       - rule
       - reason
       - dependents
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    InvalidParameterMaximumLength:
+    InvalidParameterStandard:
       type: object
       properties:
         field:
@@ -569,105 +550,38 @@ components:
           example: name
           readOnly: true
         rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
+          $ref: '#/components/schemas/InvalidRules'
         source:
           type: string
           example: body
         reason:
           type: string
-          example: must not have more than 8 characters
+          example: is a required field
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
-      - rule
-      - maximum
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
       type: object
       properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ListPortalTeamsResponse:
-      description: A paginated list of teams in a portal.
-      type: object
-      properties:
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/PortalTeamResponse'
-      example:
-        meta:
-          page:
-            number: 1
-            size: 10
-            total: 3
-        data:
-        - id: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          name: Partner
-          description: Team with access to Partner APIs
-          created_at: '2022-02-07T17:46:57.52Z'
-          updated_at: '2022-09-25T13:00:00.00Z'
-          can_own_applications: false
-        - id: af9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          name: Internal
-          description: Team with access to Internal APIs
-          created_at: '2022-02-07T17:46:57.52Z'
-          updated_at: '2022-09-25T13:00:00.00Z'
-          can_own_applications: true
-        - id: 4f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          name: Root
-          description: Team with access to Internal Systems
-          created_at: '2022-02-07T17:46:57.52Z'
-          updated_at: '2022-09-25T13:00:00.00Z'
-          can_own_applications: true
-      required:
-      - data
-      - meta
-      title: ListPortalTeamsResponse
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
     BasicDeveloper:
       description: Basic information about a developer.
       type: object
@@ -709,11 +623,7 @@ components:
         created_at: '2022-02-07T17:46:57.52Z'
         updated_at: '2022-10-08T17:00:00.52Z'
       title: BasicDeveloper
-    BooleanFieldFilter:
-      description: Filter by a boolean value (true/false).
-      type: boolean
-      title: BooleanFieldFilter
-    InvalidParameterStandard:
+    InvalidParameterMaximumLength:
       type: object
       properties:
         field:
@@ -721,25 +631,127 @@ components:
           example: name
           readOnly: true
         rule:
-          $ref: '#/components/schemas/InvalidRules'
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
         source:
           type: string
           example: body
         reason:
           type: string
-          example: is a required field
+          example: must not have more than 8 characters
           readOnly: true
       additionalProperties: false
       required:
       - field
       - reason
+      - rule
+      - maximum
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+  parameters:
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
+    DeveloperId:
+      schema:
+        type: string
+        format: uuid
+        example: d32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: developerId
+      in: path
+      required: true
+      description: ID of the developer.
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    TeamId:
+      x-speakeasy-match: id
+      schema:
+        type: string
+        format: uuid
+        example: d32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: teamId
+      in: path
+      required: true
+      description: ID of the team.
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   responses:
+    ListPortalTeams:
+      description: A paginated list of teams in a portal.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ListPortalTeamsResponse'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -766,24 +778,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Conflict:
       description: Conflict
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ConflictError'
-    ListPortalTeams:
-      description: A paginated list of teams in a portal.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ListPortalTeamsResponse'
     ListBasicDevelopers:
       description: A paginated list of basic developer information.
       content:

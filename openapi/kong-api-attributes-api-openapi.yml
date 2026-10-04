@@ -49,26 +49,6 @@ paths:
       - API Attributes
 components:
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
     ApiAttributeSort:
       name: sort
       description: "Sorts a collection of API attributes. Supported sort attributes are:\n  - id\n  - key\n  - created_at\n  - updated_at\n"
@@ -84,21 +64,182 @@ components:
       schema:
         $ref: '#/components/schemas/ApiAttributeFilterParameters'
       style: deepObject
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   schemas:
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    DateTimeFieldFilter:
+      description: Filters on the given datetime (RFC-3339) field value.
+      oneOf:
+      - type: object
+        title: DateTimeFieldEqualsFilter
+        additionalProperties: false
+        properties:
+          eq:
+            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - eq
+      - type: object
+        title: DateTimeFieldLTFilter
+        additionalProperties: false
+        properties:
+          lt:
+            description: Value is less than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lt
+      - type: object
+        title: DateTimeFieldLTEFilter
+        additionalProperties: false
+        properties:
+          lte:
+            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lte
+      - type: object
+        title: DateTimeFieldGTFilter
+        additionalProperties: false
+        properties:
+          gt:
+            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gt
+      - type: object
+        title: DateTimeFieldGTEFilter
+        additionalProperties: false
+        properties:
+          gte:
+            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gte
+      title: DateTimeFieldFilter
+    ApiAttributeFilterParameters:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        key:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        created_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+        updated_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+      title: API Attribute Filter Parameters
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      example: created_at desc
+      title: SortQuery
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    ApiAttributeListItem:
+      description: Entities that describe APIs
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        key:
+          description: A unique key that can contain lowercase letters, numbers, hyphens, and underscores
+          type: string
+          format: ^[a-z0-9-_]{0,128}$
+          example: kind
+          maxLength: 128
+        values:
+          type: array
+          items:
+            type: object
+            required:
+            - value
+            - api_count
+            properties:
+              value:
+                description: A keyword describing the API under the attribute key
+                type: string
+                example: REST
+                maxLength: 512
+                minLength: 1
+                pattern: ^[^,<>]*$
+              api_count:
+                type: integer
+      additionalProperties: false
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+      required:
+      - id
+      - key
+      - values
+      - created_at
+      - updated_at
+      title: API Attribute List Item
     BaseError:
       description: standard error
       type: object
@@ -163,177 +304,6 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    DateTimeFieldFilter:
-      description: Filters on the given datetime (RFC-3339) field value.
-      oneOf:
-      - type: object
-        title: DateTimeFieldEqualsFilter
-        additionalProperties: false
-        properties:
-          eq:
-            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - eq
-      - type: object
-        title: DateTimeFieldLTFilter
-        additionalProperties: false
-        properties:
-          lt:
-            description: Value is less than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lt
-      - type: object
-        title: DateTimeFieldLTEFilter
-        additionalProperties: false
-        properties:
-          lte:
-            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lte
-      - type: object
-        title: DateTimeFieldGTFilter
-        additionalProperties: false
-        properties:
-          gt:
-            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gt
-      - type: object
-        title: DateTimeFieldGTEFilter
-        additionalProperties: false
-        properties:
-          gte:
-            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gte
-      title: DateTimeFieldFilter
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    ApiAttributeFilterParameters:
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        key:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        created_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-        updated_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-      title: API Attribute Filter Parameters
-    ApiAttributeListItem:
-      description: Entities that describe APIs
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        key:
-          description: A unique key that can contain lowercase letters, numbers, hyphens, and underscores
-          type: string
-          format: ^[a-z0-9-_]{0,128}$
-          example: kind
-          maxLength: 128
-        values:
-          type: array
-          items:
-            type: object
-            required:
-            - value
-            - api_count
-            properties:
-              value:
-                description: A keyword describing the API under the attribute key
-                type: string
-                example: REST
-                maxLength: 512
-                minLength: 1
-                pattern: ^[^,<>]*$
-              api_count:
-                type: integer
-      additionalProperties: false
-      readOnly: true
-      required:
-      - id
-      - key
-      - values
-      - created_at
-      - updated_at
-      title: API Attribute List Item
     UUID:
       description: Contains a unique identifier used for this resource.
       type: string
@@ -360,33 +330,69 @@ components:
       - number
       - size
       - total
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
   responses:
-    ApiNotFound:
-      description: Not Found
+    ApiForbidden:
+      description: ApiForbidden
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/NotFoundError'
+            $ref: '#/components/schemas/ForbiddenError'
     ApiUnauthorized:
       description: ApiUnauthorized
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/UnauthorizedError'
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
     ListApiAttributesResponse:
       description: Paginated list of API attributes
       content:
@@ -405,12 +411,6 @@ components:
             - data
             - meta
             title: ListApiAttributes
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
   securitySchemes:
     personalAccessToken:
       type: http

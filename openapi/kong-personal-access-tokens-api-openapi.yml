@@ -190,6 +190,35 @@ paths:
       - Personal Access Tokens
 components:
   schemas:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
     PersonalAccessTokenCreateRequestWithTTL:
       type: object
       properties:
@@ -204,47 +233,70 @@ components:
       required:
       - name
       - ttl_seconds
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    RevokedBy:
+      description: Contains a unique identifier used for the user that revoked this token.
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      nullable: true
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
+    PersonalAccessToken:
+      description: Properties of a personal access token.
       type: object
       properties:
-        field:
+        id:
+          $ref: '#/components/schemas/UUID'
+        user_id:
+          $ref: '#/components/schemas/UserId'
+        name:
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
+        state:
+          $ref: '#/components/schemas/PersonalAccessTokenState'
+        revoked_by:
+          $ref: '#/components/schemas/RevokedBy'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        last_used_at:
+          $ref: '#/components/schemas/LastUsedAt'
+        expires_at:
+          $ref: '#/components/schemas/ExpiresAt'
+        revoked_at:
+          $ref: '#/components/schemas/RevokedAt'
       additionalProperties: false
       required:
-      - field
-      - reason
-      - rule
-      - choices
+      - id
+      - name
+      - state
+      - user_id
+      - created_at
+      - updated_at
+      - expires_at
     ExpiresAt:
       description: An ISO-8601 timestamp representation of entity expiration date.
       type: string
@@ -253,21 +305,53 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-param-suppress-computed-diff: true
-    PersonalAccessTokenState:
-      description: State of the personal access token.
+    PATName:
       type: string
-      enum:
-      - ACTIVE
-      - REVOKED
-      - EXPIRED
-      x-speakeasy-unknown-values: allow
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+      maxLength: 256
+      minLength: 1
+      pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
+    PersonalAccessTokenCreateResponse:
+      description: Details of the created personal access token.
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        user_id:
+          $ref: '#/components/schemas/UserId'
+        name:
+          type: string
+        state:
+          description: State of the personal access token.
+          type: string
+          enum:
+          - ACTIVE
+          - REVOKED
+          - EXPIRED
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        konnect_token:
+          description: The Konnect token used to authenticate with Konnect.
+          type: string
+        revoked_by:
+          $ref: '#/components/schemas/RevokedBy'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        last_used_at:
+          $ref: '#/components/schemas/LastUsedAt'
+        expires_at:
+          $ref: '#/components/schemas/ExpiresAt'
+        revoked_at:
+          $ref: '#/components/schemas/RevokedAt'
+      required:
+      - id
+      - name
+      - state
+      - konnect_token
+      - user_id
+      - created_at
+      - expires_at
     BaseError:
       description: standard error
       type: object
@@ -322,28 +406,112 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
+    PersonalAccessTokenCreateRequestWithExpiresAt:
+      description: '**Deprecated:** Use `ttl_seconds` instead of `expires_at` to specify token expiration. Using a time-to-live value avoids clock skew issues when setting token expiration.'
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/PATName'
+        expires_at:
+          description: An ISO-8601 timestamp representation of entity expiration date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: false
+          x-speakeasy-param-suppress-computed-diff: true
+      additionalProperties: false
+      deprecated: true
+      required:
+      - name
+      - expires_at
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    UserId:
+      description: Contains a unique identifier used for a user.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -381,14 +549,21 @@ components:
       - reason
       - rule
       - minimum
-    LastUsedAt:
-      description: An ISO-8601 timestamp representation of entity last used date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      nullable: true
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -422,119 +597,41 @@ components:
       - rule
       - reason
       - dependents
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UserId:
-      description: Contains a unique identifier used for a user.
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
       type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
       readOnly: true
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    PersonalAccessToken:
-      description: Properties of a personal access token.
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameterStandard:
       type: object
       properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        user_id:
-          $ref: '#/components/schemas/UserId'
-        name:
+        field:
           type: string
-        state:
-          $ref: '#/components/schemas/PersonalAccessTokenState'
-        revoked_by:
-          $ref: '#/components/schemas/RevokedBy'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        last_used_at:
-          $ref: '#/components/schemas/LastUsedAt'
-        expires_at:
-          $ref: '#/components/schemas/ExpiresAt'
-        revoked_at:
-          $ref: '#/components/schemas/RevokedAt'
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
       additionalProperties: false
       required:
-      - id
-      - name
-      - state
-      - user_id
-      - created_at
-      - updated_at
-      - expires_at
+      - field
+      - reason
+    PersonalAccessTokenState:
+      description: State of the personal access token.
+      type: string
+      enum:
+      - ACTIVE
+      - REVOKED
+      - EXPIRED
+      x-speakeasy-unknown-values: allow
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -568,27 +665,34 @@ components:
       - reason
       - rule
       - maximum
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    ConflictError:
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 409
+            example: 403
           title:
-            example: Conflict
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/409
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Conflict
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     RevokedAt:
       description: An ISO-8601 timestamp representation of entity revoked at date.
       type: string
@@ -597,118 +701,14 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-param-suppress-computed-diff: true
-    PersonalAccessTokenCreateRequestWithExpiresAt:
-      description: '**Deprecated:** Use `ttl_seconds` instead of `expires_at` to specify token expiration. Using a time-to-live value avoids clock skew issues when setting token expiration.'
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/PATName'
-        expires_at:
-          description: An ISO-8601 timestamp representation of entity expiration date.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: false
-          x-speakeasy-param-suppress-computed-diff: true
-      additionalProperties: false
-      deprecated: true
-      required:
-      - name
-      - expires_at
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    PATName:
+    LastUsedAt:
+      description: An ISO-8601 timestamp representation of entity last used date.
       type: string
-      maxLength: 256
-      minLength: 1
-      pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.']*[\p{L}\p{N}]$
-    PersonalAccessTokenCreateResponse:
-      description: Details of the created personal access token.
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        user_id:
-          $ref: '#/components/schemas/UserId'
-        name:
-          type: string
-        state:
-          description: State of the personal access token.
-          type: string
-          enum:
-          - ACTIVE
-          - REVOKED
-          - EXPIRED
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        konnect_token:
-          description: The Konnect token used to authenticate with Konnect.
-          type: string
-        revoked_by:
-          $ref: '#/components/schemas/RevokedBy'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        last_used_at:
-          $ref: '#/components/schemas/LastUsedAt'
-        expires_at:
-          $ref: '#/components/schemas/ExpiresAt'
-        revoked_at:
-          $ref: '#/components/schemas/RevokedAt'
-      required:
-      - id
-      - name
-      - state
-      - konnect_token
-      - user_id
-      - created_at
-      - expires_at
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    RevokedBy:
-      description: Contains a unique identifier used for the user that revoked this token.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
       nullable: true
       readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
   responses:
     BadRequest:
       description: Bad Request
@@ -716,40 +716,24 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/BadRequestError'
-    PersonalAccessTokenCreateResponse:
-      description: Response containing details of the created personal access token.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PersonalAccessTokenCreateResponse'
     PersonalAccessTokenResponse:
       description: Response containing details of a personal access token.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/PersonalAccessToken'
+    PersonalAccessTokenCreateResponse:
+      description: Response containing details of the created personal access token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PersonalAccessTokenCreateResponse'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    PersonalAccessTokenListResponse:
-      description: A list response for a collection of personal access tokens.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PageMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PersonalAccessToken'
-            additionalProperties: false
-            required:
-            - data
     Forbidden:
       description: Forbidden
       content:
@@ -768,24 +752,23 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/UnauthorizedError'
-  parameters:
-    userId:
-      name: userId
-      in: path
-      required: true
-      description: ID of the user.
-      x-go-name: userIdParam
-      schema:
-        $ref: '#/components/schemas/UUID'
-  requestBodies:
-    PersonalAccessTokenCreateRequest:
-      description: Request body schema for creating personal access tokens.
+    PersonalAccessTokenListResponse:
+      description: A list response for a collection of personal access tokens.
       content:
         application/json:
           schema:
-            oneOf:
-            - $ref: '#/components/schemas/PersonalAccessTokenCreateRequestWithExpiresAt'
-            - $ref: '#/components/schemas/PersonalAccessTokenCreateRequestWithTTL'
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PageMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonalAccessToken'
+            additionalProperties: false
+            required:
+            - data
+  requestBodies:
     PersonalAccessTokenUpdateRequest:
       description: Request body schema for updating personal access tokens.
       content:
@@ -796,6 +779,23 @@ components:
               name:
                 $ref: '#/components/schemas/PATName'
             minProperties: 1
+    PersonalAccessTokenCreateRequest:
+      description: Request body schema for creating personal access tokens.
+      content:
+        application/json:
+          schema:
+            oneOf:
+            - $ref: '#/components/schemas/PersonalAccessTokenCreateRequestWithExpiresAt'
+            - $ref: '#/components/schemas/PersonalAccessTokenCreateRequestWithTTL'
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      description: ID of the user.
+      x-go-name: userIdParam
+      schema:
+        $ref: '#/components/schemas/UUID'
   securitySchemes:
     personalAccessToken:
       type: http

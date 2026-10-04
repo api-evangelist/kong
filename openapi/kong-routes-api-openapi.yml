@@ -617,6 +617,114 @@ paths:
     - url: https://au.api.konghq.com
 components:
   schemas:
+    RouteExpression:
+      x-speakeasy-entity: RouteExpression
+      description: Route entities define rules to match client requests. Each Route is associated with a Service, and a Service may have multiple Routes associated to it. Every request matching a given Route will be proxied to its associated Service. The combination of Routes and Services (and the separation of concerns between them) offers a powerful routing mechanism with which it is possible to define fine-grained entry-points in Kong leading to different upstream services of your infrastructure. You need at least one matching rule that applies to the protocol being matched by the Route.
+      type: object
+      properties:
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        expression:
+          description: Use Router Expression to perform route match. This option is only available when `router_flavor` is set to `expressions`.
+          type: string
+          nullable: true
+        https_redirect_status_code:
+          description: 'The status code Kong responds with when all properties of a Route match except the protocol i.e. if the protocol of the request is `HTTP` instead of `HTTPS`. `Location` header is injected by Kong if the field is set to 301, 302, 307 or 308. Note: This config applies only if the Route is configured to only accept the `https` protocol.'
+          type: integer
+          default: 426
+          enum:
+          - 301
+          - 302
+          - 307
+          - 308
+          - 426
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the Route. Route names must be unique, and they are case sensitive. For example, there can be two different Routes named "test" and "Test".
+          type: string
+          nullable: true
+        path_handling:
+          description: Controls how the Service path, Route path and requested path are combined when sending a request to the upstream. See above for a detailed description of each behavior.
+          type: string
+          default: v0
+          enum:
+          - v0
+          - v1
+          nullable: true
+        preserve_host:
+          description: When matching a Route via one of the `hosts` domain names, use the request `Host` header in the upstream request headers. If set to `false`, the upstream `Host` header will be that of the Service's `host`.
+          type: boolean
+          default: false
+          nullable: true
+        priority:
+          description: A number used to specify the matching order for expression routes. The higher the `priority`, the sooner an route will be evaluated. This field is ignored unless `expression` field is set.
+          type: integer
+          default: 0
+          maximum: 70368744177663
+          minimum: 0
+          nullable: true
+        protocols:
+          description: An array of the protocols this Route should allow. See the [Route Object](#route-object) section for a list of accepted protocols. When set to only `"https"`, HTTP requests are answered with an upgrade error. When set to only `"http"`, HTTPS requests are answered with an error.
+          type: array
+          items:
+            description: A string representing a protocol, such as HTTP or HTTPS.
+            enum:
+            - grpc
+            - grpcs
+            - http
+            - https
+            - tcp
+            - tls
+            - tls_passthrough
+            - udp
+            - ws
+            - wss
+            type: string
+          default:
+          - https
+          minLength: 1
+          nullable: true
+        request_buffering:
+          description: Whether to enable request body buffering or not. With HTTP 1.1, it may make sense to turn this off on services that receive data with chunked transfer encoding.
+          type: boolean
+          default: true
+          nullable: true
+        response_buffering:
+          description: Whether to enable response body buffering or not. With HTTP 1.1, it may make sense to turn this off on services that send data with chunked transfer encoding.
+          type: boolean
+          default: true
+          nullable: true
+        service:
+          description: The Service this Route is associated to. This is where the Route proxies traffic to.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        strip_path:
+          description: When matching a Route via one of the `paths`, strip the matching prefix from the upstream request URL.
+          type: boolean
+          default: true
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Route for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      additionalProperties: false
     GatewayUnauthorizedError:
       type: object
       properties:
@@ -805,8 +913,7 @@ components:
         service:
           id: bd380f99-659d-415e-b0e7-72ea05df3218
       additionalProperties: false
-    RouteExpression:
-      x-speakeasy-entity: RouteExpression
+    RouteExpression_2:
       description: Route entities define rules to match client requests. Each Route is associated with a Service, and a Service may have multiple Routes associated to it. Every request matching a given Route will be proxied to its associated Service. The combination of Routes and Services (and the separation of concerns between them) offers a powerful routing mechanism with which it is possible to define fine-grained entry-points in Kong leading to different upstream services of your infrastructure. You need at least one matching rule that applies to the protocol being matched by the Route.
       type: object
       properties:
@@ -829,6 +936,7 @@ components:
           - 308
           - 426
           nullable: true
+          x-speakeasy-unknown-values: allow
         id:
           description: A string representing a UUID (universally unique identifier).
           type: string
@@ -845,6 +953,7 @@ components:
           - v0
           - v1
           nullable: true
+          x-speakeasy-unknown-values: allow
         preserve_host:
           description: When matching a Route via one of the `hosts` domain names, use the request `Host` header in the upstream request headers. If set to `false`, the upstream `Host` header will be that of the Service's `host`.
           type: boolean
@@ -874,6 +983,7 @@ components:
             - ws
             - wss
             type: string
+            x-speakeasy-unknown-values: allow
           default:
           - https
           minLength: 1
@@ -913,6 +1023,13 @@ components:
           type: integer
           nullable: true
       additionalProperties: false
+    RouteWithoutParents:
+      oneOf:
+      - $ref: '#/components/schemas/RouteJson_2'
+      - $ref: '#/components/schemas/RouteExpression_2'
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
     Route:
       oneOf:
       - $ref: '#/components/schemas/RouteJson_2'
@@ -1097,123 +1214,6 @@ components:
         service:
           id: bd380f99-659d-415e-b0e7-72ea05df3218
       additionalProperties: false
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
-    RouteExpression_2:
-      description: Route entities define rules to match client requests. Each Route is associated with a Service, and a Service may have multiple Routes associated to it. Every request matching a given Route will be proxied to its associated Service. The combination of Routes and Services (and the separation of concerns between them) offers a powerful routing mechanism with which it is possible to define fine-grained entry-points in Kong leading to different upstream services of your infrastructure. You need at least one matching rule that applies to the protocol being matched by the Route.
-      type: object
-      properties:
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        expression:
-          description: Use Router Expression to perform route match. This option is only available when `router_flavor` is set to `expressions`.
-          type: string
-          nullable: true
-        https_redirect_status_code:
-          description: 'The status code Kong responds with when all properties of a Route match except the protocol i.e. if the protocol of the request is `HTTP` instead of `HTTPS`. `Location` header is injected by Kong if the field is set to 301, 302, 307 or 308. Note: This config applies only if the Route is configured to only accept the `https` protocol.'
-          type: integer
-          default: 426
-          enum:
-          - 301
-          - 302
-          - 307
-          - 308
-          - 426
-          nullable: true
-          x-speakeasy-unknown-values: allow
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        name:
-          description: The name of the Route. Route names must be unique, and they are case sensitive. For example, there can be two different Routes named "test" and "Test".
-          type: string
-          nullable: true
-        path_handling:
-          description: Controls how the Service path, Route path and requested path are combined when sending a request to the upstream. See above for a detailed description of each behavior.
-          type: string
-          default: v0
-          enum:
-          - v0
-          - v1
-          nullable: true
-          x-speakeasy-unknown-values: allow
-        preserve_host:
-          description: When matching a Route via one of the `hosts` domain names, use the request `Host` header in the upstream request headers. If set to `false`, the upstream `Host` header will be that of the Service's `host`.
-          type: boolean
-          default: false
-          nullable: true
-        priority:
-          description: A number used to specify the matching order for expression routes. The higher the `priority`, the sooner an route will be evaluated. This field is ignored unless `expression` field is set.
-          type: integer
-          default: 0
-          maximum: 70368744177663
-          minimum: 0
-          nullable: true
-        protocols:
-          description: An array of the protocols this Route should allow. See the [Route Object](#route-object) section for a list of accepted protocols. When set to only `"https"`, HTTP requests are answered with an upgrade error. When set to only `"http"`, HTTPS requests are answered with an error.
-          type: array
-          items:
-            description: A string representing a protocol, such as HTTP or HTTPS.
-            enum:
-            - grpc
-            - grpcs
-            - http
-            - https
-            - tcp
-            - tls
-            - tls_passthrough
-            - udp
-            - ws
-            - wss
-            type: string
-            x-speakeasy-unknown-values: allow
-          default:
-          - https
-          minLength: 1
-          nullable: true
-        request_buffering:
-          description: Whether to enable request body buffering or not. With HTTP 1.1, it may make sense to turn this off on services that receive data with chunked transfer encoding.
-          type: boolean
-          default: true
-          nullable: true
-        response_buffering:
-          description: Whether to enable response body buffering or not. With HTTP 1.1, it may make sense to turn this off on services that send data with chunked transfer encoding.
-          type: boolean
-          default: true
-          nullable: true
-        service:
-          description: The Service this Route is associated to. This is where the Route proxies traffic to.
-          type: object
-          nullable: true
-          properties:
-            id:
-              type: string
-          x-foreign: true
-        strip_path:
-          description: When matching a Route via one of the `paths`, strip the matching prefix from the upstream request URL.
-          type: boolean
-          default: true
-          nullable: true
-        tags:
-          description: An optional set of strings associated with the Route for grouping and filtering.
-          type: array
-          items:
-            description: A string representing a tag.
-            type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-      additionalProperties: false
-    RouteWithoutParents:
-      oneOf:
-      - $ref: '#/components/schemas/RouteJson_2'
-      - $ref: '#/components/schemas/RouteExpression_2'
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
@@ -1236,20 +1236,11 @@ components:
       schema:
         type: string
       x-speakeasy-match: id
-    PaginationSize:
-      description: Number of resources to be returned.
+    NameEqualsFilter:
+      description: Filter routes by their name.
+      example: john
       in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
+      name: filter[name][eq]
       schema:
         type: string
     PaginationTagsFilter:
@@ -1260,19 +1251,26 @@ components:
       name: tags
       schema:
         type: string
-    NameEqualsFilter:
-      description: Filter routes by their name.
-      example: john
-      in: query
-      name: filter[name][eq]
+    ServiceId:
+      description: ID of the Service to lookup
+      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
+      in: path
+      name: ServiceId
+      required: true
       schema:
         type: string
-    RouteId:
-      description: ID of the Route to lookup
-      example: a4326a41-aa12-44e3-93e4-6b6e58bfb9d7
-      in: path
-      name: RouteId
-      required: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    NameContainsFilter:
+      description: Filter routes by a substring of the name.
+      example: john
+      in: query
+      name: filter[name][contains]
       schema:
         type: string
     controlPlaneId:
@@ -1285,21 +1283,23 @@ components:
         example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
       description: The UUID of your control plane. This variable is available in the Konnect manager.
       x-speakeasy-param-force-new: true
-    NameContainsFilter:
-      description: Filter routes by a substring of the name.
-      example: john
-      in: query
-      name: filter[name][contains]
-      schema:
-        type: string
-    ServiceId:
-      description: ID of the Service to lookup
-      example: 7fca84d6-7d37-4a74-a7b0-93e576089a41
+    RouteId:
+      description: ID of the Route to lookup
+      example: a4326a41-aa12-44e3-93e4-6b6e58bfb9d7
       in: path
-      name: ServiceId
+      name: RouteId
       required: true
       schema:
         type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
   responses:
     HTTP401Error:
       description: Unauthorized

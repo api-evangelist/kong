@@ -172,54 +172,77 @@ paths:
       - Portals
 components:
   schemas:
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    BooleanFieldFilter:
+      description: Filter by a boolean value (true/false).
+      type: boolean
+      title: BooleanFieldFilter
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
       properties:
-        field:
+        eq:
+          description: The field exactly matches the provided value.
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
+        oeq:
+          description: The field matches any of the provided values.
           type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
+        neq:
+          description: The field does not match the provided value.
           type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
       additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
     BaseError:
       description: standard error
       type: object
@@ -274,39 +297,6 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -317,15 +307,102 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
-    BadRequestError:
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    LabelsUpdate:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+        nullable: true
+      maxProperties: 50
+      nullable: true
+      writeOnly: true
+    ConflictError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -363,6 +440,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -396,92 +488,53 @@ components:
       - rule
       - reason
       - dependents
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+    InvalidParameterStandard:
       type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -543,49 +596,36 @@ components:
         canonical_domain:
           $ref: '#/components/schemas/StringFieldFilter'
       title: PortalFilterParameters
-    ConflictError:
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 409
+            example: 403
           title:
-            example: Conflict
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/409
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Conflict
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    LabelsUpdate:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
       type: object
       example:
         env: test
@@ -594,59 +634,276 @@ components:
         pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
         minLength: 1
         maxLength: 63
-        nullable: true
       maxProperties: 50
-      nullable: true
-      writeOnly: true
-    BooleanFieldFilter:
-      description: Filter by a boolean value (true/false).
-      type: boolean
-      title: BooleanFieldFilter
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+      title: Labels
+  responses:
+    PortalResponse:
+      description: Details about a portal.
+      content:
+        application/json:
+          schema:
+            x-speakeasy-entity: Portal
+            type: object
+            properties:
+              id:
+                $ref: '#/components/schemas/UUID'
+              created_at:
+                $ref: '#/components/schemas/CreatedAt'
+              updated_at:
+                $ref: '#/components/schemas/UpdatedAt'
+              name:
+                description: The name of the portal, used to distinguish it from other portals. Name must be unique.
+                type: string
+                maxLength: 255
+                minLength: 1
+              display_name:
+                description: The display name of the portal. This value will be the portal's `name` in Portal API.
+                type: string
+                maxLength: 255
+                minLength: 1
+                nullable: false
+              description:
+                description: A description of the portal.
+                type: string
+                maxLength: 512
+                nullable: true
+              authentication_enabled:
+                description: Whether the portal supports developer authentication. If disabled, developers cannot register for accounts or create applications.
+                type: boolean
+                default: true
+              rbac_enabled:
+                description: Whether the portal resources are protected by Role Based Access Control (RBAC). If enabled, developers view or register for APIs until unless assigned to teams with access to view and consume specific APIs. Authentication must be enabled to use RBAC.
+                type: boolean
+                default: false
+              sipr_enabled:
+                description: Whether ip allow list is enabled for the portal.
+                type: boolean
+                example: true
+                default: false
+              default_api_visibility:
+                description: The default visibility of APIs in the portal. If set to `public`, newly published APIs are visible to unauthenticated developers. If set to `private`, newly published APIs are hidden from unauthenticated developers.
+                type: string
+                enum:
+                - public
+                - private
+                x-speakeasy-unknown-values: allow
+              default_page_visibility:
+                description: The default visibility of pages in the portal. If set to `public`, newly created pages are visible to unauthenticated developers. If set to `private`, newly created pages are hidden from unauthenticated developers.
+                type: string
+                enum:
+                - public
+                - private
+                x-speakeasy-unknown-values: allow
+              default_application_auth_strategy_id:
+                description: The default authentication strategy for APIs published to the portal. Newly published APIs will use this authentication strategy unless overridden during publication. If set to `null`, API publications will not use an authentication strategy unless set during publication.
+                type: string
+                format: uuid
+                nullable: true
+              auto_approve_developers:
+                description: Whether developer account registrations will be automatically approved, or if they will be set to pending until approved by an admin.
+                type: boolean
+                default: false
+              auto_approve_applications:
+                description: Whether requests from applications to register for APIs will be automatically approved, or if they will be set to pending until approved by an admin.
+                type: boolean
+                default: false
+              default_domain:
+                description: The domain assigned to the portal by Konnect. This is the default place to access the portal and its API if not using a `custom_domain``.
+                type: string
+                format: hostname
+                readOnly: true
+              canonical_domain:
+                description: The canonical domain of the developer portal
+                type: string
+                format: hostname
+                nullable: false
+                readOnly: true
+              labels:
+                $ref: '#/components/schemas/Labels'
+            additionalProperties: false
+            required:
+            - id
+            - name
+            - display_name
+            - description
+            - authentication_enabled
+            - rbac_enabled
+            - sipr_enabled
+            - default_api_visibility
+            - default_page_visibility
+            - default_application_auth_strategy_id
+            - auto_approve_applications
+            - auto_approve_developers
+            - default_domain
+            - canonical_domain
+            - updated_at
+            - created_at
+            title: Portal
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    ListPortalsResponse:
+      description: A paginated list of portals in the current region of an organization.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  x-speakeasy-entity: Portal
+                  title: Portal
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    id:
+                      $ref: '#/components/schemas/UUID'
+                    created_at:
+                      $ref: '#/components/schemas/CreatedAt'
+                    updated_at:
+                      $ref: '#/components/schemas/UpdatedAt'
+                    name:
+                      description: The name of the portal, used to distinguish it from other portals. Name must be unique.
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                    display_name:
+                      description: The display name of the portal. This value will be the portal's `name` in Portal API.
+                      type: string
+                      maxLength: 255
+                      minLength: 1
+                      nullable: false
+                    description:
+                      description: A description of the portal.
+                      type: string
+                      maxLength: 512
+                      nullable: true
+                    authentication_enabled:
+                      description: Whether the portal supports developer authentication. If disabled, developers cannot register for accounts or create applications.
+                      type: boolean
+                      default: true
+                    rbac_enabled:
+                      description: Whether the portal resources are protected by Role Based Access Control (RBAC). If enabled, developers view or register for APIs until unless assigned to teams with access to view and consume specific APIs. Authentication must be enabled to use RBAC.
+                      type: boolean
+                      default: false
+                    sipr_enabled:
+                      description: Whether ip allow list is enabled for the portal.
+                      type: boolean
+                      example: true
+                      default: false
+                    default_api_visibility:
+                      description: The default visibility of APIs in the portal. If set to `public`, newly published APIs are visible to unauthenticated developers. If set to `private`, newly published APIs are hidden from unauthenticated developers.
+                      type: string
+                      enum:
+                      - public
+                      - private
+                      x-speakeasy-unknown-values: allow
+                    default_page_visibility:
+                      description: The default visibility of pages in the portal. If set to `public`, newly created pages are visible to unauthenticated developers. If set to `private`, newly created pages are hidden from unauthenticated developers.
+                      type: string
+                      enum:
+                      - public
+                      - private
+                      x-speakeasy-unknown-values: allow
+                    default_application_auth_strategy_id:
+                      description: The default authentication strategy for APIs published to the portal. Newly published APIs will use this authentication strategy unless overridden during publication. If set to `null`, API publications will not use an authentication strategy unless set during publication.
+                      type: string
+                      format: uuid
+                      nullable: true
+                    auto_approve_developers:
+                      description: Whether developer account registrations will be automatically approved, or if they will be set to pending until approved by an admin.
+                      type: boolean
+                      default: false
+                    auto_approve_applications:
+                      description: Whether requests from applications to register for APIs will be automatically approved, or if they will be set to pending until approved by an admin.
+                      type: boolean
+                      default: false
+                    default_domain:
+                      description: The domain assigned to the portal by Konnect. This is the default place to access the portal and its API if not using a `custom_domain``.
+                      type: string
+                      format: hostname
+                      readOnly: true
+                    canonical_domain:
+                      description: The canonical domain of the developer portal
+                      type: string
+                      format: hostname
+                      nullable: false
+                      readOnly: true
+                    labels:
+                      $ref: '#/components/schemas/Labels'
+                  required:
+                  - id
+                  - name
+                  - display_name
+                  - description
+                  - authentication_enabled
+                  - rbac_enabled
+                  - sipr_enabled
+                  - default_api_visibility
+                  - default_page_visibility
+                  - default_application_auth_strategy_id
+                  - auto_approve_applications
+                  - auto_approve_developers
+                  - default_domain
+                  - canonical_domain
+                  - created_at
+                  - updated_at
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+            additionalProperties: false
+            required:
+            - data
+            - meta
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
+    SortPortals:
+      name: sort
+      description: "Sorts a collection of portals. Supported sort attributes are:\n  - name\n  - description\n  - authentication_enabled\n  - rbac_enabled\n  - auto_approve_applications\n  - auto_approve_developers\n  - default_domain\n  - canonical_domain\n  - created_at\n  - updated_at\n"
       in: query
-      allowEmptyValue: true
+      required: false
       schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+        type: string
     PageNumber:
       name: page[number]
       description: Determines which page of the entities to retrieve.
@@ -657,13 +914,16 @@ components:
         type: integer
         example: 1
       x-speakeasy-terraform-ignore: true
-    SortPortals:
-      name: sort
-      description: "Sorts a collection of portals. Supported sort attributes are:\n  - name\n  - description\n  - authentication_enabled\n  - rbac_enabled\n  - auto_approve_applications\n  - auto_approve_developers\n  - default_domain\n  - canonical_domain\n  - created_at\n  - updated_at\n"
-      in: query
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
       required: false
+      in: query
+      allowEmptyValue: true
       schema:
-        type: string
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   requestBodies:
     UpdatePortal:
       description: Update a portal's settings.
@@ -838,266 +1098,6 @@ components:
             additionalProperties: false
             required:
             - name
-            title: Portal
-  responses:
-    ListPortalsResponse:
-      description: A paginated list of portals in the current region of an organization.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
-                  x-speakeasy-entity: Portal
-                  title: Portal
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    id:
-                      $ref: '#/components/schemas/UUID'
-                    created_at:
-                      $ref: '#/components/schemas/CreatedAt'
-                    updated_at:
-                      $ref: '#/components/schemas/UpdatedAt'
-                    name:
-                      description: The name of the portal, used to distinguish it from other portals. Name must be unique.
-                      type: string
-                      maxLength: 255
-                      minLength: 1
-                    display_name:
-                      description: The display name of the portal. This value will be the portal's `name` in Portal API.
-                      type: string
-                      maxLength: 255
-                      minLength: 1
-                      nullable: false
-                    description:
-                      description: A description of the portal.
-                      type: string
-                      maxLength: 512
-                      nullable: true
-                    authentication_enabled:
-                      description: Whether the portal supports developer authentication. If disabled, developers cannot register for accounts or create applications.
-                      type: boolean
-                      default: true
-                    rbac_enabled:
-                      description: Whether the portal resources are protected by Role Based Access Control (RBAC). If enabled, developers view or register for APIs until unless assigned to teams with access to view and consume specific APIs. Authentication must be enabled to use RBAC.
-                      type: boolean
-                      default: false
-                    sipr_enabled:
-                      description: Whether ip allow list is enabled for the portal.
-                      type: boolean
-                      example: true
-                      default: false
-                    default_api_visibility:
-                      description: The default visibility of APIs in the portal. If set to `public`, newly published APIs are visible to unauthenticated developers. If set to `private`, newly published APIs are hidden from unauthenticated developers.
-                      type: string
-                      enum:
-                      - public
-                      - private
-                      x-speakeasy-unknown-values: allow
-                    default_page_visibility:
-                      description: The default visibility of pages in the portal. If set to `public`, newly created pages are visible to unauthenticated developers. If set to `private`, newly created pages are hidden from unauthenticated developers.
-                      type: string
-                      enum:
-                      - public
-                      - private
-                      x-speakeasy-unknown-values: allow
-                    default_application_auth_strategy_id:
-                      description: The default authentication strategy for APIs published to the portal. Newly published APIs will use this authentication strategy unless overridden during publication. If set to `null`, API publications will not use an authentication strategy unless set during publication.
-                      type: string
-                      format: uuid
-                      nullable: true
-                    auto_approve_developers:
-                      description: Whether developer account registrations will be automatically approved, or if they will be set to pending until approved by an admin.
-                      type: boolean
-                      default: false
-                    auto_approve_applications:
-                      description: Whether requests from applications to register for APIs will be automatically approved, or if they will be set to pending until approved by an admin.
-                      type: boolean
-                      default: false
-                    default_domain:
-                      description: The domain assigned to the portal by Konnect. This is the default place to access the portal and its API if not using a `custom_domain``.
-                      type: string
-                      format: hostname
-                      readOnly: true
-                    canonical_domain:
-                      description: The canonical domain of the developer portal
-                      type: string
-                      format: hostname
-                      nullable: false
-                      readOnly: true
-                    labels:
-                      $ref: '#/components/schemas/Labels'
-                  required:
-                  - id
-                  - name
-                  - display_name
-                  - description
-                  - authentication_enabled
-                  - rbac_enabled
-                  - sipr_enabled
-                  - default_api_visibility
-                  - default_page_visibility
-                  - default_application_auth_strategy_id
-                  - auto_approve_applications
-                  - auto_approve_developers
-                  - default_domain
-                  - canonical_domain
-                  - created_at
-                  - updated_at
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-            additionalProperties: false
-            required:
-            - data
-            - meta
-    NotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    Conflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    PortalResponse:
-      description: Details about a portal.
-      content:
-        application/json:
-          schema:
-            x-speakeasy-entity: Portal
-            type: object
-            properties:
-              id:
-                $ref: '#/components/schemas/UUID'
-              created_at:
-                $ref: '#/components/schemas/CreatedAt'
-              updated_at:
-                $ref: '#/components/schemas/UpdatedAt'
-              name:
-                description: The name of the portal, used to distinguish it from other portals. Name must be unique.
-                type: string
-                maxLength: 255
-                minLength: 1
-              display_name:
-                description: The display name of the portal. This value will be the portal's `name` in Portal API.
-                type: string
-                maxLength: 255
-                minLength: 1
-                nullable: false
-              description:
-                description: A description of the portal.
-                type: string
-                maxLength: 512
-                nullable: true
-              authentication_enabled:
-                description: Whether the portal supports developer authentication. If disabled, developers cannot register for accounts or create applications.
-                type: boolean
-                default: true
-              rbac_enabled:
-                description: Whether the portal resources are protected by Role Based Access Control (RBAC). If enabled, developers view or register for APIs until unless assigned to teams with access to view and consume specific APIs. Authentication must be enabled to use RBAC.
-                type: boolean
-                default: false
-              sipr_enabled:
-                description: Whether ip allow list is enabled for the portal.
-                type: boolean
-                example: true
-                default: false
-              default_api_visibility:
-                description: The default visibility of APIs in the portal. If set to `public`, newly published APIs are visible to unauthenticated developers. If set to `private`, newly published APIs are hidden from unauthenticated developers.
-                type: string
-                enum:
-                - public
-                - private
-                x-speakeasy-unknown-values: allow
-              default_page_visibility:
-                description: The default visibility of pages in the portal. If set to `public`, newly created pages are visible to unauthenticated developers. If set to `private`, newly created pages are hidden from unauthenticated developers.
-                type: string
-                enum:
-                - public
-                - private
-                x-speakeasy-unknown-values: allow
-              default_application_auth_strategy_id:
-                description: The default authentication strategy for APIs published to the portal. Newly published APIs will use this authentication strategy unless overridden during publication. If set to `null`, API publications will not use an authentication strategy unless set during publication.
-                type: string
-                format: uuid
-                nullable: true
-              auto_approve_developers:
-                description: Whether developer account registrations will be automatically approved, or if they will be set to pending until approved by an admin.
-                type: boolean
-                default: false
-              auto_approve_applications:
-                description: Whether requests from applications to register for APIs will be automatically approved, or if they will be set to pending until approved by an admin.
-                type: boolean
-                default: false
-              default_domain:
-                description: The domain assigned to the portal by Konnect. This is the default place to access the portal and its API if not using a `custom_domain``.
-                type: string
-                format: hostname
-                readOnly: true
-              canonical_domain:
-                description: The canonical domain of the developer portal
-                type: string
-                format: hostname
-                nullable: false
-                readOnly: true
-              labels:
-                $ref: '#/components/schemas/Labels'
-            additionalProperties: false
-            required:
-            - id
-            - name
-            - display_name
-            - description
-            - authentication_enabled
-            - rbac_enabled
-            - sipr_enabled
-            - default_api_visibility
-            - default_page_visibility
-            - default_application_auth_strategy_id
-            - auto_approve_applications
-            - auto_approve_developers
-            - default_domain
-            - canonical_domain
-            - updated_at
-            - created_at
             title: Portal
   securitySchemes:
     personalAccessToken:

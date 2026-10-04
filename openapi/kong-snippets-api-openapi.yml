@@ -163,66 +163,50 @@ paths:
       - Snippets
 components:
   schemas:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     SnippetName:
       description: The unique name of a snippet in a portal.
       type: string
       example: my-snippet
       maxLength: 512
       title: SnippetName
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    SnippetVisibilityStatus:
-      description: 'Whether a snippet is publicly accessible to non-authenticated users.
-
-        If not provided, the default_page_visibility value of the portal will be used.
-
-        '
-      type: string
-      example: public
-      enum:
-      - public
-      - private
-      title: PageVisibilityStatus
-      x-speakeasy-unknown-values: allow
     PortalSnippetResponse:
       description: Details about a snippet in a portal.
       type: object
@@ -255,210 +239,42 @@ components:
       - created_at
       - updated_at
       title: PortalSnippetResponse
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    NotFoundError:
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 401
           title:
-            example: Not Found
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
-    SnippetContent:
-      description: The renderable markdown content of a page in a portal.
-      type: string
-      example: '# Welcome to My Snippet'
-      maxLength: 1000000
-      title: SnippetContent
+            example: Invalid credentials
+    CreatePortalSnippetRequest:
+      description: Create a snippet in a portal.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/SnippetName'
+        title:
+          $ref: '#/components/schemas/SnippetTitle'
+        content:
+          $ref: '#/components/schemas/SnippetContent'
+        visibility:
+          $ref: '#/components/schemas/SnippetVisibilityStatus'
+        status:
+          $ref: '#/components/schemas/PublishedStatus'
+        description:
+          $ref: '#/components/schemas/Description'
+      additionalProperties: false
+      required:
+      - name
+      - content
+      title: CreatePortalSnippetRequest
     DateTimeFieldFilter:
       description: Filters on the given datetime (RFC-3339) field value.
       oneOf:
@@ -518,65 +334,38 @@ components:
         required:
         - gte
       title: DateTimeFieldFilter
-    InvalidRules:
-      description: invalid parameters rules
+    VisibilityStatus:
+      description: Whether the resource is publicly accessible to non-authenticated users.
       type: string
+      example: public
       enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
+      - public
+      - private
+      title: VisibilityStatus
       x-speakeasy-unknown-values: allow
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    PublishedStatus:
+      description: Whether the resource is visible on a given portal. Defaults to unpublished.
+      type: string
+      example: published
+      enum:
+      - published
+      - unpublished
+      title: PublishedStatus
+      x-speakeasy-unknown-values: allow
     PortalSnippetInfo:
       description: Information about a snippet in a portal.
       type: object
@@ -607,6 +396,311 @@ components:
       - created_at
       - updated_at
       title: PortalSnippetInfo
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    SnippetContent:
+      description: The renderable markdown content of a page in a portal.
+      type: string
+      example: '# Welcome to My Snippet'
+      maxLength: 1000000
+      title: SnippetContent
+    Description:
+      type: string
+      example: A custom page about developer portals
+      maxLength: 160
+      title: ResourceDescription
+    UpdatePortalSnippetRequest:
+      description: Update a snippet in a portal.
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/SnippetName'
+        title:
+          $ref: '#/components/schemas/SnippetTitle'
+        content:
+          $ref: '#/components/schemas/SnippetContent'
+        visibility:
+          $ref: '#/components/schemas/VisibilityStatus'
+        status:
+          $ref: '#/components/schemas/PublishedStatus'
+        description:
+          $ref: '#/components/schemas/Description'
+      additionalProperties: false
+      title: UpdatePortalSnippetRequest
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    SnippetVisibilityStatus:
+      description: 'Whether a snippet is publicly accessible to non-authenticated users.
+
+        If not provided, the default_page_visibility value of the portal will be used.
+
+        '
+      type: string
+      example: public
+      enum:
+      - public
+      - private
+      title: PageVisibilityStatus
+      x-speakeasy-unknown-values: allow
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -640,119 +734,6 @@ components:
       - reason
       - rule
       - maximum
-    PublishedStatus:
-      description: Whether the resource is visible on a given portal. Defaults to unpublished.
-      type: string
-      example: published
-      enum:
-      - published
-      - unpublished
-      title: PublishedStatus
-      x-speakeasy-unknown-values: allow
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    CreatePortalSnippetRequest:
-      description: Create a snippet in a portal.
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/SnippetName'
-        title:
-          $ref: '#/components/schemas/SnippetTitle'
-        content:
-          $ref: '#/components/schemas/SnippetContent'
-        visibility:
-          $ref: '#/components/schemas/SnippetVisibilityStatus'
-        status:
-          $ref: '#/components/schemas/PublishedStatus'
-        description:
-          $ref: '#/components/schemas/Description'
-      additionalProperties: false
-      required:
-      - name
-      - content
-      title: CreatePortalSnippetRequest
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    Description:
-      type: string
-      example: A custom page about developer portals
-      maxLength: 160
-      title: ResourceDescription
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    UpdatePortalSnippetRequest:
-      description: Update a snippet in a portal.
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/SnippetName'
-        title:
-          $ref: '#/components/schemas/SnippetTitle'
-        content:
-          $ref: '#/components/schemas/SnippetContent'
-        visibility:
-          $ref: '#/components/schemas/VisibilityStatus'
-        status:
-          $ref: '#/components/schemas/PublishedStatus'
-        description:
-          $ref: '#/components/schemas/Description'
-      additionalProperties: false
-      title: UpdatePortalSnippetRequest
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
     PortalSnippetsFilterParameters:
       type: object
       properties:
@@ -770,21 +751,6 @@ components:
           $ref: '#/components/schemas/DateTimeFieldFilter'
       additionalProperties: false
       title: PortalSnippetsFilterParameters
-    VisibilityStatus:
-      description: Whether the resource is publicly accessible to non-authenticated users.
-      type: string
-      example: public
-      enum:
-      - public
-      - private
-      title: VisibilityStatus
-      x-speakeasy-unknown-values: allow
-    SnippetTitle:
-      description: The display title of a snippet in a portal.
-      type: string
-      example: My Snippet
-      maxLength: 512
-      title: SnippetTitle
     ListPortalSnippetsResponse:
       description: A paginated list of custom snippets in a portal.
       type: object
@@ -815,17 +781,65 @@ components:
       - data
       - meta
       title: ListPortalSnippetsResponse
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    SnippetTitle:
+      description: The display title of a snippet in a portal.
+      type: string
+      example: My Snippet
+      maxLength: 512
+      title: SnippetTitle
+  requestBodies:
+    CreatePortalSnippet:
+      description: Create a snippet in a portal.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreatePortalSnippetRequest'
+    UpdatePortalSnippet:
+      description: Update a snippet in a portal.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdatePortalSnippetRequest'
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
+    PortalId:
       schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
     SortPortalSnippets:
       name: sort
       description: "Sorts a collection of portal snippets. Supported sort attributes are:\n  - created_at\n  - updated_at\n  - name\n  - title\n  - visibility\n"
@@ -853,15 +867,16 @@ components:
       required: true
       description: ID of the snippet.
       x-speakeasy-match: id
-    PortalId:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
       schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   responses:
     ListPortalSnippets:
       description: A paginated list of custom snippets in a portal.
@@ -869,18 +884,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ListPortalSnippetsResponse'
-    PortalSnippet:
-      description: Details about a snippet in a portal.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PortalSnippetResponse'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -907,27 +922,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-  requestBodies:
-    UpdatePortalSnippet:
-      description: Update a snippet in a portal.
-      required: true
+    PortalSnippet:
+      description: Details about a snippet in a portal.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/UpdatePortalSnippetRequest'
-    CreatePortalSnippet:
-      description: Create a snippet in a portal.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CreatePortalSnippetRequest'
+            $ref: '#/components/schemas/PortalSnippetResponse'
   securitySchemes:
     personalAccessToken:
       type: http

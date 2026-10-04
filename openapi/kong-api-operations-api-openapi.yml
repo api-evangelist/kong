@@ -72,87 +72,83 @@ paths:
       tags:
       - API Operations
 components:
-  parameters:
-    ApiOperationFilters:
-      name: filter
-      description: Filters API Operations in the response.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ApiOperationFilterParameters'
-      style: deepObject
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    OperationId:
-      schema:
-        type: string
-        format: uuid
-        example: b42d905a-ed33-46a3-a093-d8f536af9a8a
-      name: operationId
-      in: path
-      required: true
-      description: The API operation identifier
-      x-speakeasy-match: id
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    ApiId:
-      schema:
-        type: string
-        format: uuid
-        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-      name: apiId
-      in: path
-      required: true
-      description: The UUID API identifier
   schemas:
-    ApiOperationFilterParameters:
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ApiOperationImplementationStatus:
+      description: The implementation status of the operation.
       type: object
       properties:
-        method:
-          $ref: '#/components/schemas/StringFieldFilter'
-        path:
-          $ref: '#/components/schemas/StringFieldFilter'
-      title: API Operation Filter Parameters
-    ApiOperation:
-      description: An operation linked to an API
-      type: object
-      properties:
-        id:
-          description: The API operation identifier.
-          type: string
-          format: uuid
-          example: b42d905a-ed33-46a3-a093-d8f536af9a8a
+        matched:
+          description: Whether the operation is matched by a Kong route in the control plane
+          type: boolean
           readOnly: true
-        method:
-          $ref: '#/components/schemas/Method'
-        path:
-          description: The path of the operation.
-          type: string
-          example: /users/*
-        implementation_status:
-          $ref: '#/components/schemas/ApiOperationImplementationStatus'
+        route:
+          type: object
+          additionalProperties: false
+          nullable: true
+          properties:
+            id:
+              description: The route identifier
+              type: string
+              format: uuid
+            name:
+              description: The name of the route
+              type: string
+          readOnly: true
+          required:
+          - id
+          - name
+        service:
+          type: object
+          additionalProperties: false
+          nullable: true
+          properties:
+            id:
+              description: The service identifier
+              type: string
+              format: uuid
+            name:
+              description: The name of the service
+              type: string
+          readOnly: true
+          required:
+          - id
+          - name
       additionalProperties: false
       required:
-      - id
-      - method
-      - path
-      title: API Operation
+      - matched
+      - route
+      - service
+      title: API Operation Implementation Status
+    Method:
+      description: The HTTP method of an API Operation.
+      type: string
+      enum:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+      - HEAD
+      - CONNECT
+      - TRACE
+      readOnly: true
+      x-speakeasy-unknown-values: allow
     BaseError:
       description: standard error
       type: object
@@ -207,26 +203,6 @@ components:
       - instance
       - detail
       title: Error
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -237,66 +213,6 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
-    Method:
-      description: The HTTP method of an API Operation.
-      type: string
-      enum:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - PATCH
-      - OPTIONS
-      - HEAD
-      - CONNECT
-      - TRACE
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
     PageMeta:
       description: Contains pagination query parameters and the total number of objects returned.
       type: object
@@ -317,52 +233,88 @@ components:
       - number
       - size
       - total
-    ApiOperationImplementationStatus:
-      description: The implementation status of the operation.
+    ApiOperationFilterParameters:
       type: object
       properties:
-        matched:
-          description: Whether the operation is matched by a Kong route in the control plane
-          type: boolean
+        method:
+          $ref: '#/components/schemas/StringFieldFilter'
+        path:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: API Operation Filter Parameters
+    ApiOperation:
+      description: An operation linked to an API
+      type: object
+      properties:
+        id:
+          description: The API operation identifier.
+          type: string
+          format: uuid
+          example: b42d905a-ed33-46a3-a093-d8f536af9a8a
           readOnly: true
-        route:
-          type: object
-          additionalProperties: false
-          nullable: true
-          properties:
-            id:
-              description: The route identifier
-              type: string
-              format: uuid
-            name:
-              description: The name of the route
-              type: string
-          readOnly: true
-          required:
-          - id
-          - name
-        service:
-          type: object
-          additionalProperties: false
-          nullable: true
-          properties:
-            id:
-              description: The service identifier
-              type: string
-              format: uuid
-            name:
-              description: The name of the service
-              type: string
-          readOnly: true
-          required:
-          - id
-          - name
+        method:
+          $ref: '#/components/schemas/Method'
+        path:
+          description: The path of the operation.
+          type: string
+          example: /users/*
+        implementation_status:
+          $ref: '#/components/schemas/ApiOperationImplementationStatus'
       additionalProperties: false
       required:
-      - matched
-      - route
-      - service
-      title: API Operation Implementation Status
+      - id
+      - method
+      - path
+      title: API Operation
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
   responses:
     ListApiOperationResponse:
       description: Paginated list of API operations
@@ -382,30 +334,78 @@ components:
             - data
             - meta
             title: ListApiOperations
-    ApiNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    ApiUnauthorized:
-      description: ApiUnauthorized
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     ApiOperationResponse:
       description: An API operation
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ApiOperation'
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    ApiId:
+      schema:
+        type: string
+        format: uuid
+        example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+      name: apiId
+      in: path
+      required: true
+      description: The UUID API identifier
+    OperationId:
+      schema:
+        type: string
+        format: uuid
+        example: b42d905a-ed33-46a3-a093-d8f536af9a8a
+      name: operationId
+      in: path
+      required: true
+      description: The API operation identifier
+      x-speakeasy-match: id
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    ApiOperationFilters:
+      name: filter
+      description: Filters API Operations in the response.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApiOperationFilterParameters'
+      style: deepObject
   securitySchemes:
     personalAccessToken:
       type: http

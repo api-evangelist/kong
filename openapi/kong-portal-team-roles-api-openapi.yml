@@ -108,355 +108,7 @@ paths:
       tags:
       - Portal Team Roles
 components:
-  parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
-    TeamId:
-      x-speakeasy-match: id
-      schema:
-        type: string
-        format: uuid
-        example: d32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: teamId
-      in: path
-      required: true
-      description: ID of the team.
-    RoleId:
-      schema:
-        type: string
-        format: uuid
-        example: 8350205f-a305-4e39-abe9-bc082a80091a
-      name: roleId
-      in: path
-      required: true
   schemas:
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    AssignedPortalRoleCollectionResponse:
-      description: A paginated list of roles assigned to a team.
-      type: object
-      properties:
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/PortalAssignedRoleResponse'
-      example:
-        meta:
-          page:
-            number: 1
-            size: 10
-            total: 3
-        data:
-        - id: b02e23c5-8ee4-4e5a-99f4-43329923adce
-          role_name: API Viewer
-          entity_id: 437c7192-fea0-4f35-8478-c8d57783f8c1
-          entity_type_name: Services
-          entity_region: us
-        - id: b02e23c5-8ee4-4e5a-99f4-43329923adce
-          role_name: API Consumer
-          entity_id: 437c7192-fea0-4f35-8478-c8d57783f8c1
-          entity_type_name: Services
-          entity_region: us
-        - id: 869d9402-f117-4f9a-840f-69acaf70a81a
-          role_name: API Viewer
-          entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
-          entity_type_name: Services
-          entity_region: us
-      required:
-      - meta
-      - data
-      title: AssignedPortalRoleCollectionResponse
-    PortalAssignedRoleResponse:
-      description: An assigned role associates a service and an action to a team.
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          example: eaf7adf1-32c8-4bbf-b960-d1f8456afe67
-        role_name:
-          type: string
-          example: API Viewer
-        entity_id:
-          type: string
-          format: uuid
-          example: 817d0422-45c9-4d88-8d64-45aef05c1ae7
-        entity_type_name:
-          type: string
-          example: Services
-        entity_region:
-          description: Region of the entity.
-          type: string
-          example: eu
-          enum:
-          - us
-          - eu
-          - au
-          - me
-          - in
-          - sg
-          - '*'
-          x-speakeasy-unknown-values: allow
-      example:
-        id: 1a3c2169-27f8-4594-926b-41df3432d5dc
-        role_name: API Viewer
-        entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
-        entity_type_name: Services
-        entity_region: us
-      required:
-      - id
-      - role_name
-      - entity_id
-      - entity_type_name
-      - entity_region
-      title: PortalAssignedRoleResponse
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -486,6 +138,53 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
+    PortalAssignRoleRequest:
+      description: An assigned role associates a service and an action to a team.
+      type: object
+      properties:
+        role_name:
+          type: string
+          example: API Viewer
+        entity_id:
+          type: string
+          format: uuid
+          example: e67490ce-44dc-4cbd-b65e-b52c746fc26a
+        entity_type_name:
+          type: string
+          example: Services
+        entity_region:
+          description: Region of the entity.
+          type: string
+          example: eu
+          enum:
+          - us
+          - eu
+          - au
+          - me
+          - in
+          - sg
+          - '*'
+          x-speakeasy-unknown-values: allow
+      example:
+        role_name: API Viewer
+        entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
+        entity_type_name: Services
+        entity_region: us
+      required:
+      - role_name
+      - entity_id
+      - entity_type_name
+      - entity_region
+      title: PortalAssignRoleRequest
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -501,54 +200,6 @@ components:
             example: kong:trace:1234567890
           detail:
             example: Invalid credentials
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
     ListRolesResponse:
       description: The set of roles available to associate with resources and assign to teams.
       type: object
@@ -610,6 +261,70 @@ components:
       required:
       - services
       title: ListRolesResponse
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     PageMeta:
       description: Contains pagination query parameters and the total number of objects returned.
       type: object
@@ -630,6 +345,184 @@ components:
       - number
       - size
       - total
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    PortalAssignedRoleResponse:
+      description: An assigned role associates a service and an action to a team.
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: eaf7adf1-32c8-4bbf-b960-d1f8456afe67
+        role_name:
+          type: string
+          example: API Viewer
+        entity_id:
+          type: string
+          format: uuid
+          example: 817d0422-45c9-4d88-8d64-45aef05c1ae7
+        entity_type_name:
+          type: string
+          example: Services
+        entity_region:
+          description: Region of the entity.
+          type: string
+          example: eu
+          enum:
+          - us
+          - eu
+          - au
+          - me
+          - in
+          - sg
+          - '*'
+          x-speakeasy-unknown-values: allow
+      example:
+        id: 1a3c2169-27f8-4594-926b-41df3432d5dc
+        role_name: API Viewer
+        entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
+        entity_type_name: Services
+        entity_region: us
+      required:
+      - id
+      - role_name
+      - entity_id
+      - entity_type_name
+      - entity_region
+      title: PortalAssignedRoleResponse
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
     InvalidParameterStandard:
       type: object
       properties:
@@ -650,57 +543,170 @@ components:
       required:
       - field
       - reason
-    PortalAssignRoleRequest:
-      description: An assigned role associates a service and an action to a team.
+    AssignedPortalRoleCollectionResponse:
+      description: A paginated list of roles assigned to a team.
       type: object
       properties:
-        role_name:
-          type: string
-          example: API Viewer
-        entity_id:
-          type: string
-          format: uuid
-          example: e67490ce-44dc-4cbd-b65e-b52c746fc26a
-        entity_type_name:
-          type: string
-          example: Services
-        entity_region:
-          description: Region of the entity.
-          type: string
-          example: eu
-          enum:
-          - us
-          - eu
-          - au
-          - me
-          - in
-          - sg
-          - '*'
-          x-speakeasy-unknown-values: allow
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalAssignedRoleResponse'
       example:
-        role_name: API Viewer
-        entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
-        entity_type_name: Services
-        entity_region: us
+        meta:
+          page:
+            number: 1
+            size: 10
+            total: 3
+        data:
+        - id: b02e23c5-8ee4-4e5a-99f4-43329923adce
+          role_name: API Viewer
+          entity_id: 437c7192-fea0-4f35-8478-c8d57783f8c1
+          entity_type_name: Services
+          entity_region: us
+        - id: b02e23c5-8ee4-4e5a-99f4-43329923adce
+          role_name: API Consumer
+          entity_id: 437c7192-fea0-4f35-8478-c8d57783f8c1
+          entity_type_name: Services
+          entity_region: us
+        - id: 869d9402-f117-4f9a-840f-69acaf70a81a
+          role_name: API Viewer
+          entity_id: 18ee2573-dec0-4b83-be99-fa7700bcdc61
+          entity_type_name: Services
+          entity_region: us
       required:
-      - role_name
-      - entity_id
-      - entity_type_name
-      - entity_region
-      title: PortalAssignRoleRequest
+      - meta
+      - data
+      title: AssignedPortalRoleCollectionResponse
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+  parameters:
+    RoleId:
+      schema:
+        type: string
+        format: uuid
+        example: 8350205f-a305-4e39-abe9-bc082a80091a
+      name: roleId
+      in: path
+      required: true
+    PortalId:
+      schema:
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    TeamId:
+      x-speakeasy-match: id
+      schema:
+        type: string
+        format: uuid
+        example: d32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: teamId
+      in: path
+      required: true
+      description: ID of the team.
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   responses:
-    PortalAssignedRole:
-      description: Details about the role assignment.
+    AssignedPortalRoleCollection:
+      description: A paginated collection of assigned roles.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PortalAssignedRoleResponse'
+            $ref: '#/components/schemas/AssignedPortalRoleCollectionResponse'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -727,18 +733,6 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    AssignedPortalRoleCollection:
-      description: A paginated collection of assigned roles.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/AssignedPortalRoleCollectionResponse'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Conflict:
       description: Conflict
       content:
@@ -751,6 +745,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ListRolesResponse'
+    PortalAssignedRole:
+      description: Details about the role assignment.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PortalAssignedRoleResponse'
   requestBodies:
     PortalAssignRole:
       description: Assign a role to a team.

@@ -128,6 +128,146 @@ paths:
       - Portal Developers
 components:
   schemas:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    ListDevelopersResponse:
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PortalDeveloper'
+      example:
+        meta:
+          page:
+            number: 1
+            size: 10
+            total: 4
+        data:
+        - id: 8cd9feff-b4da-4a9f-ba49-cbe83c75ff22
+          email: jane.developer@example.com
+          full_name: Jane Dev
+          status: approved
+          created_at: '2022-11-15T20:37:41.457Z'
+          updated_at: '2022-11-15T20:37:47.456Z'
+        - id: 4cd9feff-b4da-4a9f-ba49-cbe83c75ff22
+          email: john.developer@example.com
+          full_name: John Dev
+          status: revoked
+          created_at: '2022-11-15T20:37:41.457Z'
+          updated_at: '2022-11-15T20:37:47.456Z'
+        - id: 6cd9feff-b4da-4a9f-ba49-cbe83c75ff22
+          email: john.developer@example.com
+          full_name: Jim Dev
+          status: pending
+          created_at: '2022-11-15T20:37:41.457Z'
+          updated_at: '2022-11-15T20:37:47.456Z'
+        - id: 7cd9feff-b4da-4a9f-ba49-cbe83c75ff22
+          email: john.developer@example.com
+          full_name: Jan Dev
+          status: rejected
+          created_at: '2022-11-15T20:37:41.457Z'
+          updated_at: '2022-11-15T20:37:47.456Z'
+      additionalProperties: false
+      required:
+      - data
+      - meta
+    UpdateDeveloperRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/DeveloperStatus'
+      example:
+        status: approved
+      additionalProperties: false
+      title: UpdateDeveloperRequest
+    PortalDeveloper:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        full_name:
+          type: string
+          maxLength: 255
+        status:
+          $ref: '#/components/schemas/DeveloperStatus'
+      example:
+        id: 7cd9feff-b4da-4a9f-ba49-cbe83c75ff22
+        email: developer@example.com
+        full_name: Jane Dev
+        status: approved
+        created_at: '2022-11-15T20:37:41.457Z'
+        updated_at: '2022-11-15T20:37:47.456Z'
+      additionalProperties: false
+      required:
+      - id
+      - created_at
+      - updated_at
+      - email
+      - full_name
+      - status
+      title: PortalDeveloper
     DeveloperStatus:
       description: The status of a developer in a portal. Approved developers can log in, create applications, and view and register for products they have access to. Pending, revoked, and rejected developers cannot login or view any non-public portal information, or create or modify applications or registrations.
       type: string
@@ -139,63 +279,6 @@ components:
       - rejected
       title: DeveloperStatus
       x-speakeasy-unknown-values: allow
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    UpdateDeveloperRequest:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/DeveloperStatus'
-      example:
-        status: approved
-      additionalProperties: false
-      title: UpdateDeveloperRequest
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
     BaseError:
       description: standard error
       type: object
@@ -250,92 +333,6 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    ListDevelopersResponse:
-      type: object
-      properties:
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/PortalDeveloper'
-      example:
-        meta:
-          page:
-            number: 1
-            size: 10
-            total: 4
-        data:
-        - id: 8cd9feff-b4da-4a9f-ba49-cbe83c75ff22
-          email: jane.developer@example.com
-          full_name: Jane Dev
-          status: approved
-          created_at: '2022-11-15T20:37:41.457Z'
-          updated_at: '2022-11-15T20:37:47.456Z'
-        - id: 4cd9feff-b4da-4a9f-ba49-cbe83c75ff22
-          email: john.developer@example.com
-          full_name: John Dev
-          status: revoked
-          created_at: '2022-11-15T20:37:41.457Z'
-          updated_at: '2022-11-15T20:37:47.456Z'
-        - id: 6cd9feff-b4da-4a9f-ba49-cbe83c75ff22
-          email: john.developer@example.com
-          full_name: Jim Dev
-          status: pending
-          created_at: '2022-11-15T20:37:41.457Z'
-          updated_at: '2022-11-15T20:37:47.456Z'
-        - id: 7cd9feff-b4da-4a9f-ba49-cbe83c75ff22
-          email: john.developer@example.com
-          full_name: Jan Dev
-          status: rejected
-          created_at: '2022-11-15T20:37:41.457Z'
-          updated_at: '2022-11-15T20:37:47.456Z'
-      additionalProperties: false
-      required:
-      - data
-      - meta
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -346,6 +343,73 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
+    UUID:
+      description: Contains a unique identifier used for this resource.
+      type: string
+      format: uuid
+      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+      readOnly: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -383,6 +447,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -416,80 +495,53 @@ components:
       - rule
       - reason
       - dependents
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidRules:
-      description: invalid parameters rules
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
       type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
       readOnly: true
-      x-speakeasy-unknown-values: allow
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -523,97 +575,44 @@ components:
       - reason
       - rule
       - maximum
-    PortalDeveloper:
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UUID'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-        email:
-          type: string
-          format: email
-          maxLength: 255
-        full_name:
-          type: string
-          maxLength: 255
-        status:
-          $ref: '#/components/schemas/DeveloperStatus'
-      example:
-        id: 7cd9feff-b4da-4a9f-ba49-cbe83c75ff22
-        email: developer@example.com
-        full_name: Jane Dev
-        status: approved
-        created_at: '2022-11-15T20:37:41.457Z'
-        updated_at: '2022-11-15T20:37:47.456Z'
-      additionalProperties: false
-      required:
-      - id
-      - created_at
-      - updated_at
-      - email
-      - full_name
-      - status
-      title: PortalDeveloper
-    UUID:
-      description: Contains a unique identifier used for this resource.
-      type: string
-      format: uuid
-      example: 5f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-      readOnly: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
+    PortalId:
       schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+        type: string
+        format: uuid
+        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
+      name: portalId
+      in: path
+      required: true
+      description: ID of the portal.
     DeveloperId:
       schema:
         type: string
@@ -623,6 +622,13 @@ components:
       in: path
       required: true
       description: ID of the developer.
+    SortDevelopers:
+      name: sort
+      description: "Sorts a collection of developers. Supported sort attributes are:\n  - created_at\n  - updated_at\n  - email\n  - name\n  - status\n"
+      in: query
+      required: false
+      schema:
+        type: string
     PageNumber:
       name: page[number]
       description: Determines which page of the entities to retrieve.
@@ -633,41 +639,41 @@ components:
         type: integer
         example: 1
       x-speakeasy-terraform-ignore: true
-    SortDevelopers:
-      name: sort
-      description: "Sorts a collection of developers. Supported sort attributes are:\n  - created_at\n  - updated_at\n  - email\n  - name\n  - status\n"
-      in: query
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
       required: false
+      in: query
+      allowEmptyValue: true
       schema:
-        type: string
-    PortalId:
-      schema:
-        type: string
-        format: uuid
-        example: f32d905a-ed33-46a3-a093-d8f536af9a8a
-      name: portalId
-      in: path
-      required: true
-      description: ID of the portal.
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   responses:
-    GetDeveloper:
-      description: Details about a developer in a portal.
+    UpdateDeveloper:
+      description: Details about the developer being updated.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/PortalDeveloper'
-    ListDevelopers:
-      description: A paginated list of developers in a portal.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ListDevelopersResponse'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    GetDeveloper:
+      description: Details about a developer in a portal.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PortalDeveloper'
     Unauthorized:
       description: Unauthorized
       content:
@@ -694,18 +700,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    UpdateDeveloper:
-      description: Details about the developer being updated.
+    ListDevelopers:
+      description: A paginated list of developers in a portal.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PortalDeveloper'
+            $ref: '#/components/schemas/ListDevelopersResponse'
   requestBodies:
     UpdateDeveloper:
       description: Update a developer.

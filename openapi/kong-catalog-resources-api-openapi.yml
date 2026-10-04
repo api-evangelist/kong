@@ -108,6 +108,182 @@ paths:
       - Catalog Resources
 components:
   schemas:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    CatalogResourceConfig:
+      description: 'JSON object representing the properties used to identify the resource in the third-party system.
+
+        The schema depends on the resource type and is dynamically registered at runtime.
+
+        '
+      type: object
+      example:
+        control_plane_id: ccadfb0a-56cd-4f74-955d-aec1d87157c8
+        gateway_service_id: 94896d05-0c4d-45eb-aae3-de754885dd58
+      additionalProperties: true
+      x-speakeasy-type-override: any
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    UpdateCatalogResource:
+      type: object
+      properties:
+        archived:
+          description: 'Whether or not to archive the resource.
+
+            When a resource is archived, all catalog service mappings will be removed.
+
+            '
+          type: boolean
+          example: false
+      additionalProperties: false
+    CursorPageParameters:
+      type: object
+      properties:
+        size:
+          description: The number of items included per page.
+          type: integer
+          example: 10
+        after:
+          description: Cursor param specifying the page (i.e. the next page) of data returned.
+          type: string
+          example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+        before:
+          description: Cursor param specifying the page (i.e. the previous page) of data returned.
+          type: string
+          example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
+    BooleanFieldFilter:
+      description: Filter by a boolean value (true/false).
+      type: boolean
+      title: BooleanFieldFilter
+    DateTimeFieldFilter:
+      description: Filters on the given datetime (RFC-3339) field value.
+      oneOf:
+      - type: object
+        title: DateTimeFieldEqualsFilter
+        additionalProperties: false
+        properties:
+          eq:
+            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - eq
+      - type: object
+        title: DateTimeFieldLTFilter
+        additionalProperties: false
+        properties:
+          lt:
+            description: Value is less than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lt
+      - type: object
+        title: DateTimeFieldLTEFilter
+        additionalProperties: false
+        properties:
+          lte:
+            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lte
+      - type: object
+        title: DateTimeFieldGTFilter
+        additionalProperties: false
+        properties:
+          gt:
+            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gt
+      - type: object
+        title: DateTimeFieldGTEFilter
+        additionalProperties: false
+        properties:
+          gte:
+            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gte
+      title: DateTimeFieldFilter
+    CatalogResourceConfigFieldFilter:
+      description: "Filters on the resource's `config` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[config.control_plane_id]`\n  - `filter[config.gateway_service_id][neq]=cedbd134-fc5c-4d44-9e38-ccd2a0c6e0ae`\n"
+      type: object
+      properties:
+        eq:
+          type: string
+        contains:
+          type: string
+        ocontains:
+          type: string
+        oeq:
+          type: string
+        neq:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      - ocontains
+      - oeq
+      - neq
+      title: CatalogResourceConfigFieldFilter
     CatalogResourceFilterParameters:
       type: object
       properties:
@@ -146,60 +322,41 @@ components:
           $ref: '#/components/schemas/DateTimeFieldFilter'
         updated_at:
           $ref: '#/components/schemas/DateTimeFieldFilter'
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    UpdateCatalogResource:
+      example: created_at desc
+      title: SortQuery
+    CatalogResourceIntegrationDataFieldFilter:
+      description: "Filters on the resource's `integration_data` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[integration_data.control_plane.id]=760562c3-fedd-43e4-b742-fc1663fef188`\n  - `filter[integration_data.gateway_service.name][contains]=legacy`\n"
       type: object
       properties:
-        archived:
-          description: 'Whether or not to archive the resource.
-
-            When a resource is archived, all catalog service mappings will be removed.
-
-            '
-          type: boolean
-          example: false
-      additionalProperties: false
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
+        eq:
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
+        contains:
           type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
+        ocontains:
           type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
+        oeq:
           type: string
-          example: body
+        neq:
+          type: string
       additionalProperties: false
       required:
-      - field
-      - reason
-      - rule
-      - choices
-    StringFieldFilterExact:
+      - contains
+      - ocontains
+      - oeq
+      - neq
+      title: CatalogResourceIntegrationDataFieldFilter
+    UuidFieldFilter:
       description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
       properties:
@@ -213,66 +370,30 @@ components:
           description: The field does not match the provided value.
           type: string
       additionalProperties: false
-    IntegrationInstanceRef:
-      description: Short-hand descriptor of an integration instance.
+    CatalogResourceType:
+      description: 'The resource type. Available resource types are compiled from the integrations installed within the catalog.
+
+        '
+      type: string
+      example: gateway_svc
+      maxLength: 120
+      minLength: 1
+    IntegrationRef:
+      description: Short-hand descriptor of an integration installed within the catalog.
       type: object
       properties:
-        id:
-          description: The integration instance ID.
-          type: string
-          format: uuid
-          example: 772b9caf-ddbc-4f4f-8aa4-8dfbbe420351
         name:
-          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
-
-            '
           type: string
-          example: aws-lambda-prod
-          pattern: ^[0-9a-z.-]+$
+          example: gateway-manager
         display_name:
-          description: The display name of the integration instance.
           type: string
-          example: AWS (prod)
+          example: gateway-manager
+        instance:
+          $ref: '#/components/schemas/IntegrationInstanceRef'
       required:
-      - id
       - name
       - display_name
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+      - instance
     BaseError:
       description: standard error
       type: object
@@ -327,6 +448,84 @@ components:
       - instance
       - detail
       title: Error
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
     CatalogResource:
       description: Information about a catalog resource.
       type: object
@@ -387,34 +586,101 @@ components:
       - service_associations
       - created_at
       - updated_at
-    CatalogResourceType:
-      description: 'The resource type. Available resource types are compiled from the integrations installed within the catalog.
-
-        '
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
       type: string
-      example: gateway_svc
-      maxLength: 120
-      minLength: 1
-    CatalogResourceId:
-      description: The resource ID.
-      type: string
-      format: base64url
-      example: 4UdXnoaDYYJsH_Ir
-      maxLength: 16
-      minLength: 16
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
     NumericFieldFilter:
       description: Filter by a numeric value.
       oneOf:
@@ -471,288 +737,13 @@ components:
             example: 1.85
         required:
         - gte
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    IntegrationRef:
-      description: Short-hand descriptor of an integration installed within the catalog.
-      type: object
-      properties:
-        name:
-          type: string
-          example: gateway-manager
-        display_name:
-          type: string
-          example: gateway-manager
-        instance:
-          $ref: '#/components/schemas/IntegrationInstanceRef'
-      required:
-      - name
-      - display_name
-      - instance
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
+    CatalogResourceId:
+      description: The resource ID.
       type: string
-      example: created_at desc
-      title: SortQuery
-    CatalogResourceConfigFieldFilter:
-      description: "Filters on the resource's `config` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[config.control_plane_id]`\n  - `filter[config.gateway_service_id][neq]=cedbd134-fc5c-4d44-9e38-ccd2a0c6e0ae`\n"
-      type: object
-      properties:
-        eq:
-          type: string
-        contains:
-          type: string
-        ocontains:
-          type: string
-        oeq:
-          type: string
-        neq:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      - ocontains
-      - oeq
-      - neq
-      title: CatalogResourceConfigFieldFilter
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    DateTimeFieldFilter:
-      description: Filters on the given datetime (RFC-3339) field value.
-      oneOf:
-      - type: object
-        title: DateTimeFieldEqualsFilter
-        additionalProperties: false
-        properties:
-          eq:
-            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - eq
-      - type: object
-        title: DateTimeFieldLTFilter
-        additionalProperties: false
-        properties:
-          lt:
-            description: Value is less than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lt
-      - type: object
-        title: DateTimeFieldLTEFilter
-        additionalProperties: false
-        properties:
-          lte:
-            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lte
-      - type: object
-        title: DateTimeFieldGTFilter
-        additionalProperties: false
-        properties:
-          gt:
-            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gt
-      - type: object
-        title: DateTimeFieldGTEFilter
-        additionalProperties: false
-        properties:
-          gte:
-            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gte
-      title: DateTimeFieldFilter
+      format: base64url
+      example: 4UdXnoaDYYJsH_Ir
+      maxLength: 16
+      minLength: 16
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -786,46 +777,7 @@ components:
       - reason
       - rule
       - maximum
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    CursorPageParameters:
-      type: object
-      properties:
-        size:
-          description: The number of items included per page.
-          type: integer
-          example: 10
-        after:
-          description: Cursor param specifying the page (i.e. the next page) of data returned.
-          type: string
-          example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-        before:
-          description: Cursor param specifying the page (i.e. the previous page) of data returned.
-          type: string
-          example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-    CatalogResourceConfig:
-      description: 'JSON object representing the properties used to identify the resource in the third-party system.
-
-        The schema depends on the resource type and is dynamically registered at runtime.
-
-        '
-      type: object
-      example:
-        control_plane_id: ccadfb0a-56cd-4f74-955d-aec1d87157c8
-        gateway_service_id: 94896d05-0c4d-45eb-aae3-de754885dd58
-      additionalProperties: true
-      x-speakeasy-type-override: any
-    BooleanFieldFilter:
-      description: Filter by a boolean value (true/false).
-      type: boolean
-      title: BooleanFieldFilter
-    UuidFieldFilter:
+    StringFieldFilterExact:
       description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
       properties:
@@ -839,47 +791,95 @@ components:
           description: The field does not match the provided value.
           type: string
       additionalProperties: false
-    CatalogResourceIntegrationDataFieldFilter:
-      description: "Filters on the resource's `integration_data` field. Filters must use dot-notation to identify\nthe property that will be used to filter the results. For example:\n\n\n  - `filter[integration_data.control_plane.id]=760562c3-fedd-43e4-b742-fc1663fef188`\n  - `filter[integration_data.gateway_service.name][contains]=legacy`\n"
+    IntegrationInstanceRef:
+      description: Short-hand descriptor of an integration instance.
       type: object
       properties:
-        eq:
+        id:
+          description: The integration instance ID.
           type: string
-        contains:
+          format: uuid
+          example: 772b9caf-ddbc-4f4f-8aa4-8dfbbe420351
+        name:
+          description: 'The machine name of the integration instance that uniquely identifies it within the catalog.
+
+            '
           type: string
-        ocontains:
+          example: aws-lambda-prod
+          pattern: ^[0-9a-z.-]+$
+        display_name:
+          description: The display name of the integration instance.
           type: string
-        oeq:
-          type: string
-        neq:
-          type: string
-      additionalProperties: false
+          example: AWS (prod)
       required:
-      - contains
-      - ocontains
-      - oeq
-      - neq
-      title: CatalogResourceIntegrationDataFieldFilter
-    InvalidParameterStandard:
+      - id
+      - name
+      - display_name
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CursorMetaPage:
       type: object
       properties:
-        field:
+        first:
+          description: URI to the first page
           type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
+          format: path
+        last:
+          description: URI to the last page
           type: string
-          example: body
-        reason:
+          format: path
+        next:
+          description: URI to the next page
           type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
       required:
-      - field
-      - reason
+      - size
+      - next
+      - previous
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
   responses:
     BadRequest:
       description: Bad Request
@@ -893,6 +893,12 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -919,6 +925,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    CatalogResourceResponse:
+      description: A response containing a single resource object.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CatalogResource'
     ListCatalogResourcesResponse:
       description: A paginated list response for a collection of resources.
       content:
@@ -936,19 +948,14 @@ components:
             required:
             - meta
             - data
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    CatalogResourceResponse:
-      description: A response containing a single resource object.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CatalogResource'
   parameters:
+    CatalogResourceSort:
+      name: sort
+      description: "Sorts a collection of resources. Supported sort attributes are:\n  - `created_at`\n  - `updated_at`\n\nDefault sort is `created_at` in descending order.\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
     CatalogResourceFilter:
       name: filter
       description: Filters a collection of resources.
@@ -964,13 +971,6 @@ components:
       in: query
       schema:
         $ref: '#/components/schemas/CursorPageParameters'
-    CatalogResourceSort:
-      name: sort
-      description: "Sorts a collection of resources. Supported sort attributes are:\n  - `created_at`\n  - `updated_at`\n\nDefault sort is `created_at` in descending order.\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
   requestBodies:
     UpdateCatalogResourceRequest:
       required: true

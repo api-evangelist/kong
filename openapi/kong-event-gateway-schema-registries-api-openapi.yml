@@ -150,67 +150,46 @@ paths:
       - Event Gateway Schema Registries
 components:
   schemas:
-    SchemaRegistryAuthenticationScheme:
-      description: The authentication configuration for the schema registry.
-      discriminator:
-        propertyName: type
-        mapping:
-          basic: '#/components/schemas/SchemaRegistryAuthenticationBasic'
-      oneOf:
-      - $ref: '#/components/schemas/SchemaRegistryAuthenticationBasic'
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
+    InvalidRules:
+      description: invalid parameters rules
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
       readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
-    SchemaRegistryConfluentSensitiveDataAware:
-      description: A Confluent schema registry.
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    SchemaRegistry:
+      description: A schema registry that contains schemas.
       type: object
       properties:
         name:
@@ -227,53 +206,76 @@ components:
         type:
           description: The type of the schema registry.
           type: string
-          const: confluent
         config:
           description: The configuration of the schema registry.
           type: object
-          $ref: '#/components/schemas/SchemaRegistryConfluentConfigSensitiveDataAware'
         labels:
           $ref: '#/components/schemas/Labels'
+        id:
+          description: The unique identifier of the schema registry.
+          type: string
+          format: uuid
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
       required:
       - name
       - type
-      - config
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
+      - id
+      - created_at
+      - updated_at
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    SchemaRegistryAuthenticationSensitiveDataAwareScheme:
+      description: The authentication configuration for the schema registry.
+      discriminator:
+        propertyName: type
+        mapping:
+          basic: '#/components/schemas/SchemaRegistryAuthenticationBasicSensitiveDataAware'
+      oneOf:
+      - $ref: '#/components/schemas/SchemaRegistryAuthenticationBasicSensitiveDataAware'
+    SchemaRegistryCreate:
+      description: The typed schema of the schema registry to create it.
+      discriminator:
+        propertyName: type
+        mapping:
+          confluent: '#/components/schemas/SchemaRegistryConfluent'
+      oneOf:
+      - $ref: '#/components/schemas/SchemaRegistryConfluent'
+    GatewaySecretReferenceOrLiteral:
+      description: 'A literal value or a reference to an existing secret as a template string expression.
+
+        The value is stored and returned by the API as-is, not treated as sensitive information.
+
+        '
       type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+    SchemaRegistryUpdate:
+      description: The typed schema of the schema registry to modify it.
+      discriminator:
+        propertyName: type
+        mapping:
+          confluent: '#/components/schemas/SchemaRegistryConfluentSensitiveDataAware'
+      oneOf:
+      - $ref: '#/components/schemas/SchemaRegistryConfluentSensitiveDataAware'
     BaseError:
       description: standard error
       type: object
@@ -328,40 +330,150 @@ components:
       - instance
       - detail
       title: Error
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    GatewaySecretReferenceOrLiteral:
-      description: 'A literal value or a reference to an existing secret as a template string expression.
-
-        The value is stored and returned by the API as-is, not treated as sensitive information.
+    SchemaRegistryConfluent:
+      description: A Confluent schema registry.
+      type: object
+      properties:
+        name:
+          description: The unique name of the schema registry.
+          type: string
+          maxLength: 255
+          minLength: 1
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the virtual cluster.
+          type: string
+          default: ''
+          maxLength: 512
+        type:
+          description: The type of the schema registry.
+          type: string
+          const: confluent
+        config:
+          description: The configuration of the schema registry.
+          type: object
+          $ref: '#/components/schemas/SchemaRegistryConfluentConfig'
+        labels:
+          $ref: '#/components/schemas/Labels'
+      required:
+      - name
+      - type
+      - config
+    SchemaRegistryConfluentSensitiveDataAware:
+      description: A Confluent schema registry.
+      type: object
+      properties:
+        name:
+          description: The unique name of the schema registry.
+          type: string
+          maxLength: 255
+          minLength: 1
+          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+        description:
+          description: A human-readable description of the virtual cluster.
+          type: string
+          default: ''
+          maxLength: 512
+        type:
+          description: The type of the schema registry.
+          type: string
+          const: confluent
+        config:
+          description: The configuration of the schema registry.
+          type: object
+          $ref: '#/components/schemas/SchemaRegistryConfluentConfigSensitiveDataAware'
+        labels:
+          $ref: '#/components/schemas/Labels'
+      required:
+      - name
+      - type
+      - config
+    SchemaRegistryAuthenticationBasic:
+      description: Basic authentication scheme for the schema registry with username and password.
+      type: object
+      properties:
+        type:
+          type: string
+          const: basic
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      required:
+      - type
+      - username
+      - password
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    SchemaRegistryConfluentConfig:
+      description: 'The configuration of [Confluent Schema Registry](https://github.com/confluentinc/schema-registry)
 
         '
-      type: string
-      minLength: 1
-      x-expression:
-        type: string
-        fields:
-        - vault
+      type: object
+      properties:
+        schema_type:
+          description: The format of the message.
+          type: string
+          enum:
+          - avro
+          - json
+          x-speakeasy-unknown-values: allow
+        endpoint:
+          description: The endpoint of the Confluent schema registry.
+          type: string
+          format: uri
+          minLength: 1
+        timeout_seconds:
+          description: 'Total time in seconds from establishing connection to receive a response from schema registry.
+
+            '
+          type: integer
+          default: 10
+          minimum: 1
+        authentication:
+          $ref: '#/components/schemas/SchemaRegistryAuthenticationScheme'
+      required:
+      - schema_type
+      - endpoint
     InvalidParameterMinimumLength:
       type: object
       properties:
@@ -399,6 +511,21 @@ components:
       - reason
       - rule
       - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -432,159 +559,49 @@ components:
       - rule
       - reason
       - dependents
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    SchemaRegistry:
-      description: A schema registry that contains schemas.
+    InvalidParameterStandard:
       type: object
       properties:
-        name:
-          description: The unique name of the schema registry.
+        field:
           type: string
-          maxLength: 255
-          minLength: 1
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the virtual cluster.
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
           type: string
-          default: ''
-          maxLength: 512
-        type:
-          description: The type of the schema registry.
+          example: body
+        reason:
           type: string
-        config:
-          description: The configuration of the schema registry.
-          type: object
-        labels:
-          $ref: '#/components/schemas/Labels'
-        id:
-          description: The unique identifier of the schema registry.
-          type: string
-          format: uuid
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
       required:
-      - name
-      - type
-      - id
-      - created_at
-      - updated_at
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-    SchemaRegistryConfluentConfigSensitiveDataAware:
-      description: 'The configuration of [Confluent Schema Registry](https://github.com/confluentinc/schema-registry)
+      - field
+      - reason
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    GatewaySecret:
+      description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
+
+        If the value is provided as plain text, it is encrypted at rest and omitted from API responses.
+
+        If provided as an expression, the expression itself is stored and returned by the API.
 
         '
-      type: object
-      properties:
-        schema_type:
-          description: The format of the message.
-          type: string
-          enum:
-          - avro
-          - json
-          x-speakeasy-unknown-values: allow
-        endpoint:
-          description: The endpoint of the Confluent schema registry.
-          type: string
-          format: uri
-          minLength: 1
-        timeout_seconds:
-          description: 'Total time in seconds from establishing connection to receive a response from schema registry.
-
-            '
-          type: integer
-          default: 10
-          minimum: 1
-        authentication:
-          $ref: '#/components/schemas/SchemaRegistryAuthenticationSensitiveDataAwareScheme'
-      required:
-      - schema_type
-      - endpoint
+      type: string
+      example: ${vault.env['MY_ENV_VAR']}
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+      x-sensitive: true
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -618,75 +635,16 @@ components:
       - reason
       - rule
       - maximum
-    SchemaRegistryConfluent:
-      description: A Confluent schema registry.
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
       type: object
       properties:
-        name:
-          description: The unique name of the schema registry.
+        contains:
           type: string
-          maxLength: 255
-          minLength: 1
-          x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-        description:
-          description: A human-readable description of the virtual cluster.
-          type: string
-          default: ''
-          maxLength: 512
-        type:
-          description: The type of the schema registry.
-          type: string
-          const: confluent
-        config:
-          description: The configuration of the schema registry.
-          type: object
-          $ref: '#/components/schemas/SchemaRegistryConfluentConfig'
-        labels:
-          $ref: '#/components/schemas/Labels'
+      additionalProperties: false
       required:
-      - name
-      - type
-      - config
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    SchemaRegistryAuthenticationSensitiveDataAwareScheme:
-      description: The authentication configuration for the schema registry.
-      discriminator:
-        propertyName: type
-        mapping:
-          basic: '#/components/schemas/SchemaRegistryAuthenticationBasicSensitiveDataAware'
-      oneOf:
-      - $ref: '#/components/schemas/SchemaRegistryAuthenticationBasicSensitiveDataAware'
-    SchemaRegistryUpdate:
-      description: The typed schema of the schema registry to modify it.
-      discriminator:
-        propertyName: type
-        mapping:
-          confluent: '#/components/schemas/SchemaRegistryConfluentSensitiveDataAware'
-      oneOf:
-      - $ref: '#/components/schemas/SchemaRegistryConfluentSensitiveDataAware'
-    GatewaySecret:
-      description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
-
-        If the value is provided as plain text, it is encrypted at rest and omitted from API responses.
-
-        If provided as an expression, the expression itself is stored and returned by the API.
-
-        '
-      type: string
-      example: ${vault.env['MY_ENV_VAR']}
-      minLength: 1
-      x-expression:
-        type: string
-        fields:
-        - vault
-      x-sensitive: true
+      - contains
+      title: StringFieldContainsFilter
     SchemaRegistryAuthenticationBasicSensitiveDataAware:
       type: object
       properties:
@@ -700,7 +658,80 @@ components:
       required:
       - type
       - username
-    SchemaRegistryConfluentConfig:
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
+    SchemaRegistryAuthenticationScheme:
+      description: The authentication configuration for the schema registry.
+      discriminator:
+        propertyName: type
+        mapping:
+          basic: '#/components/schemas/SchemaRegistryAuthenticationBasic'
+      oneOf:
+      - $ref: '#/components/schemas/SchemaRegistryAuthenticationBasic'
+    SchemaRegistryConfluentConfigSensitiveDataAware:
       description: 'The configuration of [Confluent Schema Registry](https://github.com/confluentinc/schema-registry)
 
         '
@@ -726,60 +757,23 @@ components:
           default: 10
           minimum: 1
         authentication:
-          $ref: '#/components/schemas/SchemaRegistryAuthenticationScheme'
+          $ref: '#/components/schemas/SchemaRegistryAuthenticationSensitiveDataAwareScheme'
       required:
       - schema_type
       - endpoint
-    SchemaRegistryAuthenticationBasic:
-      description: Basic authentication scheme for the schema registry with username and password.
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
       type: object
-      properties:
-        type:
-          type: string
-          const: basic
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      required:
-      - type
-      - username
-      - password
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    SchemaRegistryCreate:
-      description: The typed schema of the schema registry to create it.
-      discriminator:
-        propertyName: type
-        mapping:
-          confluent: '#/components/schemas/SchemaRegistryConfluent'
-      oneOf:
-      - $ref: '#/components/schemas/SchemaRegistryConfluent'
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
   responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
     ListSchemaRegistriesResponse:
       description: A paginated list response for a collection of schema registries.
       content:
@@ -793,12 +787,24 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/SchemaRegistry'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -825,23 +831,7 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
   parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
     PageAfter:
       name: page[after]
       description: Request the next page of data, starting with the item after this parameter.
@@ -871,19 +861,29 @@ components:
         format: uuid
         example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
       description: The UUID of your Gateway.
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   requestBodies:
-    UpdateSchemaRegistryRequest:
-      description: The request schema for updating a schema registry.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SchemaRegistryUpdate'
     CreateSchemaRegistryRequest:
       description: The request schema for creating a schema registry.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/SchemaRegistryCreate'
+    UpdateSchemaRegistryRequest:
+      description: The request schema for updating a schema registry.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SchemaRegistryUpdate'
   securitySchemes:
     personalAccessToken:
       type: http

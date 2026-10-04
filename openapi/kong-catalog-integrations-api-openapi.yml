@@ -66,169 +66,68 @@ paths:
       tags:
       - Catalog Integrations
 components:
-  responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ListCatalogIntegrationsResponse:
-      description: A paginated list response for a collection of integrations.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CatalogIntegration'
-            additionalProperties: false
-            required:
-            - meta
-            - data
-  parameters:
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    CatalogIntegrationSort:
-      name: sort
-      description: "Sorts a collection of integrations. Supported sort attributes are:\n  - `display_name`\n  - `name`\n\nDefault sort is `display_name` in ascending order.\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
-    CatalogIntegrationFilter:
-      name: filter
-      description: Filters a collection of integrations.
-      required: false
-      in: query
-      style: deepObject
-      schema:
-        $ref: '#/components/schemas/CatalogIntegrationFilterParameters'
   schemas:
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    CatalogIntegrationAuthorization:
-      description: Defines the authorization strategy for an integration.
-      oneOf:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
       - type: object
-        nullable: true
-      - $ref: '#/components/schemas/OAuth'
-      - $ref: '#/components/schemas/MultiKeyAuth'
-      - $ref: '#/components/schemas/GitHubAppInstallationAuth'
-      title: CatalogIntegrationAuthorization
-    BooleanConfigFieldSchema:
-      description: Defines a boolean value integration config field.
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    IntegrationResourceEvent:
+      description: Defines a registered event type for a given resource.
       type: object
       properties:
         display_name:
-          description: user-friendly name of the configuration field.
+          description: User-friendly display name for the event type.
           type: string
         description:
-          description: Optional brief description of the configuration field.
+          description: Optional, brief description of the integration event type.
           type: string
-        required:
-          description: Denotes whether the config field is a required value.
-          type: boolean
-          default: false
-        mutable_condition:
-          $ref: '#/components/schemas/MutableCondition'
-        type:
-          description: The field type of the config value.
-          type: string
-          enum:
-          - boolean
-        default:
-          description: The default value for the config field.
-          type: boolean
+          nullable: true
+        events_feed:
+          type: object
+          properties:
+            enabled:
+              description: Whether this event type is returned by default in the Events API.
+              type: boolean
+          required:
+          - enabled
       required:
-      - type
-      title: BooleanConfigFieldSchema
+      - display_name
+      - description
+      - events_feed
     CatalogIntegrationApiSpecProvider:
       description: 'Defines how an integration behaves as a source provider of Catalog Service API specs.
 
@@ -303,8 +202,23 @@ components:
       - description
       - config_schema
       - resource_type
-    EnumConfigFieldSchema:
-      description: Defines an enum value integration config field.
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    StringConfigFieldSchema:
+      description: Defines a string value integration config field.
       type: object
       properties:
         display_name:
@@ -320,39 +234,63 @@ components:
         mutable_condition:
           $ref: '#/components/schemas/MutableCondition'
         type:
-          description: The field type of config value.
+          description: The field type of the config value.
           type: string
           enum:
-          - enum
-        choices:
-          description: List of enumerated choices that can be selected as the config field value.
-          type: array
-          items:
-            type: object
-            required:
-            - value
-            - display_name
-            properties:
-              value:
-                description: The value represented by this option.
-                type: string
-              display_name:
-                description: user-friendly name of the option.
-                type: string
-              description:
-                description: Optional brief description of the option.
-                type: string
+          - string
         default:
-          description: 'The default value for the config field.
-
-            Must reference the value of an option listed in `choices`.
-
-            '
+          description: The default value for the config field.
           type: string
       required:
       - type
-      - choices
-      title: EnumConfigFieldSchema
+      title: StringConfigFieldSchema
+    CatalogIntegrationFilterParameters:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        display_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    BooleanConfigFieldSchema:
+      description: Defines a boolean value integration config field.
+      type: object
+      properties:
+        display_name:
+          description: user-friendly name of the configuration field.
+          type: string
+        description:
+          description: Optional brief description of the configuration field.
+          type: string
+        required:
+          description: Denotes whether the config field is a required value.
+          type: boolean
+          default: false
+        mutable_condition:
+          $ref: '#/components/schemas/MutableCondition'
+        type:
+          description: The field type of the config value.
+          type: string
+          enum:
+          - boolean
+        default:
+          description: The default value for the config field.
+          type: boolean
+      required:
+      - type
+      title: BooleanConfigFieldSchema
     BaseError:
       description: standard error
       type: object
@@ -407,39 +345,6 @@ components:
       - instance
       - detail
       title: Error
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -450,151 +355,15 @@ components:
       - page
       title: PaginatedMeta
       x-speakeasy-terraform-ignore: true
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
+    CatalogIntegrationAuthorization:
+      description: Defines the authorization strategy for an integration.
+      oneOf:
       - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    IntegrationResourceEvent:
-      description: Defines a registered event type for a given resource.
-      type: object
-      properties:
-        display_name:
-          description: User-friendly display name for the event type.
-          type: string
-        description:
-          description: Optional, brief description of the integration event type.
-          type: string
-          nullable: true
-        events_feed:
-          type: object
-          properties:
-            enabled:
-              description: Whether this event type is returned by default in the Events API.
-              type: boolean
-          required:
-          - enabled
-      required:
-      - display_name
-      - description
-      - events_feed
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
+        nullable: true
+      - $ref: '#/components/schemas/OAuth'
+      - $ref: '#/components/schemas/MultiKeyAuth'
+      - $ref: '#/components/schemas/GitHubAppInstallationAuth'
+      title: CatalogIntegrationAuthorization
     CatalogIntegration:
       type: object
       properties:
@@ -656,22 +425,19 @@ components:
       - api_spec_provider
       - events
       - visibility
-    MutableCondition:
-      description: 'Defines the condition under which this configuration field is allowed to be modified.
-
-        When specified, the platform will restrict updates to this field unless the integration
-
-        meets the given condition.
-
-
-        For example, setting `mutable_condition: unauthorized` means the field can only be
-
-        changed while the integration is in an unauthorized state.
-
-        '
-      type: string
-      enum:
-      - unauthorized
+    CatalogIntegrationEvents:
+      description: "Defines the event types across all resource types belonging to the integration that will be ingested into the catalog.\n\n\n\n  - Keys are the machine-readable, globally unique names of resource types registered by this integration.\n  - Values are a map of event type definitions.\n"
+      type: object
+      example:
+        gateway_svc:
+          plugin_added:
+            display_name: Plugin Added
+            description: Event triggered when a new plugin is added to a gateway service.
+            events_feed:
+              enabled: true
+      additionalProperties:
+        $ref: '#/components/schemas/IntegrationResourceEvents'
+      nullable: true
     MultiKeyAuth:
       description: 'Defines an authentication strategy based on one or more API keys passed via HTTP headers.
 
@@ -722,196 +488,6 @@ components:
       required:
       - type
       - config
-    IntegrationResourceEvents:
-      description: "Defines the event types for a given resource type belonging to the integration that will be ingested in the catalog.\n\n\n\n  - Keys are the machine-readable, globally unique names of resource types registered by this integration.\n  - Values are the event type definition.\n"
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/IntegrationResourceEvent'
-    CatalogIntegrationDiscovery:
-      description: 'Defines how the integration participates in Discovery.
-
-        Discovery enables integrations to automatically ingest and update resources in the catalog.
-
-        '
-      type: object
-      properties:
-        resource_integration_data_examples:
-          description: "A map of example resource `integration_data` payloads by resource type.\n\n\n\n  - Keys are the machine-readable, globally unique names of resource types registered by this integration.\n  - Values are example `integration_data` payloads.\n"
-          type: object
-          example:
-            gateway_service:
-              control_plane:
-                id: 00000000-0000-0000-0000-000000000000
-                name: dev-ext
-                labels:
-                  env: development
-              gateway_service:
-                id: 11111111-1111-1111-1111-111111111111
-                name: gateway-service
-                host: konghq.com
-                path: /example
-                type: service
-                port: 443
-                protocol: https
-                enabled: true
-          additionalProperties:
-            type: object
-            additionalProperties: true
-            description: An example `integration_data` payload for the given resource type.
-      nullable: true
-      required:
-      - resource_integration_data_examples
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    StringConfigFieldSchema:
-      description: Defines a string value integration config field.
-      type: object
-      properties:
-        display_name:
-          description: user-friendly name of the configuration field.
-          type: string
-        description:
-          description: Optional brief description of the configuration field.
-          type: string
-        required:
-          description: Denotes whether the config field is a required value.
-          type: boolean
-          default: false
-        mutable_condition:
-          $ref: '#/components/schemas/MutableCondition'
-        type:
-          description: The field type of the config value.
-          type: string
-          enum:
-          - string
-        default:
-          description: The default value for the config field.
-          type: string
-      required:
-      - type
-      title: StringConfigFieldSchema
-    CatalogIntegrationResourceTypes:
-      description: "Defines the resource types that the integration manages within the catalog.\n\nThis schema is a key-value object where:\n\n\n  - Keys are globally unique, machine-readable identifiers for each resource type.\n  - Values are objects describing metadata about the resource type.\n\nThis declaration enables the platform to understand the structure, identity, and behavior of resources discovered by the integration.\nBy registering resource types, integrations communicate the kinds of entities they will ingest and maintain,\nallowing the catalog to enforce consistency, validation, and visibility across all integrations.\n"
-      type: object
-      example:
-        gateway_svc:
-          display_name: Gateway Service
-          schema:
-            type: simple
-            definition:
-              control_plane_id: string
-              gatway_service_id: string
-        analytics_dashboard:
-          display_name: Dashboard
-          schema:
-            type: simple
-            definition:
-              dashboard_id: string
-      additionalProperties:
-        type: object
-        title: ResourceType
-        required:
-        - schema
-        properties:
-          display_name:
-            description: The user-friendly resource type name.
-            type: string
-          schema:
-            $ref: '#/components/schemas/SimpleSchema'
-    SimpleSchema:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - simple
-        definition:
-          type: object
-          additionalProperties:
-            type: string
-            enum:
-            - string
-            - number
-            - boolean
-            x-speakeasy-unknown-values: allow
-      required:
-      - type
-      - definition
-    CatalogIntegrationConfigSchema:
-      description: Defines the configuration schema for the integration.
-      example:
-        base_url:
-          type: string
-          display_name: Base URL
-          description: The customer-specific API URL
-          required: true
-      additionalProperties:
-        oneOf:
-        - type: object
-          nullable: true
-        - $ref: '#/components/schemas/StringConfigFieldSchema'
-        - $ref: '#/components/schemas/EnumConfigFieldSchema'
-        - $ref: '#/components/schemas/BooleanConfigFieldSchema'
     PageMeta:
       description: Contains pagination query parameters and the total number of objects returned.
       type: object
@@ -932,6 +508,181 @@ components:
       - number
       - size
       - total
+    MutableCondition:
+      description: 'Defines the condition under which this configuration field is allowed to be modified.
+
+        When specified, the platform will restrict updates to this field unless the integration
+
+        meets the given condition.
+
+
+        For example, setting `mutable_condition: unauthorized` means the field can only be
+
+        changed while the integration is in an unauthorized state.
+
+        '
+      type: string
+      enum:
+      - unauthorized
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    EnumConfigFieldSchema:
+      description: Defines an enum value integration config field.
+      type: object
+      properties:
+        display_name:
+          description: user-friendly name of the configuration field.
+          type: string
+        description:
+          description: Optional brief description of the configuration field.
+          type: string
+        required:
+          description: Denotes whether the config field is a required value.
+          type: boolean
+          default: false
+        mutable_condition:
+          $ref: '#/components/schemas/MutableCondition'
+        type:
+          description: The field type of config value.
+          type: string
+          enum:
+          - enum
+        choices:
+          description: List of enumerated choices that can be selected as the config field value.
+          type: array
+          items:
+            type: object
+            required:
+            - value
+            - display_name
+            properties:
+              value:
+                description: The value represented by this option.
+                type: string
+              display_name:
+                description: user-friendly name of the option.
+                type: string
+              description:
+                description: Optional brief description of the option.
+                type: string
+        default:
+          description: 'The default value for the config field.
+
+            Must reference the value of an option listed in `choices`.
+
+            '
+          type: string
+      required:
+      - type
+      - choices
+      title: EnumConfigFieldSchema
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    IntegrationResourceEvents:
+      description: "Defines the event types for a given resource type belonging to the integration that will be ingested in the catalog.\n\n\n\n  - Keys are the machine-readable, globally unique names of resource types registered by this integration.\n  - Values are the event type definition.\n"
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/IntegrationResourceEvent'
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
     OAuth:
       description: 'Defines the OAuth 2.0 authorization strategy used by an integration.
 
@@ -1039,26 +790,6 @@ components:
       required:
       - type
       - config
-    CatalogIntegrationEvents:
-      description: "Defines the event types across all resource types belonging to the integration that will be ingested into the catalog.\n\n\n\n  - Keys are the machine-readable, globally unique names of resource types registered by this integration.\n  - Values are a map of event type definitions.\n"
-      type: object
-      example:
-        gateway_svc:
-          plugin_added:
-            display_name: Plugin Added
-            description: Event triggered when a new plugin is added to a gateway service.
-            events_feed:
-              enabled: true
-      additionalProperties:
-        $ref: '#/components/schemas/IntegrationResourceEvents'
-      nullable: true
-    CatalogIntegrationFilterParameters:
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        display_name:
-          $ref: '#/components/schemas/StringFieldFilter'
     InvalidParameterStandard:
       type: object
       properties:
@@ -1079,6 +810,69 @@ components:
       required:
       - field
       - reason
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CatalogIntegrationConfigSchema:
+      description: Defines the configuration schema for the integration.
+      example:
+        base_url:
+          type: string
+          display_name: Base URL
+          description: The customer-specific API URL
+          required: true
+      additionalProperties:
+        oneOf:
+        - type: object
+          nullable: true
+        - $ref: '#/components/schemas/StringConfigFieldSchema'
+        - $ref: '#/components/schemas/EnumConfigFieldSchema'
+        - $ref: '#/components/schemas/BooleanConfigFieldSchema'
+    CatalogIntegrationResourceTypes:
+      description: "Defines the resource types that the integration manages within the catalog.\n\nThis schema is a key-value object where:\n\n\n  - Keys are globally unique, machine-readable identifiers for each resource type.\n  - Values are objects describing metadata about the resource type.\n\nThis declaration enables the platform to understand the structure, identity, and behavior of resources discovered by the integration.\nBy registering resource types, integrations communicate the kinds of entities they will ingest and maintain,\nallowing the catalog to enforce consistency, validation, and visibility across all integrations.\n"
+      type: object
+      example:
+        gateway_svc:
+          display_name: Gateway Service
+          schema:
+            type: simple
+            definition:
+              control_plane_id: string
+              gatway_service_id: string
+        analytics_dashboard:
+          display_name: Dashboard
+          schema:
+            type: simple
+            definition:
+              dashboard_id: string
+      additionalProperties:
+        type: object
+        title: ResourceType
+        required:
+        - schema
+        properties:
+          display_name:
+            description: The user-friendly resource type name.
+            type: string
+          schema:
+            $ref: '#/components/schemas/SimpleSchema'
     GitHubAppInstallationAuth:
       description: 'Defines the GitHub App authorization strategy used by the GitHub integration.
 
@@ -1161,6 +955,212 @@ components:
       required:
       - type
       - config
+    CatalogIntegrationDiscovery:
+      description: 'Defines how the integration participates in Discovery.
+
+        Discovery enables integrations to automatically ingest and update resources in the catalog.
+
+        '
+      type: object
+      properties:
+        resource_integration_data_examples:
+          description: "A map of example resource `integration_data` payloads by resource type.\n\n\n\n  - Keys are the machine-readable, globally unique names of resource types registered by this integration.\n  - Values are example `integration_data` payloads.\n"
+          type: object
+          example:
+            gateway_service:
+              control_plane:
+                id: 00000000-0000-0000-0000-000000000000
+                name: dev-ext
+                labels:
+                  env: development
+              gateway_service:
+                id: 11111111-1111-1111-1111-111111111111
+                name: gateway-service
+                host: konghq.com
+                path: /example
+                type: service
+                port: 443
+                protocol: https
+                enabled: true
+          additionalProperties:
+            type: object
+            additionalProperties: true
+            description: An example `integration_data` payload for the given resource type.
+      nullable: true
+      required:
+      - resource_integration_data_examples
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    SimpleSchema:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - simple
+        definition:
+          type: object
+          additionalProperties:
+            type: string
+            enum:
+            - string
+            - number
+            - boolean
+            x-speakeasy-unknown-values: allow
+      required:
+      - type
+      - definition
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+  parameters:
+    CatalogIntegrationSort:
+      name: sort
+      description: "Sorts a collection of integrations. Supported sort attributes are:\n  - `display_name`\n  - `name`\n\nDefault sort is `display_name` in ascending order.\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    CatalogIntegrationFilter:
+      name: filter
+      description: Filters a collection of integrations.
+      required: false
+      in: query
+      style: deepObject
+      schema:
+        $ref: '#/components/schemas/CatalogIntegrationFilterParameters'
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    ListCatalogIntegrationsResponse:
+      description: A paginated list response for a collection of integrations.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogIntegration'
+            additionalProperties: false
+            required:
+            - meta
+            - data
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
   securitySchemes:
     personalAccessToken:
       type: http

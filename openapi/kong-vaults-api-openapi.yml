@@ -361,22 +361,6 @@ components:
       schema:
         type: string
       x-speakeasy-match: id
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
     PaginationTagsFilter:
       allowEmptyValue: true
       description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
@@ -385,12 +369,11 @@ components:
       name: tags
       schema:
         type: string
-    VaultId:
-      description: ID of the Vault to lookup
-      example: 9d4d6d19-77c6-428e-a965-9bc9647633e9
-      in: path
-      name: VaultId
-      required: true
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
       schema:
         type: string
     controlPlaneId:
@@ -403,7 +386,77 @@ components:
         example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
       description: The UUID of your control plane. This variable is available in the Konnect manager.
       x-speakeasy-param-force-new: true
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    VaultId:
+      description: ID of the Vault to lookup
+      example: 9d4d6d19-77c6-428e-a965-9bc9647633e9
+      in: path
+      name: VaultId
+      required: true
+      schema:
+        type: string
   schemas:
+    Vault:
+      x-speakeasy-entity: Vault
+      description: Vault entities are used to configure different Vault connectors. Examples of Vaults are Environment Variables, Hashicorp Vault and AWS Secrets Manager. Configuring a Vault allows referencing the secrets with other entities. For example a certificate entity can store a reference to a certificate and key, stored in a vault, instead of storing the certificate and key within the entity. This allows a proper separation of secrets and configuration and prevents secret sprawl.
+      type: object
+      properties:
+        config:
+          description: The configuration properties for the Vault which can be found on the vaults' documentation page.
+          type: object
+          additionalProperties: true
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        description:
+          description: The description of the Vault entity.
+          type: string
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the Vault that's going to be added. Currently, the Vault implementation must be installed in every Kong instance.
+          type: string
+        prefix:
+          description: The unique prefix (or identifier) for this Vault configuration. The prefix is used to load the right Vault configuration and implementation when referencing secrets with the other entities.
+          type: string
+        tags:
+          description: An optional set of strings associated with the Vault for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        config:
+          prefix: ENV_PREFIX
+        description: environment variable based vault
+        id: 2747d1e5-8246-4f65-a939-b392f1ee17f8
+        name: env
+        prefix: env
+        tags:
+        - foo
+        - bar
+      additionalProperties: false
+      required:
+      - name
+      - prefix
     GatewayUnauthorizedError:
       type: object
       properties:
@@ -414,8 +467,7 @@ components:
       required:
       - message
       - status
-    Vault:
-      x-speakeasy-entity: Vault
+    Vault_2:
       description: Vault entities are used to configure different Vault connectors. Examples of Vaults are Environment Variables, Hashicorp Vault and AWS Secrets Manager. Configuring a Vault allows referencing the secrets with other entities. For example a certificate entity can store a reference to a certificate and key, stored in a vault, instead of storing the certificate and key within the entity. This allows a proper separation of secrets and configuration and prevents secret sprawl.
       type: object
       properties:
@@ -470,58 +522,6 @@ components:
     PaginationNextResponse:
       description: URI to the next page (may be null)
       type: string
-    Vault_2:
-      description: Vault entities are used to configure different Vault connectors. Examples of Vaults are Environment Variables, Hashicorp Vault and AWS Secrets Manager. Configuring a Vault allows referencing the secrets with other entities. For example a certificate entity can store a reference to a certificate and key, stored in a vault, instead of storing the certificate and key within the entity. This allows a proper separation of secrets and configuration and prevents secret sprawl.
-      type: object
-      properties:
-        config:
-          description: The configuration properties for the Vault which can be found on the vaults' documentation page.
-          type: object
-          additionalProperties: true
-          nullable: true
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        description:
-          description: The description of the Vault entity.
-          type: string
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        name:
-          description: The name of the Vault that's going to be added. Currently, the Vault implementation must be installed in every Kong instance.
-          type: string
-        prefix:
-          description: The unique prefix (or identifier) for this Vault configuration. The prefix is used to load the right Vault configuration and implementation when referencing secrets with the other entities.
-          type: string
-        tags:
-          description: An optional set of strings associated with the Vault for grouping and filtering.
-          type: array
-          items:
-            description: A string representing a tag.
-            type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-      example:
-        config:
-          prefix: ENV_PREFIX
-        description: environment variable based vault
-        id: 2747d1e5-8246-4f65-a939-b392f1ee17f8
-        name: env
-        prefix: env
-        tags:
-        - foo
-        - bar
-      additionalProperties: false
-      required:
-      - name
-      - prefix
     PaginationOffsetResponse:
       description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
