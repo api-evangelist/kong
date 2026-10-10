@@ -151,143 +151,17 @@ paths:
       - Event Gateway Backend Clusters
 components:
   schemas:
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    BackendClusterAuthenticationSaslScram:
-      description: SASL/SCRAM authentication scheme for the backend cluster.
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_scram
-        algorithm:
-          description: The algorithm used for SASL/SCRAM authentication.
-          type: string
-          enum:
-          - sha256
-          - sha512
-          x-speakeasy-unknown-values: allow
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      additionalProperties: false
-      required:
-      - type
-      - username
-      - algorithm
-      - password
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    BackendMetadataUpdateIntervalSeconds:
-      description: The interval at which metadata is updated in seconds.
-      type: integer
-      default: 60
-      maximum: 43200
-      minimum: 1
-    BackendClusterAuthenticationSaslScramSensitiveDataAware:
-      description: 'SASL/SCRAM authentication scheme for the backend cluster without requiring sensitive password data.
-
-        '
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_scram
-        algorithm:
-          description: The algorithm used for SASL/SCRAM authentication.
-          type: string
-          enum:
-          - sha256
-          - sha512
-          x-speakeasy-unknown-values: allow
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      additionalProperties: false
-      required:
-      - type
-      - username
-      - algorithm
-    GatewaySecretReferenceOrLiteral:
-      description: 'A literal value or a reference to an existing secret as a template string expression.
-
-        The value is stored and returned by the API as-is, not treated as sensitive information.
-
-        '
-      type: string
-      minLength: 1
-      x-expression:
-        type: string
-        fields:
-        - vault
-    BackendClusterAuthenticationSaslPlainSensitiveDataAware:
-      description: 'SASL/PLAIN authentication scheme for the backend cluster without requiring sensitive password data.
-
-        '
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_plain
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      additionalProperties: false
-      required:
-      - type
-      - username
+    BackendClusterAuthenticationSensitiveDataAwareScheme:
+      discriminator:
+        propertyName: type
+        mapping:
+          anonymous: '#/components/schemas/BackendClusterAuthenticationAnonymous'
+          sasl_plain: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
+          sasl_scram: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
+      oneOf:
+      - $ref: '#/components/schemas/BackendClusterAuthenticationAnonymous'
+      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
+      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
     BackendClusterTLS:
       type: object
       properties:
@@ -330,6 +204,50 @@ components:
           x-speakeasy-param-computed: false
       required:
       - enabled
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    CursorMetaPage:
+      type: object
+      properties:
+        first:
+          description: URI to the first page
+          type: string
+          format: path
+        last:
+          description: URI to the last page
+          type: string
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
+          nullable: true
+        previous:
+          description: URI to the previous page
+          type: string
+          format: path
+          nullable: true
+        size:
+          description: Requested page size
+          type: number
+          example: 10
+      required:
+      - size
+      - next
+      - previous
     BackendCluster:
       description: The Kafka cluster.
       type: object
@@ -378,6 +296,145 @@ components:
       - tls
       - created_at
       - updated_at
+    BackendClusterName:
+      description: The unique name of the backend cluster.
+      type: string
+      maxLength: 255
+      minLength: 1
+      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
+    GatewaySecret:
+      description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
+
+        If the value is provided as plain text, it is encrypted at rest and omitted from API responses.
+
+        If provided as an expression, the expression itself is stored and returned by the API.
+
+        '
+      type: string
+      example: ${vault.env['MY_ENV_VAR']}
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+      x-sensitive: true
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
+    GatewaySecretReferenceOrLiteral:
+      description: 'A literal value or a reference to an existing secret as a template string expression.
+
+        The value is stored and returned by the API as-is, not treated as sensitive information.
+
+        '
+      type: string
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+    BackendClusterAuthenticationSaslScramSensitiveDataAware:
+      description: 'SASL/SCRAM authentication scheme for the backend cluster without requiring sensitive password data.
+
+        '
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_scram
+        algorithm:
+          description: The algorithm used for SASL/SCRAM authentication.
+          type: string
+          enum:
+          - sha256
+          - sha512
+          x-speakeasy-unknown-values: allow
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      additionalProperties: false
+      required:
+      - type
+      - username
+      - algorithm
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     BackendClusterAuthenticationScheme:
       discriminator:
         propertyName: type
@@ -389,6 +446,233 @@ components:
       - $ref: '#/components/schemas/BackendClusterAuthenticationAnonymous'
       - $ref: '#/components/schemas/BackendClusterAuthenticationSaslPlain'
       - $ref: '#/components/schemas/BackendClusterAuthenticationSaslScram'
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BackendMetadataUpdateIntervalSeconds:
+      description: The interval at which metadata is updated in seconds.
+      type: integer
+      default: 60
+      maximum: 43200
+      minimum: 1
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    BackendClusterAuthenticationSaslPlain:
+      description: SASL/PLAIN authentication scheme for the backend cluster.
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_plain
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      additionalProperties: false
+      required:
+      - type
+      - username
+      - password
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    BackendClusterAuthenticationAnonymous:
+      description: Anonymous authentication scheme for the backend cluster.
+      type: object
+      properties:
+        type:
+          description: The type of authentication scheme.
+          type: string
+          const: anonymous
+      additionalProperties: false
+      required:
+      - type
+    BootstrapServers:
+      description: A list of cluster bootstrap servers in the format address:port.
+      type: array
+      items:
+        type: string
+        description: Endpoint in address:port format.
+        pattern: ^(([a-zA-Z0-9\.\-]+)|\[([a-fA-F0-9:]+)\]):\d+$
+        minLength: 1
+      minItems: 1
+    BackendClusterAuthenticationSaslPlainSensitiveDataAware:
+      description: 'SASL/PLAIN authentication scheme for the backend cluster without requiring sensitive password data.
+
+        '
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_plain
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      additionalProperties: false
+      required:
+      - type
+      - username
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
+      type: object
+      properties:
+        contains:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      title: StringFieldContainsFilter
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
     BaseError:
       description: standard error
       type: object
@@ -443,39 +727,6 @@ components:
       - instance
       - detail
       title: Error
-    BackendClusterName:
-      description: The unique name of the backend cluster.
-      type: string
-      maxLength: 255
-      minLength: 1
-      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-    BackendClusterAuthenticationSaslPlain:
-      description: SASL/PLAIN authentication scheme for the backend cluster.
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_plain
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      additionalProperties: false
-      required:
-      - type
-      - username
-      - password
-    BackendClusterAuthenticationSensitiveDataAwareScheme:
-      discriminator:
-        propertyName: type
-        mapping:
-          anonymous: '#/components/schemas/BackendClusterAuthenticationAnonymous'
-          sasl_plain: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
-          sasl_scram: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
-      oneOf:
-      - $ref: '#/components/schemas/BackendClusterAuthenticationAnonymous'
-      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslPlainSensitiveDataAware'
-      - $ref: '#/components/schemas/BackendClusterAuthenticationSaslScramSensitiveDataAware'
     InvalidParameterChoiceItem:
       type: object
       properties:
@@ -510,340 +761,37 @@ components:
       - reason
       - rule
       - choices
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    BootstrapServers:
-      description: A list of cluster bootstrap servers in the format address:port.
-      type: array
-      items:
-        type: string
-        description: Endpoint in address:port format.
-        pattern: ^(([a-zA-Z0-9\.\-]+)|\[([a-fA-F0-9:]+)\]):\d+$
-        minLength: 1
-      minItems: 1
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    GatewaySecret:
-      description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
-
-        If the value is provided as plain text, it is encrypted at rest and omitted from API responses.
-
-        If provided as an expression, the expression itself is stored and returned by the API.
-
-        '
-      type: string
-      example: ${vault.env['MY_ENV_VAR']}
-      minLength: 1
-      x-expression:
-        type: string
-        fields:
-        - vault
-      x-sensitive: true
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    CursorMetaPage:
-      type: object
-      properties:
-        first:
-          description: URI to the first page
-          type: string
-          format: path
-        last:
-          description: URI to the last page
-          type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
-      required:
-      - size
-      - next
-      - previous
-    CursorMeta:
-      description: Pagination metadata.
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    BackendClusterAuthenticationAnonymous:
-      description: Anonymous authentication scheme for the backend cluster.
+    BackendClusterAuthenticationSaslScram:
+      description: SASL/SCRAM authentication scheme for the backend cluster.
       type: object
       properties:
         type:
-          description: The type of authentication scheme.
           type: string
-          const: anonymous
+          const: sasl_scram
+        algorithm:
+          description: The algorithm used for SASL/SCRAM authentication.
+          type: string
+          enum:
+          - sha256
+          - sha512
+          x-speakeasy-unknown-values: allow
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
       additionalProperties: false
       required:
       - type
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-  parameters:
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-    EventGatewayCommonFilter:
-      schema:
-        type: object
-        properties:
-          name:
-            $ref: '#/components/schemas/StringFieldContainsFilter'
-      in: query
-      name: filter
-      description: Filter documents returned in the response.
-      required: false
-      style: deepObject
-    gatewayId:
-      name: gatewayId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your Gateway.
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+      - username
+      - algorithm
+      - password
   responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -870,6 +818,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     ListBackendClustersResponse:
       description: A paginated list response for a collection of backend clusters.
       content:
@@ -883,6 +837,52 @@ components:
                 type: array
                 items:
                   $ref: '#/components/schemas/BackendCluster'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    EventGatewayCommonFilter:
+      schema:
+        type: object
+        properties:
+          name:
+            $ref: '#/components/schemas/StringFieldContainsFilter'
+      in: query
+      name: filter
+      description: Filter documents returned in the response.
+      required: false
+      style: deepObject
+    gatewayId:
+      name: gatewayId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your Gateway.
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   requestBodies:
     UpdateBackendClusterRequest:
       description: The request schema for updating a backend cluster.

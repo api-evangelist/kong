@@ -1,4 +1,4 @@
-generated: '2026-10-04'
+generated: '2026-10-10'
 method: derived
 generator: derive-data-model.py
 source:
@@ -1078,10 +1078,18 @@ entities:
 - name: VirtualClusterNamespaceAdditionalProperties
   fields: 2
 relationships:
-- from: CreateManagedCacheAddOnConfig
+- from: ControlPlaneAddOnOwner
+  to: ControlPlane
+  type: belongs_to
+  via: control_plane_id
+- from: ManagedCacheAddOnConfigResponse
   to: ManagedCacheCapacityConfig
   type: has_one
   via: capacity_config
+- from: ManagedCacheAddOnConfigResponse
+  to: ManagedCacheAddOnDataPlaneGroup
+  type: has_many
+  via: data_plane_groups
 - from: PaginatedMeta
   to: PageMeta
   type: has_one
@@ -1094,26 +1102,6 @@ relationships:
   to: AddOnConfigResponse
   type: has_one
   via: config
-- from: CreateAddOnRequest
-  to: AddOnOwner
-  type: has_one
-  via: owner
-- from: CreateAddOnRequest
-  to: CreateAddOnConfig
-  type: has_one
-  via: config
-- from: ManagedCacheAddOnConfigResponse
-  to: ManagedCacheCapacityConfig
-  type: has_one
-  via: capacity_config
-- from: ManagedCacheAddOnConfigResponse
-  to: ManagedCacheAddOnDataPlaneGroup
-  type: has_many
-  via: data_plane_groups
-- from: ControlPlaneAddOnOwner
-  to: ControlPlane
-  type: belongs_to
-  via: control_plane_id
 - from: AddOnsFilterParameters
   to: CloudGatewaysStringFieldFilterOverride
   type: has_one
@@ -1126,6 +1114,18 @@ relationships:
   to: UuidFieldFilter
   type: has_one
   via: owner.control_plane_group_id
+- from: CreateManagedCacheAddOnConfig
+  to: ManagedCacheCapacityConfig
+  type: has_one
+  via: capacity_config
+- from: CreateAddOnRequest
+  to: AddOnOwner
+  type: has_one
+  via: owner
+- from: CreateAddOnRequest
+  to: CreateAddOnConfig
+  type: has_one
+  via: config
 - from: ApiAttributeFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -1138,10 +1138,14 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: status
-- from: ApiImplementationControlPlaneEntity
-  to: ApiImplementationControlPlane
+- from: ApiImplementationGatewayServiceEntity
+  to: ApiImplementationService
   type: has_one
-  via: control_plane
+  via: service
+- from: ApiImplementationControlPlane
+  to: ControlPlane
+  type: belongs_to
+  via: control_plane_id
 - from: ApiImplementationService
   to: ControlPlane
   type: belongs_to
@@ -1150,22 +1154,6 @@ relationships:
   to: AuthStrategyApiSyncError
   type: has_one
   via: auth_strategy_sync_error
-- from: ApiImplementationListItemGatewayServiceEntity
-  to: ApiImplementationService
-  type: has_one
-  via: service
-- from: ApiImplementationGatewayServiceEntity
-  to: ApiImplementationService
-  type: has_one
-  via: service
-- from: ApiImplementationListItemControlPlaneEntity
-  to: ApiImplementationControlPlane
-  type: has_one
-  via: control_plane
-- from: ApiImplementationControlPlane
-  to: ControlPlane
-  type: belongs_to
-  via: control_plane_id
 - from: ApiImplementationFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -1190,6 +1178,18 @@ relationships:
   to: ControlPlane
   type: belongs_to
   via: control_plane_id
+- from: ApiImplementationListItemControlPlaneEntity
+  to: ApiImplementationControlPlane
+  type: has_one
+  via: control_plane
+- from: ApiImplementationControlPlaneEntity
+  to: ApiImplementationControlPlane
+  type: has_one
+  via: control_plane
+- from: ApiImplementationListItemGatewayServiceEntity
+  to: ApiImplementationService
+  type: has_one
+  via: service
 - from: ApiOperationFilterParameters
   to: StringFieldFilter
   type: has_one
@@ -1342,14 +1342,14 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: implementation_mode
-- from: AppAuthStrategyOpenIDConnectRequest
-  to: Labels
-  type: has_one
-  via: labels
 - from: UpdateAppAuthStrategyRequestOpenIdConnect
   to: PartialAppAuthStrategyConfigOpenIDConnect
   type: has_one
   via: openid-connect
+- from: AppAuthStrategyKeyAuthResponse
+  to: Labels
+  type: has_one
+  via: labels
 - from: UpdateAppAuthStrategyRequest
   to: LabelsUpdate
   type: has_one
@@ -1366,7 +1366,11 @@ relationships:
   to: PartialAppAuthStrategyConfigKeyAuth
   type: has_one
   via: key-auth
-- from: AppAuthStrategyKeyAuthResponse
+- from: AppAuthStrategyOpenIDConnectRequest
+  to: Labels
+  type: has_one
+  via: labels
+- from: AppAuthStrategyKeyAuthRequest
   to: Labels
   type: has_one
   via: labels
@@ -1382,10 +1386,6 @@ relationships:
   to: Labels
   type: has_one
   via: labels
-- from: AppAuthStrategyKeyAuthRequest
-  to: Labels
-  type: has_one
-  via: labels
 - from: ListApplicationRegistrationsResponse
   to: PaginatedMeta
   type: has_one
@@ -1394,18 +1394,6 @@ relationships:
   to: ApplicationRegistration
   type: has_many
   via: data
-- from: ListApplicationDevelopersResponse
-  to: PaginatedMeta
-  type: has_one
-  via: meta
-- from: ListApplicationDevelopersResponse
-  to: ApplicationDeveloperDetailed
-  type: has_many
-  via: data
-- from: ListApplicationsResponse
-  to: PaginatedMeta
-  type: has_one
-  via: meta
 - from: ClientCredentialsApplication
   to: LabelsUpdate
   type: has_one
@@ -1418,6 +1406,26 @@ relationships:
   to: ApplicationOwner
   type: has_one
   via: owner
+- from: ListApplicationsResponse
+  to: PaginatedMeta
+  type: has_one
+  via: meta
+- from: FilterApplications
+  to: UuidFieldFilter
+  type: has_one
+  via: developer_id
+- from: FilterApplications
+  to: StringFieldFilter
+  type: has_one
+  via: name
+- from: FilterApplications
+  to: UuidFieldFilter
+  type: has_one
+  via: team_id
+- from: FilterApplications
+  to: Team
+  type: belongs_to
+  via: team_id
 - from: KeyAuthApplication
   to: AuthStrategyKeyAuth
   type: has_one
@@ -1438,27 +1446,27 @@ relationships:
   to: CredentialListItem
   type: has_many
   via: data
-- from: FilterApplications
-  to: UuidFieldFilter
+- from: ListApplicationDevelopersResponse
+  to: PaginatedMeta
   type: has_one
-  via: developer_id
-- from: FilterApplications
-  to: StringFieldFilter
-  type: has_one
-  via: name
-- from: FilterApplications
-  to: UuidFieldFilter
-  type: has_one
-  via: team_id
-- from: FilterApplications
-  to: Team
-  type: belongs_to
-  via: team_id
+  via: meta
+- from: ListApplicationDevelopersResponse
+  to: ApplicationDeveloperDetailed
+  type: has_many
+  via: data
 - from: CreateIdentityProvider
   to: OIDCIdentityProviderConfig
   type: has_one
   via: config
 - from: CreateIdentityProvider
+  to: SAMLIdentityProviderConfig
+  type: has_one
+  via: config
+- from: UpdateIdentityProvider
+  to: OIDCIdentityProviderConfig
+  type: has_one
+  via: config
+- from: UpdateIdentityProvider
   to: SAMLIdentityProviderConfig
   type: has_one
   via: config
@@ -1470,26 +1478,26 @@ relationships:
   to: Team
   type: belongs_to
   via: team_id
+- from: IdentityProvider
+  to: OIDCIdentityProviderConfig
+  type: has_one
+  via: config
+- from: IdentityProvider
+  to: SAMLIdentityProviderConfig
+  type: has_one
+  via: config
 - from: CursorMeta
   to: CursorMetaPage
   type: has_one
   via: page
-- from: IdentityProvider
-  to: OIDCIdentityProviderConfig
+- from: CatalogIntegrationFilterParameters
+  to: StringFieldFilter
   type: has_one
-  via: config
-- from: IdentityProvider
-  to: SAMLIdentityProviderConfig
+  via: name
+- from: CatalogIntegrationFilterParameters
+  to: StringFieldFilter
   type: has_one
-  via: config
-- from: UpdateIdentityProvider
-  to: OIDCIdentityProviderConfig
-  type: has_one
-  via: config
-- from: UpdateIdentityProvider
-  to: SAMLIdentityProviderConfig
-  type: has_one
-  via: config
+  via: display_name
 - from: CatalogIntegration
   to: CatalogIntegrationResourceTypes
   type: has_one
@@ -1506,18 +1514,14 @@ relationships:
   to: CatalogIntegrationEvents
   type: has_one
   via: events
-- from: CatalogIntegrationFilterParameters
-  to: StringFieldFilter
-  type: has_one
-  via: name
-- from: CatalogIntegrationFilterParameters
-  to: StringFieldFilter
-  type: has_one
-  via: display_name
 - from: CreateCatalogResourceMappingResourceByConfig
   to: CatalogResourceConfig
   type: has_one
   via: config
+- from: CreateCatalogResourceMapping
+  to: CreateCatalogResourceMappingResourceByConfig
+  type: has_one
+  via: resource
 - from: CatalogResourceRef
   to: IntegrationRef
   type: has_one
@@ -1526,6 +1530,10 @@ relationships:
   to: CatalogResourceConfig
   type: has_one
   via: config
+- from: IntegrationRef
+  to: IntegrationInstanceRef
+  type: has_one
+  via: instance
 - from: CatalogResourceMapping
   to: CatalogResourceRef
   type: has_one
@@ -1534,14 +1542,6 @@ relationships:
   to: CatalogServiceRef
   type: has_one
   via: service
-- from: IntegrationRef
-  to: IntegrationInstanceRef
-  type: has_one
-  via: instance
-- from: CreateCatalogResourceMapping
-  to: CreateCatalogResourceMappingResourceByConfig
-  type: has_one
-  via: resource
 - from: CatalogResourceMappingFilterParameters
   to: StringFieldFilterExact
   type: has_one
@@ -1590,6 +1590,14 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: service.display_name
+- from: CatalogService
+  to: CustomFields
+  type: has_one
+  via: custom_fields
+- from: CatalogService
+  to: Labels
+  type: has_one
+  via: labels
 - from: CatalogServiceFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -1608,14 +1616,6 @@ relationships:
   via: custom_fields
 - from: CatalogServiceFilterParameters
   to: LabelsFieldFilter
-  type: has_one
-  via: labels
-- from: CatalogService
-  to: CustomFields
-  type: has_one
-  via: custom_fields
-- from: CatalogService
-  to: Labels
   type: has_one
   via: labels
 - from: CatalogResourceFilterParameters
@@ -1666,6 +1666,10 @@ relationships:
   to: CatalogResourceConfig
   type: has_one
   via: config
+- from: CatalogServiceApiMappingFilterParameters
+  to: UuidFieldFilter
+  type: has_one
+  via: api_id
 - from: CatalogServiceApiMapping
   to: Service
   type: belongs_to
@@ -1678,10 +1682,6 @@ relationships:
   to: Service
   type: belongs_to
   via: service_id
-- from: CatalogServiceApiMappingFilterParameters
-  to: UuidFieldFilter
-  type: has_one
-  via: api_id
 - from: CatalogResourceRefFilterParameters
   to: StringFieldFilterExact
   type: has_one
@@ -1746,6 +1746,10 @@ relationships:
   to: ConsumerGroup
   type: has_one
   via: consumer_group
+- from: ControlPlane
+  to: Labels
+  type: has_one
+  via: labels
 - from: GroupConflict
   to: GroupConflictResource
   type: has_one
@@ -1754,10 +1758,6 @@ relationships:
   to: CursorMetaWithSizeAndTotal
   type: has_one
   via: page
-- from: ControlPlane
-  to: Labels
-  type: has_one
-  via: labels
 - from: GroupStatus
   to: GroupConflict
   type: has_many
@@ -1806,26 +1806,6 @@ relationships:
   to: CloudGatewaysStringFieldFilterOverride
   type: has_one
   via: domain
-- from: Dashboard
-  to: AllFilterItems
-  type: has_many
-  via: preset_filters
-- from: DashboardResponse
-  to: Dashboard
-  type: has_one
-  via: definition
-- from: DashboardResponse
-  to: Labels
-  type: has_one
-  via: labels
-- from: DashboardUpdateRequest
-  to: Dashboard
-  type: has_one
-  via: definition
-- from: DashboardUpdateRequest
-  to: Labels
-  type: has_one
-  via: labels
 - from: DashboardFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -1838,6 +1818,26 @@ relationships:
   to: LabelsFieldFilter
   type: has_one
   via: labels
+- from: DashboardUpdateRequest
+  to: Dashboard
+  type: has_one
+  via: definition
+- from: DashboardUpdateRequest
+  to: Labels
+  type: has_one
+  via: labels
+- from: Dashboard
+  to: AllFilterItems
+  type: has_many
+  via: preset_filters
+- from: DashboardResponse
+  to: Dashboard
+  type: has_one
+  via: definition
+- from: DashboardResponse
+  to: Labels
+  type: has_one
+  via: labels
 - from: CreateConfigurationRequest
   to: ControlPlane
   type: belongs_to
@@ -1846,14 +1846,6 @@ relationships:
   to: CreateConfigurationDataPlaneGroup
   type: has_many
   via: dataplane_groups
-- from: ConfigurationsFilterParameters
-  to: IDFieldFilter
-  type: has_one
-  via: control_plane_id
-- from: ConfigurationsFilterParameters
-  to: ControlPlane
-  type: belongs_to
-  via: control_plane_id
 - from: ConfigurationManifest
   to: ConfigurationDataPlaneGroupConfig
   type: has_many
@@ -1866,27 +1858,51 @@ relationships:
   to: ControlPlane
   type: belongs_to
   via: control_plane_id
-- from: DcrProviderAuth0
-  to: DcrConfigAuth0InResponse
+- from: ConfigurationsFilterParameters
+  to: IDFieldFilter
   type: has_one
-  via: dcr_config
+  via: control_plane_id
+- from: ConfigurationsFilterParameters
+  to: ControlPlane
+  type: belongs_to
+  via: control_plane_id
 - from: DcrProviderOkta
   to: DcrConfigOktaInResponse
   type: has_one
   via: dcr_config
-- from: CreateDcrProviderRequestHttp
-  to: CreateDcrConfigHttpInRequest
+- from: DcrProviderAzureAd
+  to: DcrConfigAzureAdInResponse
   type: has_one
   via: dcr_config
-- from: CreateDcrProviderRequestHttp
-  to: Labels
+- from: DcrProviderAuth0
+  to: DcrConfigAuth0InResponse
   type: has_one
-  via: labels
+  via: dcr_config
+- from: DcrProviderCurity
+  to: DcrConfigCurityInResponse
+  type: has_one
+  via: dcr_config
 - from: CreateDcrProviderRequestCurity
   to: CreateDcrConfigCurityInRequest
   type: has_one
   via: dcr_config
 - from: CreateDcrProviderRequestCurity
+  to: Labels
+  type: has_one
+  via: labels
+- from: CreateDcrProviderRequestAuth0
+  to: CreateDcrConfigAuth0InRequest
+  type: has_one
+  via: dcr_config
+- from: CreateDcrProviderRequestAuth0
+  to: Labels
+  type: has_one
+  via: labels
+- from: CreateDcrProviderRequestOkta
+  to: CreateDcrConfigOktaInRequest
+  type: has_one
+  via: dcr_config
+- from: CreateDcrProviderRequestOkta
   to: Labels
   type: has_one
   via: labels
@@ -1898,39 +1914,15 @@ relationships:
   to: PaginatedMeta
   type: has_one
   via: meta
-- from: CreateDcrProviderRequestAuth0
-  to: CreateDcrConfigAuth0InRequest
-  type: has_one
-  via: dcr_config
-- from: CreateDcrProviderRequestAuth0
-  to: Labels
-  type: has_one
-  via: labels
-- from: DcrProviderBase
-  to: Labels
-  type: has_one
-  via: labels
-- from: DcrProviderAzureAd
-  to: DcrConfigAzureAdInResponse
-  type: has_one
-  via: dcr_config
-- from: DcrProviderCurity
-  to: DcrConfigCurityInResponse
-  type: has_one
-  via: dcr_config
 - from: DcrProviderHttp
   to: DcrConfigHttpInResponse
   type: has_one
   via: dcr_config
-- from: UpdateDcrProviderRequest
-  to: LabelsUpdate
-  type: has_one
-  via: labels
-- from: CreateDcrProviderRequestOkta
-  to: CreateDcrConfigOktaInRequest
+- from: CreateDcrProviderRequestHttp
+  to: CreateDcrConfigHttpInRequest
   type: has_one
   via: dcr_config
-- from: CreateDcrProviderRequestOkta
+- from: CreateDcrProviderRequestHttp
   to: Labels
   type: has_one
   via: labels
@@ -1939,6 +1931,14 @@ relationships:
   type: has_one
   via: dcr_config
 - from: CreateDcrProviderRequestAzureAd
+  to: Labels
+  type: has_one
+  via: labels
+- from: UpdateDcrProviderRequest
+  to: LabelsUpdate
+  type: has_one
+  via: labels
+- from: DcrProviderBase
   to: Labels
   type: has_one
   via: labels
@@ -1958,14 +1958,6 @@ relationships:
   to: CertificateMetadata
   type: has_one
   via: metadata
-- from: EventGatewayTLSListenerPolicyConfigSensitiveDataAware
-  to: TLSVersionRange
-  type: has_one
-  via: versions
-- from: EventGatewayListenerPolicy
-  to: Labels
-  type: has_one
-  via: labels
 - from: ForwardToVirtualClusterPolicy
   to: Labels
   type: has_one
@@ -1978,6 +1970,14 @@ relationships:
   to: ForwardToClusterByPortMappingConfig
   type: has_one
   via: config
+- from: EventGatewayTLSListenerPolicyConfigSensitiveDataAware
+  to: TLSVersionRange
+  type: has_one
+  via: versions
+- from: EventGatewayListenerPolicy
+  to: Labels
+  type: has_one
+  via: labels
 - from: EventGatewayTLSListenerPolicy
   to: Labels
   type: has_one
@@ -1986,6 +1986,10 @@ relationships:
   to: EventGatewayTLSListenerPolicyConfig
   type: has_one
   via: config
+- from: EventGatewayTLSListenerPolicyConfig
+  to: TLSVersionRange
+  type: has_one
+  via: versions
 - from: EventGatewayTLSListenerSensitiveDataAwarePolicy
   to: Labels
   type: has_one
@@ -1994,23 +1998,11 @@ relationships:
   to: EventGatewayTLSListenerPolicyConfigSensitiveDataAware
   type: has_one
   via: config
-- from: EventGatewayTLSListenerPolicyConfig
-  to: TLSVersionRange
-  type: has_one
-  via: versions
 - from: EventGatewayListenerPolicyPatch
   to: Labels
   type: has_one
   via: labels
 - from: EventGatewayListener
-  to: Labels
-  type: has_one
-  via: labels
-- from: SchemaRegistryConfluentSensitiveDataAware
-  to: SchemaRegistryConfluentConfigSensitiveDataAware
-  type: has_one
-  via: config
-- from: SchemaRegistryConfluentSensitiveDataAware
   to: Labels
   type: has_one
   via: labels
@@ -2023,6 +2015,14 @@ relationships:
   type: has_one
   via: config
 - from: SchemaRegistryConfluent
+  to: Labels
+  type: has_one
+  via: labels
+- from: SchemaRegistryConfluentSensitiveDataAware
+  to: SchemaRegistryConfluentConfigSensitiveDataAware
+  type: has_one
+  via: config
+- from: SchemaRegistryConfluentSensitiveDataAware
   to: Labels
   type: has_one
   via: labels
@@ -2042,6 +2042,10 @@ relationships:
   to: Labels
   type: has_one
   via: labels
+- from: EventGatewayConsumeSchemaValidationPolicy
+  to: Labels
+  type: has_one
+  via: labels
 - from: EventGatewayParsedRecordDecryptFieldsPolicy
   to: Labels
   type: has_one
@@ -2050,7 +2054,19 @@ relationships:
   to: EventGatewayParsedRecordDecryptFieldsConfig
   type: has_one
   via: config
+- from: EventGatewayParsedRecordDecryptFieldsPolicyCreate
+  to: Labels
+  type: has_one
+  via: labels
+- from: EventGatewayParsedRecordDecryptFieldsPolicyCreate
+  to: EventGatewayParsedRecordDecryptFieldsConfig
+  type: has_one
+  via: config
 - from: EventGatewaySkipRecordPolicy
+  to: Labels
+  type: has_one
+  via: labels
+- from: EventGatewayPolicyPatch
   to: Labels
   type: has_one
   via: labels
@@ -2062,27 +2078,7 @@ relationships:
   to: EventGatewayDecryptPolicyConfig
   type: has_one
   via: config
-- from: EventGatewayPolicyPatch
-  to: Labels
-  type: has_one
-  via: labels
-- from: EventGatewayParsedRecordDecryptFieldsPolicyCreate
-  to: Labels
-  type: has_one
-  via: labels
-- from: EventGatewayParsedRecordDecryptFieldsPolicyCreate
-  to: EventGatewayParsedRecordDecryptFieldsConfig
-  type: has_one
-  via: config
 - from: EventGatewayModifyHeadersPolicyCreate
-  to: Labels
-  type: has_one
-  via: labels
-- from: EventGatewayParsedRecordDecryptFieldsConfig
-  to: EventGatewayParsedRecordDecryptionSelector
-  type: has_many
-  via: decrypt_fields
-- from: EventGatewayConsumeSchemaValidationPolicy
   to: Labels
   type: has_one
   via: labels
@@ -2094,10 +2090,10 @@ relationships:
   to: Labels
   type: has_one
   via: labels
-- from: EventGatewayACLPolicyConfig
-  to: EventGatewayACLRule
+- from: EventGatewayParsedRecordDecryptFieldsConfig
+  to: EventGatewayParsedRecordDecryptionSelector
   type: has_many
-  via: rules
+  via: decrypt_fields
 - from: EventGatewayACLRule
   to: EventGatewayACLOperation
   type: has_many
@@ -2110,22 +2106,10 @@ relationships:
   to: EventGatewayACLPolicyConfig
   type: has_one
   via: config
-- from: EventGatewayParsedRecordEncryptFieldsConfig
-  to: EventGatewayParsedRecordEncryptionSelector
+- from: EventGatewayACLPolicyConfig
+  to: EventGatewayACLRule
   type: has_many
-  via: encrypt_fields
-- from: EventGatewayProduceSchemaValidationPolicy
-  to: Labels
-  type: has_one
-  via: labels
-- from: EventGatewayParsedRecordEncryptFieldsPolicy
-  to: Labels
-  type: has_one
-  via: labels
-- from: EventGatewayParsedRecordEncryptFieldsPolicy
-  to: EventGatewayParsedRecordEncryptFieldsConfig
-  type: has_one
-  via: config
+  via: rules
 - from: EventGatewayParsedRecordEncryptFieldsPolicyCreate
   to: Labels
   type: has_one
@@ -2142,10 +2126,22 @@ relationships:
   to: EventGatewayEncryptConfig
   type: has_one
   via: config
-- from: VirtualClusterNamespace
-  to: VirtualClusterNamespaceAdditionalProperties
+- from: EventGatewayParsedRecordEncryptFieldsConfig
+  to: EventGatewayParsedRecordEncryptionSelector
+  type: has_many
+  via: encrypt_fields
+- from: EventGatewayParsedRecordEncryptFieldsPolicy
+  to: Labels
   type: has_one
-  via: additional
+  via: labels
+- from: EventGatewayParsedRecordEncryptFieldsPolicy
+  to: EventGatewayParsedRecordEncryptFieldsConfig
+  type: has_one
+  via: config
+- from: EventGatewayProduceSchemaValidationPolicy
+  to: Labels
+  type: has_one
+  via: labels
 - from: VirtualClusterAuthenticationOauthBearer
   to: VirtualClusterAuthenticationValidate
   type: has_one
@@ -2162,6 +2158,10 @@ relationships:
   to: Labels
   type: has_one
   via: labels
+- from: VirtualClusterNamespace
+  to: VirtualClusterNamespaceAdditionalProperties
+  type: has_one
+  via: additional
 - from: EventGatewayInfo
   to: Labels
   type: has_one
@@ -2182,19 +2182,19 @@ relationships:
   to: MissingPermission
   type: has_many
   via: missing_permissions
-- from: OAuthCredential
+- from: GitHubAppInstallationCredential
   to: IntegrationInstanceRef
   type: has_one
   via: integration_instance
-- from: OAuthCredential
+- from: GitHubAppInstallationCredential
   to: MissingPermission
   type: has_many
   via: missing_permissions
-- from: GitHubAppInstallationCredential
+- from: OAuthCredential
   to: IntegrationInstanceRef
   type: has_one
   via: integration_instance
-- from: GitHubAppInstallationCredential
+- from: OAuthCredential
   to: MissingPermission
   type: has_many
   via: missing_permissions
@@ -2206,14 +2206,6 @@ relationships:
   to: MissingPermission
   type: has_many
   via: missing_permissions
-- from: CreateIntegrationInstance
-  to: Labels
-  type: has_one
-  via: labels
-- from: CreateIntegrationInstance
-  to: IntegrationInstanceConfig
-  type: has_one
-  via: config
 - from: IntegrationInstanceFilterParameters
   to: StringFieldFilter
   type: has_one
@@ -2234,14 +2226,6 @@ relationships:
   to: LabelsFieldFilter
   type: has_one
   via: labels
-- from: UpdateIntegrationInstance
-  to: LabelsUpdate
-  type: has_one
-  via: labels
-- from: UpdateIntegrationInstance
-  to: IntegrationInstanceConfig
-  type: has_one
-  via: config
 - from: IntegrationInstance
   to: IntegrationRefWithoutInstance
   type: has_one
@@ -2254,6 +2238,26 @@ relationships:
   to: IntegrationInstanceConfig
   type: has_one
   via: config
+- from: CreateIntegrationInstance
+  to: Labels
+  type: has_one
+  via: labels
+- from: CreateIntegrationInstance
+  to: IntegrationInstanceConfig
+  type: has_one
+  via: config
+- from: UpdateIntegrationInstance
+  to: LabelsUpdate
+  type: has_one
+  via: labels
+- from: UpdateIntegrationInstance
+  to: IntegrationInstanceConfig
+  type: has_one
+  via: config
+- from: CreateMCPServerRequest
+  to: ControlPlane
+  type: belongs_to
+  via: control_plane_id
 - from: MCPServerInfo
   to: ControlPlane
   type: belongs_to
@@ -2262,18 +2266,10 @@ relationships:
   to: ControlPlane
   type: belongs_to
   via: control_plane_id
-- from: ListMCPServersResponse
-  to: MCPServerInfo
-  type: has_many
-  via: data
-- from: ListMCPServersResponse
-  to: CursorMeta
+- from: MCPServerVersionStatus
+  to: MCPServerPodsStatus
   type: has_one
-  via: meta
-- from: MCPCapabilitiesMap
-  to: MCPCapabilityRequest
-  type: has_one
-  via: mcp
+  via: pods_status
 - from: ListMCPServersCPInfoResponse
   to: MCPServerCPInfo
   type: has_many
@@ -2282,6 +2278,10 @@ relationships:
   to: CursorMeta
   type: has_one
   via: meta
+- from: MCPCapabilitiesMap
+  to: MCPCapabilityRequest
+  type: has_one
+  via: mcp
 - from: KongEntitiesResponse
   to: KongRoute
   type: has_many
@@ -2290,6 +2290,14 @@ relationships:
   to: KongService
   type: has_many
   via: services
+- from: ListMCPServersResponse
+  to: MCPServerInfo
+  type: has_many
+  via: data
+- from: ListMCPServersResponse
+  to: CursorMeta
+  type: has_one
+  via: meta
 - from: MCPServerCPInfo
   to: ContainerSpec
   type: has_one
@@ -2298,19 +2306,11 @@ relationships:
   to: ContainerSpec
   type: has_one
   via: init_container
-- from: MCPServerVersionStatus
-  to: MCPServerPodsStatus
-  type: has_one
-  via: pods_status
-- from: CreateMCPServerRequest
-  to: ControlPlane
-  type: belongs_to
-  via: control_plane_id
-- from: Meter
+- from: CreateMeterRequest
   to: Labels
   type: has_one
   via: labels
-- from: CreateMeterRequest
+- from: Meter
   to: Labels
   type: has_one
   via: labels
@@ -2322,14 +2322,6 @@ relationships:
   to: PaginatedMeta
   type: has_one
   via: meta
-- from: NetworksFilterParameters
-  to: CloudGatewaysStringFieldFilterOverride
-  type: has_one
-  via: name
-- from: NetworksFilterParameters
-  to: NetworkStateFieldFilter
-  type: has_one
-  via: state
 - from: Network
   to: NetworkStateMetadata
   type: has_one
@@ -2338,6 +2330,34 @@ relationships:
   to: NetworkProviderMetadata
   type: has_one
   via: provider_metadata
+- from: NetworksFilterParameters
+  to: CloudGatewaysStringFieldFilterOverride
+  type: has_one
+  via: name
+- from: NetworksFilterParameters
+  to: NetworkStateFieldFilter
+  type: has_one
+  via: state
+- from: EventSubscriptionResponse
+  to: NotificationChannel
+  type: has_many
+  via: channels
+- from: ConfigurationFilterParameters
+  to: LegacyStringFieldFilter
+  type: has_one
+  via: event_title
+- from: ConfigurationFilterParameters
+  to: LegacyStringFieldFilter
+  type: has_one
+  via: event_description
+- from: ConfigurationFilterParameters
+  to: LegacyStringFieldFilter
+  type: has_one
+  via: event_namespace
+- from: ConfigurationFilterParameters
+  to: LegacyStringFieldFilter
+  type: has_one
+  via: region
 - from: NotificationFilterParameters
   to: LegacyStringFieldFilter
   type: has_one
@@ -2362,31 +2382,11 @@ relationships:
   to: NotificationChannel
   type: has_many
   via: channels
-- from: ConfigurationFilterParameters
-  to: LegacyStringFieldFilter
-  type: has_one
-  via: event_title
-- from: ConfigurationFilterParameters
-  to: LegacyStringFieldFilter
-  type: has_one
-  via: event_description
-- from: ConfigurationFilterParameters
-  to: LegacyStringFieldFilter
-  type: has_one
-  via: event_namespace
-- from: ConfigurationFilterParameters
-  to: LegacyStringFieldFilter
-  type: has_one
-  via: region
-- from: EventSubscriptionResponse
-  to: NotificationChannel
-  type: has_many
-  via: channels
-- from: BillingAppSandbox
+- from: BillingAppExternalInvoicing
   to: Labels
   type: has_one
   via: labels
-- from: BillingAppStripe
+- from: BillingAppSandbox
   to: Labels
   type: has_one
   via: labels
@@ -2398,15 +2398,11 @@ relationships:
   to: PaginatedMeta
   type: has_one
   via: meta
-- from: BillingAppExternalInvoicing
+- from: BillingAppStripe
   to: Labels
   type: has_one
   via: labels
 - from: CreateBillingProfileRequest
-  to: Labels
-  type: has_one
-  via: labels
-- from: BillingProfile
   to: Labels
   type: has_one
   via: labels
@@ -2418,6 +2414,10 @@ relationships:
   to: PaginatedMeta
   type: has_one
   via: meta
+- from: BillingProfile
+  to: Labels
+  type: has_one
+  via: labels
 - from: CustomerPagePaginatedResponse
   to: BillingCustomer
   type: has_many
@@ -2438,11 +2438,11 @@ relationships:
   to: BillingEntitlementAccessResult
   type: has_many
   via: data
-- from: BillingSubscriptionCreate
+- from: BillingSubscription
   to: Labels
   type: has_one
   via: labels
-- from: BillingSubscription
+- from: BillingSubscriptionCreate
   to: Labels
   type: has_one
   via: labels
@@ -2458,6 +2458,10 @@ relationships:
   to: Labels
   type: has_one
   via: labels
+- from: ListPortalPagesResponse
+  to: PortalPageInfo
+  type: has_many
+  via: data
 - from: PortalPagesFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -2474,10 +2478,6 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: visibility
-- from: ListPortalPagesResponse
-  to: PortalPageInfo
-  type: has_many
-  via: data
 - from: PersonalAccessToken
   to: User
   type: belongs_to
@@ -2487,10 +2487,6 @@ relationships:
   type: belongs_to
   via: user_id
 - from: CreatePortalIdpTeamGroupMappingRequest
-  to: Team
-  type: belongs_to
-  via: team_id
-- from: PortalIdpTeamGroupMapping
   to: Team
   type: belongs_to
   via: team_id
@@ -2510,6 +2506,10 @@ relationships:
   to: PortalTeamGroupMapping
   type: has_many
   via: data
+- from: PortalIdpTeamGroupMapping
+  to: Team
+  type: belongs_to
+  via: team_id
 - from: PortalTeamGroupMapping
   to: Team
   type: belongs_to
@@ -2534,14 +2534,14 @@ relationships:
   to: PortalDeveloper
   type: has_many
   via: data
-- from: EmailTemplate
+- from: EmailTemplateVariablesList
+  to: EmailTemplateVariable
+  type: has_many
+  via: data
+- from: DefaultEmailTemplate
   to: DefaultEmailTemplateContent
   type: has_one
   via: default_content
-- from: EmailTemplate
-  to: EmailTemplateContent
-  type: has_one
-  via: content
 - from: ListDomains
   to: EmailDomain
   type: has_many
@@ -2566,14 +2566,22 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: verification_status
-- from: DefaultEmailTemplate
+- from: EmailTemplate
   to: DefaultEmailTemplateContent
   type: has_one
   via: default_content
-- from: EmailTemplateVariablesList
-  to: EmailTemplateVariable
-  type: has_many
-  via: data
+- from: EmailTemplate
+  to: EmailTemplateContent
+  type: has_one
+  via: content
+- from: UpdateGoogleAnalytics4Integration
+  to: GoogleAnalytics4IntegrationConfigProperties
+  type: has_one
+  via: config_data
+- from: UpdateGoogleTagManagerIntegration
+  to: GoogleTagManagerIntegrationConfigProperties
+  type: has_one
+  via: config_data
 - from: UpdatePortalIntegrations
   to: UpdateGoogleTagManagerIntegration
   type: has_one
@@ -2590,28 +2598,20 @@ relationships:
   to: GoogleAnalytics4Integration
   type: has_one
   via: google_analytics_4
-- from: UpdateGoogleAnalytics4Integration
-  to: GoogleAnalytics4IntegrationConfigProperties
-  type: has_one
-  via: config_data
-- from: UpdateGoogleTagManagerIntegration
-  to: GoogleTagManagerIntegrationConfigProperties
-  type: has_one
-  via: config_data
-- from: ListBasicDevelopersResponse
-  to: PaginatedMeta
-  type: has_one
-  via: meta
-- from: ListBasicDevelopersResponse
-  to: BasicDeveloper
-  type: has_many
-  via: data
 - from: ListPortalTeamsResponse
   to: PaginatedMeta
   type: has_one
   via: meta
 - from: ListPortalTeamsResponse
   to: PortalTeamResponse
+  type: has_many
+  via: data
+- from: ListBasicDevelopersResponse
+  to: PaginatedMeta
+  type: has_one
+  via: meta
+- from: ListBasicDevelopersResponse
+  to: BasicDeveloper
   type: has_many
   via: data
 - from: AssignedPortalRoleCollectionResponse
@@ -2654,23 +2654,19 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: canonical_domain
-- from: CreatePrivateDnsRequest
-  to: AwsPrivateHostedZoneAttachmentConfig
-  type: has_one
-  via: private_dns_attachment_config
-- from: CreatePrivateDnsRequest
+- from: AwsPrivateDnsResolverResponse
   to: AwsPrivateDnsResolverAttachmentConfig
   type: has_one
   via: private_dns_attachment_config
-- from: CreatePrivateDnsRequest
-  to: GcpPrivateHostedZoneAttachmentConfig
+- from: AzurePrivateDnsResolverAttachmentConfig
+  to: PrivateDnsResolverConfig
+  type: has_one
+  via: dns_config
+- from: AwsPrivateHostedZoneResponse
+  to: AwsPrivateHostedZoneAttachmentConfig
   type: has_one
   via: private_dns_attachment_config
-- from: CreatePrivateDnsRequest
-  to: AzurePrivateHostedZoneAttachmentConfig
-  type: has_one
-  via: private_dns_attachment_config
-- from: CreatePrivateDnsRequest
+- from: PatchAzurePrivateDnsResolver
   to: AzurePrivateDnsResolverAttachmentConfig
   type: has_one
   via: private_dns_attachment_config
@@ -2678,7 +2674,31 @@ relationships:
   to: GcpPrivateHostedZoneAttachmentConfig
   type: has_one
   via: private_dns_attachment_config
-- from: PatchAzurePrivateDnsResolver
+- from: PatchAwsPrivateDnsResolver
+  to: AwsPrivateDnsResolverAttachmentConfig
+  type: has_one
+  via: private_dns_attachment_config
+- from: AzurePrivateHostedZoneResponse
+  to: AzurePrivateHostedZoneAttachmentConfig
+  type: has_one
+  via: private_dns_attachment_config
+- from: CreatePrivateDnsRequest
+  to: AwsPrivateHostedZoneAttachmentConfig
+  type: has_one
+  via: private_dns_attachment_config
+- from: CreatePrivateDnsRequest
+  to: AwsPrivateDnsResolverAttachmentConfig
+  type: has_one
+  via: private_dns_attachment_config
+- from: CreatePrivateDnsRequest
+  to: GcpPrivateHostedZoneAttachmentConfig
+  type: has_one
+  via: private_dns_attachment_config
+- from: CreatePrivateDnsRequest
+  to: AzurePrivateHostedZoneAttachmentConfig
+  type: has_one
+  via: private_dns_attachment_config
+- from: CreatePrivateDnsRequest
   to: AzurePrivateDnsResolverAttachmentConfig
   type: has_one
   via: private_dns_attachment_config
@@ -2686,30 +2706,10 @@ relationships:
   to: AzurePrivateDnsResolverAttachmentConfig
   type: has_one
   via: private_dns_attachment_config
-- from: AwsPrivateHostedZoneResponse
-  to: AwsPrivateHostedZoneAttachmentConfig
-  type: has_one
-  via: private_dns_attachment_config
-- from: AwsPrivateDnsResolverResponse
-  to: AwsPrivateDnsResolverAttachmentConfig
-  type: has_one
-  via: private_dns_attachment_config
 - from: AwsPrivateDnsResolverAttachmentConfig
   to: PrivateDnsResolverConfig
   type: has_one
   via: dns_config
-- from: AzurePrivateDnsResolverAttachmentConfig
-  to: PrivateDnsResolverConfig
-  type: has_one
-  via: dns_config
-- from: AzurePrivateHostedZoneResponse
-  to: AzurePrivateHostedZoneAttachmentConfig
-  type: has_one
-  via: private_dns_attachment_config
-- from: PatchAwsPrivateDnsResolver
-  to: AwsPrivateDnsResolverAttachmentConfig
-  type: has_one
-  via: private_dns_attachment_config
 - from: PrivateDnsFilterParameters
   to: CloudGatewaysStringFieldFilterOverride
   type: has_one
@@ -2734,10 +2734,6 @@ relationships:
   to: ResourceConfiguration
   type: has_many
   via: overrides
-- from: HasApisSelector
-  to: HasSelectorParams
-  type: has_one
-  via: selector_parameters
 - from: ScorecardCriteriaService
   to: CustomFields
   type: has_one
@@ -2750,98 +2746,14 @@ relationships:
   to: ScorecardCriteriaServiceEvaluation
   type: has_one
   via: score
-- from: ScorecardTemplateCriteria
-  to: CriteriaParameters
-  type: has_one
-  via: template_parameters
-- from: CriteriaEvaluationResultDetails
-  to: CriteriaEvaluationRelationMap
-  type: has_one
-  via: raw_value
-- from: CreateScorecard
-  to: ScorecardEntitySelector
-  type: has_one
-  via: entity_selector
-- from: CreateScorecard
-  to: CreateScorecardCriteria
-  type: has_many
-  via: criteria
-- from: CatalogServiceScorecardCriteria
-  to: Scorecard
-  type: belongs_to
-  via: scorecard_id
-- from: CatalogServiceScorecardCriteria
-  to: CriteriaParameters
-  type: has_one
-  via: template_parameters
-- from: CatalogServiceScorecardCriteria
-  to: ScorecardCriteriaServiceEvaluation
-  type: has_one
-  via: evaluation
 - from: UpdateScorecardCriteria
   to: CriteriaParameters
   type: has_one
   via: template_parameters
-- from: ByDisplayNameSelector
+- from: ByNameSelector
   to: StringFieldSelectorParams
   type: has_one
   via: selector_parameters
-- from: Scorecard
-  to: ScorecardScore
-  type: has_one
-  via: score
-- from: Scorecard
-  to: ScorecardEntitySelector
-  type: has_one
-  via: entity_selector
-- from: CatalogServiceScorecard
-  to: ScorecardScore
-  type: has_one
-  via: score
-- from: CatalogServiceScorecard
-  to: ScorecardEntitySelector
-  type: has_one
-  via: entity_selector
-- from: CatalogServiceScorecard
-  to: CatalogServiceScorecardCriteria
-  type: has_many
-  via: criteria
-- from: CreateScorecardCriteria
-  to: CriteriaParameters
-  type: has_one
-  via: template_parameters
-- from: ScorecardFilterParameters
-  to: StringFieldFilter
-  type: has_one
-  via: name
-- from: ScorecardFilterParameters
-  to: StringFieldFilter
-  type: has_one
-  via: score.value
-- from: ScorecardService
-  to: CustomFields
-  type: has_one
-  via: custom_fields
-- from: ScorecardService
-  to: Labels
-  type: has_one
-  via: labels
-- from: ScorecardService
-  to: ScorecardScore
-  type: has_one
-  via: score
-- from: ScorecardCriteriaWithEvaluation
-  to: Scorecard
-  type: belongs_to
-  via: scorecard_id
-- from: ScorecardCriteriaWithEvaluation
-  to: CriteriaParameters
-  type: has_one
-  via: template_parameters
-- from: ScorecardCriteriaWithEvaluation
-  to: ScorecardCriteriaEvaluation
-  type: has_one
-  via: evaluation
 - from: ScorecardWithCriteria
   to: ScorecardScore
   type: has_one
@@ -2854,18 +2766,26 @@ relationships:
   to: ScorecardCriteria
   type: has_many
   via: criteria
-- from: ByNameSelector
-  to: StringFieldSelectorParams
-  type: has_one
-  via: selector_parameters
-- from: ScorecardCriteria
-  to: Scorecard
-  type: belongs_to
-  via: scorecard_id
-- from: ScorecardCriteria
+- from: CreateScorecardCriteria
   to: CriteriaParameters
   type: has_one
   via: template_parameters
+- from: ScorecardTemplateCriteria
+  to: CriteriaParameters
+  type: has_one
+  via: template_parameters
+- from: ScorecardCriteriaWithEvaluation
+  to: Scorecard
+  type: belongs_to
+  via: scorecard_id
+- from: ScorecardCriteriaWithEvaluation
+  to: CriteriaParameters
+  type: has_one
+  via: template_parameters
+- from: ScorecardCriteriaWithEvaluation
+  to: ScorecardCriteriaEvaluation
+  type: has_one
+  via: evaluation
 - from: ScorecardServiceFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -2890,26 +2810,14 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: score.value
-- from: UpdateScorecard
-  to: ScorecardEntitySelector
+- from: ScorecardFilterParameters
+  to: StringFieldFilter
   type: has_one
-  via: entity_selector
-- from: UpdateScorecard
-  to: UpdateScorecardCriteria
-  type: has_many
-  via: criteria
-- from: UpdateScorecard
-  to: CreateScorecardCriteria
-  type: has_many
-  via: criteria
-- from: CriteriaEvaluationRelationResult
-  to: CriteriaEvaluationResultDetails
+  via: name
+- from: ScorecardFilterParameters
+  to: StringFieldFilter
   type: has_one
-  via: details
-- from: ScorecardCriteriaServiceEvaluation
-  to: CriteriaEvaluationResultDetails
-  type: has_one
-  via: evaluation_context
+  via: score.value
 - from: ScorecardCriteriaServiceFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -2930,6 +2838,22 @@ relationships:
   to: LabelsFieldFilter
   type: has_one
   via: labels
+- from: ScorecardService
+  to: CustomFields
+  type: has_one
+  via: custom_fields
+- from: ScorecardService
+  to: Labels
+  type: has_one
+  via: labels
+- from: ScorecardService
+  to: ScorecardScore
+  type: has_one
+  via: score
+- from: ByDisplayNameSelector
+  to: StringFieldSelectorParams
+  type: has_one
+  via: selector_parameters
 - from: ScorecardTemplateFilterParameters
   to: StringFieldFilter
   type: has_one
@@ -2938,6 +2862,82 @@ relationships:
   to: StringFieldFilter
   type: has_one
   via: display_name
+- from: ScorecardCriteriaServiceEvaluation
+  to: CriteriaEvaluationResultDetails
+  type: has_one
+  via: evaluation_context
+- from: CriteriaEvaluationRelationResult
+  to: CriteriaEvaluationResultDetails
+  type: has_one
+  via: details
+- from: UpdateScorecard
+  to: ScorecardEntitySelector
+  type: has_one
+  via: entity_selector
+- from: UpdateScorecard
+  to: UpdateScorecardCriteria
+  type: has_many
+  via: criteria
+- from: UpdateScorecard
+  to: CreateScorecardCriteria
+  type: has_many
+  via: criteria
+- from: HasApisSelector
+  to: HasSelectorParams
+  type: has_one
+  via: selector_parameters
+- from: Scorecard
+  to: ScorecardScore
+  type: has_one
+  via: score
+- from: Scorecard
+  to: ScorecardEntitySelector
+  type: has_one
+  via: entity_selector
+- from: CatalogServiceScorecardCriteria
+  to: Scorecard
+  type: belongs_to
+  via: scorecard_id
+- from: CatalogServiceScorecardCriteria
+  to: CriteriaParameters
+  type: has_one
+  via: template_parameters
+- from: CatalogServiceScorecardCriteria
+  to: ScorecardCriteriaServiceEvaluation
+  type: has_one
+  via: evaluation
+- from: CriteriaEvaluationResultDetails
+  to: CriteriaEvaluationRelationMap
+  type: has_one
+  via: raw_value
+- from: ScorecardCriteria
+  to: Scorecard
+  type: belongs_to
+  via: scorecard_id
+- from: ScorecardCriteria
+  to: CriteriaParameters
+  type: has_one
+  via: template_parameters
+- from: CatalogServiceScorecard
+  to: ScorecardScore
+  type: has_one
+  via: score
+- from: CatalogServiceScorecard
+  to: ScorecardEntitySelector
+  type: has_one
+  via: entity_selector
+- from: CatalogServiceScorecard
+  to: CatalogServiceScorecardCriteria
+  type: has_many
+  via: criteria
+- from: CreateScorecard
+  to: ScorecardEntitySelector
+  type: has_one
+  via: entity_selector
+- from: CreateScorecard
+  to: CreateScorecardCriteria
+  type: has_many
+  via: criteria
 - from: PortalSnippetsFilterParameters
   to: UuidFieldFilter
   type: has_one
@@ -2966,36 +2966,44 @@ relationships:
   to: Labels
   type: has_one
   via: labels
-- from: CreateAzureTransitGateway
-  to: AzureVNETPeeringAttachmentConfig
-  type: has_one
-  via: transit_gateway_attachment_config
-- from: CreateAwsTransitGateway
-  to: AwsTransitGatewayAttachmentConfig
-  type: has_one
-  via: transit_gateway_attachment_config
-- from: CreateAwsResourceEndpointGateway
-  to: AwsResourceEndpointAttachmentConfig
+- from: AwsTransitGatewayResponse
+  to: AwsTransitGatewayAttachmentConfigForResponse
   type: has_one
   via: transit_gateway_attachment_config
 - from: CreateAwsVpcPeeringGateway
   to: AwsVpcPeeringGatewayAttachmentConfig
   type: has_one
   via: transit_gateway_attachment_config
+- from: GCPVPCPeeringGatewayResponse
+  to: GCPVPCPeeringAttachmentConfig
+  type: has_one
+  via: transit_gateway_attachment_config
+- from: AzureTransitGatewayResponse
+  to: AzureVNETPeeringAttachmentConfig
+  type: has_one
+  via: transit_gateway_attachment_config
 - from: AwsVpcPeeringGatewayResponse
   to: AwsVpcPeeringGatewayAttachmentConfigForResponse
   type: has_one
   via: transit_gateway_attachment_config
-- from: AwsTransitGatewayResponse
-  to: AwsTransitGatewayAttachmentConfigForResponse
+- from: CreateAwsResourceEndpointGateway
+  to: AwsResourceEndpointAttachmentConfig
+  type: has_one
+  via: transit_gateway_attachment_config
+- from: CreateAzureTransitGateway
+  to: AzureVNETPeeringAttachmentConfig
+  type: has_one
+  via: transit_gateway_attachment_config
+- from: AzureVHubPeeringGatewayResponse
+  to: AzureVHubPeeringAttachmentConfig
   type: has_one
   via: transit_gateway_attachment_config
 - from: AwsResourceEndpointGatewayResponse
   to: AwsResourceEndpointAttachmentConfigResponse
   type: has_one
   via: transit_gateway_attachment_config
-- from: AzureTransitGatewayResponse
-  to: AzureVNETPeeringAttachmentConfig
+- from: CreateAwsTransitGateway
+  to: AwsTransitGatewayAttachmentConfig
   type: has_one
   via: transit_gateway_attachment_config
 - from: CreateGCPVPCPeeringTransitGateway
@@ -3004,13 +3012,5 @@ relationships:
   via: transit_gateway_attachment_config
 - from: CreateAzureVHubPeeringGateway
   to: AzureVHubPeeringAttachmentConfig
-  type: has_one
-  via: transit_gateway_attachment_config
-- from: AzureVHubPeeringGatewayResponse
-  to: AzureVHubPeeringAttachmentConfig
-  type: has_one
-  via: transit_gateway_attachment_config
-- from: GCPVPCPeeringGatewayResponse
-  to: GCPVPCPeeringAttachmentConfig
   type: has_one
   via: transit_gateway_attachment_config

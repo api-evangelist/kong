@@ -171,6 +171,120 @@ paths:
       - Catalog Service API Mappings
 components:
   schemas:
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CatalogServiceApiMappingFilterParameters:
+      type: object
+      properties:
+        api_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+      additionalProperties: false
+      title: CatalogServiceApiMappingFilterParameters
+    CatalogApiServiceMappingFilterParameters:
+      type: object
+      properties:
+        service_id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+      additionalProperties: false
+      title: CatalogApiServiceMappingFilterParameters
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -200,6 +314,21 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -209,55 +338,29 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    CatalogServiceApiMappingFilterParameters:
+    PaginatedMeta:
+      description: returns the pagination information
       type: object
       properties:
-        api_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-      additionalProperties: false
-      title: CatalogServiceApiMappingFilterParameters
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     CatalogServiceApiMapping:
       description: Represents an API mapping associated with a service in the catalog.
       type: object
@@ -288,13 +391,73 @@ components:
       - api_id
       - created_at
       - updated_at
-    CatalogApiServiceMappingFilterParameters:
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
       properties:
-        service_id:
-          $ref: '#/components/schemas/UuidFieldFilter'
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
       additionalProperties: false
-      title: CatalogApiServiceMappingFilterParameters
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
     BaseError:
       description: standard error
       type: object
@@ -349,51 +512,6 @@ components:
       - instance
       - detail
       title: Error
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
     InvalidParameterChoiceItem:
       type: object
       properties:
@@ -428,58 +546,21 @@ components:
       - reason
       - rule
       - choices
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    NotFoundError:
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 401
           title:
-            example: Not Found
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
+            example: Invalid credentials
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -513,123 +594,57 @@ components:
       - rule
       - reason
       - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
+  parameters:
+    CatalogServiceApiMappingFilter:
+      name: filter
+      in: query
+      required: false
+      style: deepObject
+      description: "Filters a collection of catalog service API mappings for a given Service. Supported filter attributes are:\n\n\n  - `api_id`\n"
+      schema:
+        $ref: '#/components/schemas/CatalogServiceApiMappingFilterParameters'
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    CatalogApiServiceMappingFilter:
+      name: filter
+      in: query
+      required: false
+      style: deepObject
+      description: "Filters a collection of catalog API service mappings for a given API. Supported filter attributes are:\n\n\n  - `service_id`\n"
+      schema:
+        $ref: '#/components/schemas/CatalogApiServiceMappingFilterParameters'
+    CatalogServiceApiMappingSort:
+      name: sort
+      in: query
+      required: false
+      description: "Sorts a collection of catalog service API mappings. Supported sort attributes are:\n\n\n  - `created_at`\n  - `updated_at`\n\nDefault sort is `created_at` in descending order.\n"
+      schema:
+        $ref: '#/components/schemas/SortQuery'
   responses:
-    ListCatalogServiceApiMappingsResponse:
-      description: A paginated list response for a collection of catalog service API mappings.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CatalogServiceApiMapping'
-            additionalProperties: false
-            required:
-            - meta
-            - data
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -656,62 +671,47 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    Conflict:
-      description: Conflict
+    BadRequest:
+      description: Bad Request
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/ConflictError'
+            $ref: '#/components/schemas/BadRequestError'
     CatalogServiceApiMappingResponse:
       description: A response containing a single catalog service API mapping.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CatalogServiceApiMapping'
-  parameters:
-    CatalogServiceApiMappingFilter:
-      name: filter
-      in: query
-      required: false
-      style: deepObject
-      description: "Filters a collection of catalog service API mappings for a given Service. Supported filter attributes are:\n\n\n  - `api_id`\n"
-      schema:
-        $ref: '#/components/schemas/CatalogServiceApiMappingFilterParameters'
-    CatalogApiServiceMappingFilter:
-      name: filter
-      in: query
-      required: false
-      style: deepObject
-      description: "Filters a collection of catalog API service mappings for a given API. Supported filter attributes are:\n\n\n  - `service_id`\n"
-      schema:
-        $ref: '#/components/schemas/CatalogApiServiceMappingFilterParameters'
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    CatalogServiceApiMappingSort:
-      name: sort
-      in: query
-      required: false
-      description: "Sorts a collection of catalog service API mappings. Supported sort attributes are:\n\n\n  - `created_at`\n  - `updated_at`\n\nDefault sort is `created_at` in descending order.\n"
-      schema:
-        $ref: '#/components/schemas/SortQuery'
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+    Conflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ListCatalogServiceApiMappingsResponse:
+      description: A paginated list response for a collection of catalog service API mappings.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogServiceApiMapping'
+            additionalProperties: false
+            required:
+            - meta
+            - data
   requestBodies:
     CreateCatalogServiceApiMappingBody:
       description: Request body schema for creating a new API mapping for catalog service.

@@ -175,26 +175,49 @@ paths:
       tags:
       - Groups
 components:
-  parameters:
-    GroupId:
-      description: ID of the Group to lookup
-      example: ''
-      in: path
-      name: GroupId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    GroupRoleId:
-      description: ID of the Group to lookup
-      example: ''
-      in: path
-      name: GroupId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-name-override: group_id
   schemas:
+    Group:
+      x-speakeasy-entity: Group
+      type: object
+      properties:
+        comment:
+          description: Any comments associated with the specific group.
+          type: string
+          nullable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the group
+          type: string
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        comment: This is an example comment for the group.
+        created_at: 1706598432
+        id: d4e7f2c9-8a7b-4e89-b3a1-9c3d6f1e5b92
+        name: example-group
+        updated_at: 1706684832
+      additionalProperties: false
+      required:
+      - name
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     GroupRole:
       x-speakeasy-entity: GroupRole
       type: object
@@ -240,66 +263,26 @@ components:
         jq: ".\n| if .group != null and .group.id != null\n  then . + { group_id: .group.id }\n  else .\n  end\n| if .rbac_role != null and .rbac_role.id != null\n  then . + { role_id: .rbac_role.id }\n  else .\n  end\n| if .workspace != null and (.workspace | type) == \"object\" and .workspace.id != null\n  then .workspace = .workspace.id\n  else .\n  end\n| del(.group, .rbac_role)\n"
       x-speakeasy-transform-to-api:
         jq: ".\n| if .workspace != null\n  then . + { workspace_id: .workspace }\n  else .\n  end\n| if .role_id != null\n  then . + { rbac_role_id: .role_id }\n  else .\n  end\n| del(.group_id, .role_id, .workspace, .group, .rbac_role)\n"
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
-    Group:
-      x-speakeasy-entity: Group
-      type: object
-      properties:
-        comment:
-          description: Any comments associated with the specific group.
-          type: string
-          nullable: true
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        name:
-          description: The name of the group
-          type: string
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-      example:
-        comment: This is an example comment for the group.
-        created_at: 1706598432
-        id: d4e7f2c9-8a7b-4e89-b3a1-9c3d6f1e5b92
-        name: example-group
-        updated_at: 1706684832
-      additionalProperties: false
-      required:
-      - name
+  parameters:
+    GroupRoleId:
+      description: ID of the Group to lookup
+      example: ''
+      in: path
+      name: GroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-name-override: group_id
+    GroupId:
+      description: ID of the Group to lookup
+      example: ''
+      in: path
+      name: GroupId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
   responses:
-    CreateGroupRolesResponse:
-      description: Successfully created or updated roles.
-      content:
-        application/json:
-          example:
-            group:
-              comment: Read access to all endpoints, across all workspaces
-              id: 7574eb1d-c9fa-46a9-bd3a-3f1b4b196287
-              name: read-only
-              updated_at: '2024-04-23T18:25:43Z'
-            rbac_role:
-              id: 7fdea5c8-2bfa-4aa9-9c21-7bb9e607186d
-              name: admin
-            workspace:
-              id: 99bd8d18-f5b6-410e-aefe-d75f4252f13c
-          schema:
-            $ref: '#/components/schemas/GroupRole'
     HTTP401Error:
       description: Unauthorized
       content:
@@ -322,6 +305,23 @@ components:
                 status: 401
           schema:
             $ref: '#/components/schemas/GatewayUnauthorizedError'
+    CreateGroupRolesResponse:
+      description: Successfully created or updated roles.
+      content:
+        application/json:
+          example:
+            group:
+              comment: Read access to all endpoints, across all workspaces
+              id: 7574eb1d-c9fa-46a9-bd3a-3f1b4b196287
+              name: read-only
+              updated_at: '2024-04-23T18:25:43Z'
+            rbac_role:
+              id: 7fdea5c8-2bfa-4aa9-9c21-7bb9e607186d
+              name: admin
+            workspace:
+              id: 99bd8d18-f5b6-410e-aefe-d75f4252f13c
+          schema:
+            $ref: '#/components/schemas/GroupRole'
   requestBodies:
     GroupRoleRequest:
       content:

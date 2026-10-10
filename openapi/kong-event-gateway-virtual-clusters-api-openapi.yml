@@ -159,150 +159,6 @@ paths:
       - Event Gateway Virtual Clusters
 components:
   schemas:
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    StringFieldEqualsFilter:
-      description: Filters on the given string field value by exact match.
-      properties:
-        eq:
-          type: string
-      title: StringFieldEqualsFilter
-    VirtualClusterAuthenticationSaslScram:
-      description: SASL/SCRAM authentication scheme for the virtual cluster.
-      type: object
-      properties:
-        type:
-          type: string
-          const: sasl_scram
-        algorithm:
-          description: The algorithm used for SASL/SCRAM authentication.
-          type: string
-          enum:
-          - sha256
-          - sha512
-          x-speakeasy-unknown-values: allow
-      additionalProperties: false
-      required:
-      - type
-      - algorithm
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    VirtualClusterAuthenticationAudience:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-      required:
-      - name
-    BackendClusterReferenceById:
-      type: object
-      properties:
-        id:
-          description: The unique identifier of the backend cluster.
-          type: string
-          format: uuid
-          minLength: 1
-      required:
-      - id
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    NamespaceExactAllowListItem:
-      type: object
-      properties:
-        backend:
-          type: string
-          minLength: 1
-      required:
-      - backend
-    VirtualClusterAuthenticationPrincipalSensitiveDataAware:
-      description: A principal for authentication.
-      type: object
-      properties:
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      required:
-      - username
-    VirtualClusterAuthenticationClientCertificate:
-      description: 'Client certificate (mTLS) authentication scheme for the virtual cluster.
-
-
-        **Requires a minimum runtime version of `1.1`**.'
-      type: object
-      properties:
-        type:
-          type: string
-          const: client_certificate
-      example:
-        type: client_certificate
-      additionalProperties: false
-      required:
-      - type
-      x-min-runtime-version: '1.1'
-    VirtualClusterNamespaceIdSelectorGlob:
-      type: object
-      properties:
-        type:
-          type: string
-          const: glob
-        glob:
-          description: Expose any id that matches this glob pattern (e.g., `my_id_*`).
-          type: string
-          format: glob
-          minLength: 1
-          pattern: ^[A-Za-z0-9._?*-]+$
-      required:
-      - type
-      - glob
     VirtualClusterNamespaceAdditionalProperties:
       type: object
       properties:
@@ -324,438 +180,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VirtualClusterNamespaceIdSelector'
-    VirtualClusterAuthenticationSaslPlain:
-      description: 'SASL/PLAIN authentication scheme for the virtual cluster containing principals with username and password.
-
-        '
-      type: object
+    StringFieldEqualsFilter:
+      description: Filters on the given string field value by exact match.
       properties:
-        type:
+        eq:
           type: string
-          const: sasl_plain
-        mediation:
-          description: The mediation type for SASL/PLAIN authentication.
-          type: string
-          enum:
-          - passthrough
-          - terminate
-          x-speakeasy-unknown-values: allow
-        principals:
-          description: List of principals to be able to authenticate with, used with `terminate` mediation.
-          type: array
-          items:
-            $ref: '#/components/schemas/VirtualClusterAuthenticationPrincipal'
-          minItems: 1
-      additionalProperties: false
-      required:
-      - type
-      - mediation
-    VirtualClusterAuthenticationSchemes:
-      description: 'How to handle authentication from clients.
-
-
-        It tries to authenticate with every rule sequentially one by one.
-
-        It succeeds on the first match, and fails if no rule matches.
-
-        '
-      type: array
-      items:
-        $ref: '#/components/schemas/VirtualClusterAuthenticationScheme'
-      minItems: 1
-    GatewaySecretReferenceOrLiteral:
-      description: 'A literal value or a reference to an existing secret as a template string expression.
-
-        The value is stored and returned by the API as-is, not treated as sensitive information.
-
-        '
-      type: string
-      minLength: 1
-      x-expression:
-        type: string
-        fields:
-        - vault
-    BackendClusterReference:
-      description: The backend cluster associated with the virtual cluster.
-      type: object
-      properties:
-        id:
-          description: The unique identifier of the backend cluster.
-          type: string
-          format: uuid
-        name:
-          $ref: '#/components/schemas/BackendClusterName'
-      additionalProperties: false
-      required:
-      - id
-      - name
-    VirtualClusterAuthenticationAnonymous:
-      type: object
-      properties:
-        type:
-          type: string
-          const: anonymous
-      required:
-      - type
-    VirtualClusterNamespaceTopicSelectorGlob:
-      type: object
-      properties:
-        type:
-          type: string
-          const: glob
-        glob:
-          description: Expose any backend topic that matches this glob pattern (e.g., `operations_data_*`).
-          type: string
-          format: glob
-          minLength: 1
-          pattern: ^[A-Za-z0-9._?*-]+$
-        conflict:
-          description: 'How to inform the user about conflicts where multiple backend topics would map to the same virtual topic name.
-
-            * warn - log in the Event Gateway logs. Additionally, it sets knep_namespace_topic_conflict to 1.
-
-            * ignore - do not do anything. It does not cause knep_namespace_topic_conflict metric to be set to 1.
-
-            '
-          type: string
-          default: warn
-          enum:
-          - warn
-          - ignore
-          x-speakeasy-unknown-values: allow
-      required:
-      - type
-      - glob
-    VirtualClusterAuthenticationPrincipal:
-      description: A principal for authentication containing username and password.
-      type: object
-      properties:
-        username:
-          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
-        password:
-          $ref: '#/components/schemas/GatewaySecret'
-      required:
-      - username
-      - password
-    VirtualClusterAuthenticationScheme:
-      discriminator:
-        propertyName: type
-        mapping:
-          anonymous: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
-          sasl_plain: '#/components/schemas/VirtualClusterAuthenticationSaslPlain'
-          sasl_scram: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
-          oauth_bearer: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
-          client_certificate: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
-      oneOf:
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslPlain'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
-    VirtualClusterNamespaceTopicSelector:
-      type: object
-      discriminator:
-        propertyName: type
-        mapping:
-          glob: '#/components/schemas/VirtualClusterNamespaceTopicSelectorGlob'
-          exact_list: '#/components/schemas/VirtualClusterNamespaceTopicSelectorExactList'
-      oneOf:
-      - $ref: '#/components/schemas/VirtualClusterNamespaceTopicSelectorGlob'
-      - $ref: '#/components/schemas/VirtualClusterNamespaceTopicSelectorExactList'
-      required:
-      - type
-    VirtualClusterAuthenticationOauthBearer:
-      description: Oauth Bearer authentication scheme for the virtual cluster.
-      type: object
-      properties:
-        type:
-          type: string
-          const: oauth_bearer
-        mediation:
-          description: "Methods to mediate authentication:\n* passthrough - pass authentication from the client through proxy to the backend cluster without any kind of\n\n\n  validation\n* validate_forward - pass authentication from the client through proxy to the backend cluster.\n\n\n  Proxy does the validation before forwarding it to the client.\n* terminate - terminate authentication at the proxy level and originate authentication to the backend cluster\n\n\n  using the configuration defined at BackendCluster's authentication.\n  SASL auth is not originated if authentication on the backend_cluster is not configured.\n"
-          type: string
-          enum:
-          - passthrough
-          - validate_forward
-          - terminate
-          x-speakeasy-unknown-values: allow
-        claims_mapping:
-          $ref: '#/components/schemas/VirtualClusterAuthenticationClaimsMapping'
-        jwks:
-          $ref: '#/components/schemas/VirtualClusterAuthenticationJWKS'
-        validate:
-          $ref: '#/components/schemas/VirtualClusterAuthenticationValidate'
-      additionalProperties: false
-      required:
-      - type
-      - mediation
-    VirtualClusterACLMode:
-      description: "Configures whether or not ACL policies are enforced on the gateway.\n- `enforce_on_gateway` means the gateway enforces its own ACL policies for this virtual cluster\n\n\n  and does not forward ACL-related commands to the backend cluster.\n  Note that if there are no ACL policies configured, all access is denied.\n- `passthrough` tells the gateway to forward all ACL-related commands.\n"
-      type: string
-      enum:
-      - enforce_on_gateway
-      - passthrough
-      x-speakeasy-unknown-values: allow
-    VirtualClusterDNSLabel:
-      description: 'The DNS label used in the bootstrap server URL to identify the virtual cluster when using SNI routing.
-
-        The format follows the RFC1035: 1-63 chars, lowercase alphanumeric or ''-'', must start and end with an alphanumeric character.'
-      type: string
-      example: vcluster-1
-      maxLength: 63
-      minLength: 1
-      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
-    BackendClusterReferenceModify:
-      description: 'The backend cluster associated with the virtual cluster.
-
-
-        Either `id` or `name` must be provided. Following changes to the backend cluster name won''t affect the
-
-        reference, as the system will create the entities relationship by `id`.
-
-        '
-      anyOf:
-      - $ref: '#/components/schemas/BackendClusterReferenceById'
-      - $ref: '#/components/schemas/BackendClusterReferenceByName'
-    VirtualClusterName:
-      description: The name of the virtual cluster.
-      type: string
-      maxLength: 255
-      minLength: 1
-      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    VirtualClusterNamespaceTopicSelectorExactList:
-      type: object
-      properties:
-        type:
-          type: string
-          const: exact_list
-        exact_list:
-          description: Explicit allow-list of backend topic names.
-          type: array
-          items:
-            $ref: '#/components/schemas/NamespaceExactAllowListItem'
-          minItems: 1
-        conflict:
-          description: 'How to inform the user about conflicts where multiple backend topics would map to the same virtual topic name.
-
-            * warn - log in the Event Gateway logs. Additionally, it sets knep_namespace_topic_conflict to 1.
-
-            * ignore - do not do anything. It does not cause knep_namespace_topic_conflict metric to be set to 1.
-
-            '
-          type: string
-          default: warn
-          enum:
-          - warn
-          - ignore
-          x-speakeasy-unknown-values: allow
-      required:
-      - type
-    BackendClusterName:
-      description: The unique name of the backend cluster.
-      type: string
-      maxLength: 255
-      minLength: 1
-      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
-    VirtualCluster:
-      description: A representation of a Kafka cluster that maps to a backend cluster.
-      type: object
-      properties:
-        id:
-          description: The unique identifier of the virtual cluster.
-          type: string
-          format: uuid
-          x-speakeasy-param-suppress-computed-diff: true
-        description:
-          description: A human-readable description of the virtual cluster.
-          type: string
-          default: ''
-          maxLength: 512
-        destination:
-          $ref: '#/components/schemas/BackendClusterReference'
-        authentication:
-          $ref: '#/components/schemas/VirtualClusterAuthenticationSensitiveDataAwareSchemes'
-        namespace:
-          $ref: '#/components/schemas/VirtualClusterNamespace'
-        topic_aliases:
-          description: '**Pre-release Feature**
-
-            This feature is currently in beta and is subject to change.
-
-
-            Topic aliases allow exposing backend topics under additional names.
-
-            An alias creates a new entry point to the same physical data.
-
-            The alias `topic` field references namespace-visible names (if namespace is configured).
-
-            Aliases are independent of namespace and can be used without it.
-
-
-            **Requires a minimum runtime version of `1.2`**.'
-          type: array
-          items:
-            $ref: '#/components/schemas/VirtualClusterTopicAlias'
-          x-min-runtime-version: '1.2'
-        name:
-          $ref: '#/components/schemas/VirtualClusterName'
-        dns_label:
-          $ref: '#/components/schemas/VirtualClusterDNSLabel'
-        acl_mode:
-          $ref: '#/components/schemas/VirtualClusterACLMode'
-        labels:
-          $ref: '#/components/schemas/Labels'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      required:
-      - id
-      - name
-      - dns_label
-      - destination
-      - authentication
-      - acl_mode
-      - created_at
-      - updated_at
-    VirtualClusterAuthenticationValidate:
-      description: Validation rules.
-      type: object
-      properties:
-        audiences:
-          description: List of expected audience values. One of them has to match the audience claim in the token.
-          type: array
-          items:
-            $ref: '#/components/schemas/VirtualClusterAuthenticationAudience'
-          minItems: 1
-        issuer:
-          description: Expected token issuer in the token.
-          type: string
-          minLength: 1
-    VirtualClusterAuthenticationSensitiveDataAwareSchemes:
-      description: 'How to handle authentication from clients.
-
-
-        It tries to authenticate with every rule sequentially one by one.
-
-        It succeeds on the first match, and fails if no rule matches.
-
-        '
-      type: array
-      items:
-        $ref: '#/components/schemas/VirtualClusterAuthenticationSensitiveDataAwareScheme'
-      minItems: 1
-    VirtualClusterAuthenticationSensitiveDataAwareScheme:
-      discriminator:
-        propertyName: type
-        mapping:
-          anonymous: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
-          sasl_plain: '#/components/schemas/VirtualClusterAuthenticationSaslPlainSensitiveDataAware'
-          sasl_scram: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
-          oauth_bearer: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
-          client_certificate: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
-      oneOf:
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslPlainSensitiveDataAware'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
-      - $ref: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
+      title: StringFieldEqualsFilter
     VirtualClusterAuthenticationClaimsMapping:
       description: Maps JWT claims in the case when sub and scope are presented as different claims in your JWT token.
       type: object
@@ -768,125 +198,89 @@ components:
           description: Maps the scope claim.
           type: string
           minLength: 1
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    NotFoundError:
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 403
           title:
-            example: Not Found
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
-    InvalidParameterDependentItem:
+            example: Forbidden
+    CursorMetaPage:
       type: object
       properties:
-        field:
+        first:
+          description: URI to the first page
           type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
+          format: path
+        last:
+          description: URI to the last page
           type: string
-          enum:
-          - dependent_fields
+          format: path
+        next:
+          description: URI to the next page
+          type: string
+          format: path
           nullable: true
-          readOnly: true
-        reason:
+        previous:
+          description: URI to the previous page
           type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
+          format: path
           nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
+        size:
+          description: Requested page size
+          type: number
+          example: 10
       required:
-      - field
-      - rule
-      - reason
-      - dependents
-    InvalidParameterStandard:
+      - size
+      - next
+      - previous
+    VirtualClusterAuthenticationAnonymous:
       type: object
       properties:
-        field:
+        type:
           type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
+          const: anonymous
       required:
-      - field
-      - reason
-    BackendClusterReferenceByName:
+      - type
+    VirtualClusterAuthenticationPrincipal:
+      description: A principal for authentication containing username and password.
+      type: object
+      properties:
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      required:
+      - username
+      - password
+    VirtualClusterNamespaceIdSelector:
+      type: object
+      discriminator:
+        propertyName: type
+        mapping:
+          glob: '#/components/schemas/VirtualClusterNamespaceIdSelectorGlob'
+          exact_list: '#/components/schemas/VirtualClusterNamespaceIdSelectorExactList'
+      oneOf:
+      - $ref: '#/components/schemas/VirtualClusterNamespaceIdSelectorGlob'
+      - $ref: '#/components/schemas/VirtualClusterNamespaceIdSelectorExactList'
+      required:
+      - type
+    VirtualClusterAuthenticationAudience:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/BackendClusterName'
+          type: string
+          minLength: 1
       required:
       - name
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
     GatewaySecret:
       description: 'A sensitive value containing the secret or a reference to a secret as a template string expression.
 
@@ -903,61 +297,24 @@ components:
         fields:
         - vault
       x-sensitive: true
-    VirtualClusterNamespaceIdSelector:
-      type: object
-      discriminator:
-        propertyName: type
-        mapping:
-          glob: '#/components/schemas/VirtualClusterNamespaceIdSelectorGlob'
-          exact_list: '#/components/schemas/VirtualClusterNamespaceIdSelectorExactList'
-      oneOf:
-      - $ref: '#/components/schemas/VirtualClusterNamespaceIdSelectorGlob'
-      - $ref: '#/components/schemas/VirtualClusterNamespaceIdSelectorExactList'
-      required:
-      - type
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    StringFieldContainsFilter:
-      description: Filters on the given string field value by fuzzy match.
-      type: object
-      properties:
-        contains:
-          type: string
-      additionalProperties: false
-      required:
-      - contains
-      title: StringFieldContainsFilter
+    BackendClusterReferenceModify:
+      description: 'The backend cluster associated with the virtual cluster.
+
+
+        Either `id` or `name` must be provided. Following changes to the backend cluster name won''t affect the
+
+        reference, as the system will create the entities relationship by `id`.
+
+        '
+      anyOf:
+      - $ref: '#/components/schemas/BackendClusterReferenceById'
+      - $ref: '#/components/schemas/BackendClusterReferenceByName'
+    BackendClusterName:
+      description: The unique name of the backend cluster.
+      type: string
+      maxLength: 255
+      minLength: 1
+      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
     VirtualClusterTopicAlias:
       description: '**Pre-release Feature**
 
@@ -1029,21 +386,124 @@ components:
           default: 1h
       required:
       - endpoint
-    ForbiddenError:
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    CursorMeta:
+      description: Pagination metadata.
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/CursorMetaPage'
+      required:
+      - page
+    GatewaySecretReferenceOrLiteral:
+      description: 'A literal value or a reference to an existing secret as a template string expression.
+
+        The value is stored and returned by the API as-is, not treated as sensitive information.
+
+        '
+      type: string
+      minLength: 1
+      x-expression:
+        type: string
+        fields:
+        - vault
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    VirtualClusterAuthenticationClientCertificate:
+      description: 'Client certificate (mTLS) authentication scheme for the virtual cluster.
+
+
+        **Requires a minimum runtime version of `1.1`**.'
+      type: object
+      properties:
+        type:
+          type: string
+          const: client_certificate
+      example:
+        type: client_certificate
+      additionalProperties: false
+      required:
+      - type
+      x-min-runtime-version: '1.1'
+    VirtualClusterAuthenticationPrincipalSensitiveDataAware:
+      description: A principal for authentication.
+      type: object
+      properties:
+        username:
+          $ref: '#/components/schemas/GatewaySecretReferenceOrLiteral'
+        password:
+          $ref: '#/components/schemas/GatewaySecret'
+      required:
+      - username
+    NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 403
+            example: 404
           title:
-            example: Forbidden
+            example: Not Found
           type:
-            example: https://httpstatuses.com/403
+            example: https://httpstatuses.com/404
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Forbidden
+            example: Not found
     VirtualClusterNamespaceIdSelectorExactList:
       type: object
       properties:
@@ -1063,6 +523,252 @@ components:
           minItems: 1
       required:
       - type
+    VirtualClusterAuthenticationSaslPlain:
+      description: 'SASL/PLAIN authentication scheme for the virtual cluster containing principals with username and password.
+
+        '
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_plain
+        mediation:
+          description: The mediation type for SASL/PLAIN authentication.
+          type: string
+          enum:
+          - passthrough
+          - terminate
+          x-speakeasy-unknown-values: allow
+        principals:
+          description: List of principals to be able to authenticate with, used with `terminate` mediation.
+          type: array
+          items:
+            $ref: '#/components/schemas/VirtualClusterAuthenticationPrincipal'
+          minItems: 1
+      additionalProperties: false
+      required:
+      - type
+      - mediation
+    VirtualClusterAuthenticationSensitiveDataAwareScheme:
+      discriminator:
+        propertyName: type
+        mapping:
+          anonymous: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
+          sasl_plain: '#/components/schemas/VirtualClusterAuthenticationSaslPlainSensitiveDataAware'
+          sasl_scram: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
+          oauth_bearer: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
+          client_certificate: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
+      oneOf:
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslPlainSensitiveDataAware'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BackendClusterReferenceByName:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/BackendClusterName'
+      required:
+      - name
+    VirtualClusterNamespaceTopicSelectorExactList:
+      type: object
+      properties:
+        type:
+          type: string
+          const: exact_list
+        exact_list:
+          description: Explicit allow-list of backend topic names.
+          type: array
+          items:
+            $ref: '#/components/schemas/NamespaceExactAllowListItem'
+          minItems: 1
+        conflict:
+          description: 'How to inform the user about conflicts where multiple backend topics would map to the same virtual topic name.
+
+            * warn - log in the Event Gateway logs. Additionally, it sets knep_namespace_topic_conflict to 1.
+
+            * ignore - do not do anything. It does not cause knep_namespace_topic_conflict metric to be set to 1.
+
+            '
+          type: string
+          default: warn
+          enum:
+          - warn
+          - ignore
+          x-speakeasy-unknown-values: allow
+      required:
+      - type
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    VirtualClusterAuthenticationOauthBearer:
+      description: Oauth Bearer authentication scheme for the virtual cluster.
+      type: object
+      properties:
+        type:
+          type: string
+          const: oauth_bearer
+        mediation:
+          description: "Methods to mediate authentication:\n* passthrough - pass authentication from the client through proxy to the backend cluster without any kind of\n\n\n  validation\n* validate_forward - pass authentication from the client through proxy to the backend cluster.\n\n\n  Proxy does the validation before forwarding it to the client.\n* terminate - terminate authentication at the proxy level and originate authentication to the backend cluster\n\n\n  using the configuration defined at BackendCluster's authentication.\n  SASL auth is not originated if authentication on the backend_cluster is not configured.\n"
+          type: string
+          enum:
+          - passthrough
+          - validate_forward
+          - terminate
+          x-speakeasy-unknown-values: allow
+        claims_mapping:
+          $ref: '#/components/schemas/VirtualClusterAuthenticationClaimsMapping'
+        jwks:
+          $ref: '#/components/schemas/VirtualClusterAuthenticationJWKS'
+        validate:
+          $ref: '#/components/schemas/VirtualClusterAuthenticationValidate'
+      additionalProperties: false
+      required:
+      - type
+      - mediation
+    NamespaceExactAllowListItem:
+      type: object
+      properties:
+        backend:
+          type: string
+          minLength: 1
+      required:
+      - backend
+    VirtualClusterNamespaceIdSelectorGlob:
+      type: object
+      properties:
+        type:
+          type: string
+          const: glob
+        glob:
+          description: Expose any id that matches this glob pattern (e.g., `my_id_*`).
+          type: string
+          format: glob
+          minLength: 1
+          pattern: ^[A-Za-z0-9._?*-]+$
+      required:
+      - type
+      - glob
+    VirtualClusterAuthenticationSensitiveDataAwareSchemes:
+      description: 'How to handle authentication from clients.
+
+
+        It tries to authenticate with every rule sequentially one by one.
+
+        It succeeds on the first match, and fails if no rule matches.
+
+        '
+      type: array
+      items:
+        $ref: '#/components/schemas/VirtualClusterAuthenticationSensitiveDataAwareScheme'
+      minItems: 1
+    VirtualClusterNamespaceTopicSelector:
+      type: object
+      discriminator:
+        propertyName: type
+        mapping:
+          glob: '#/components/schemas/VirtualClusterNamespaceTopicSelectorGlob'
+          exact_list: '#/components/schemas/VirtualClusterNamespaceTopicSelectorExactList'
+      oneOf:
+      - $ref: '#/components/schemas/VirtualClusterNamespaceTopicSelectorGlob'
+      - $ref: '#/components/schemas/VirtualClusterNamespaceTopicSelectorExactList'
+      required:
+      - type
+    VirtualClusterTopicAliasConflict:
+      description: 'How to handle conflicts where an alias shadows a physical topic.
+
+        * warn - activate the alias but log a warning and set the conflict metric to 1.
+
+        * ignore - activate the alias silently.
+
+        '
+      type: string
+      default: warn
+      enum:
+      - warn
+      - ignore
+      x-enum-varnames:
+      - VirtualClusterTopicAliasConflictWarn
+      - VirtualClusterTopicAliasConflictIgnore
+      x-speakeasy-unknown-values: allow
+    BackendClusterReference:
+      description: The backend cluster associated with the virtual cluster.
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the backend cluster.
+          type: string
+          format: uuid
+        name:
+          $ref: '#/components/schemas/BackendClusterName'
+      additionalProperties: false
+      required:
+      - id
+      - name
+    VirtualClusterDNSLabel:
+      description: 'The DNS label used in the bootstrap server URL to identify the virtual cluster when using SNI routing.
+
+        The format follows the RFC1035: 1-63 chars, lowercase alphanumeric or ''-'', must start and end with an alphanumeric character.'
+      type: string
+      example: vcluster-1
+      maxLength: 63
+      minLength: 1
+      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
     InvalidParameters:
       description: invalid parameters
       type: array
@@ -1099,59 +805,312 @@ components:
       required:
       - type
       - mediation
-    CursorMeta:
-      description: Pagination metadata.
+    VirtualClusterAuthenticationValidate:
+      description: Validation rules.
       type: object
       properties:
-        page:
-          $ref: '#/components/schemas/CursorMetaPage'
-      required:
-      - page
-    CursorMetaPage:
+        audiences:
+          description: List of expected audience values. One of them has to match the audience claim in the token.
+          type: array
+          items:
+            $ref: '#/components/schemas/VirtualClusterAuthenticationAudience'
+          minItems: 1
+        issuer:
+          description: Expected token issuer in the token.
+          type: string
+          minLength: 1
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    VirtualCluster:
+      description: A representation of a Kafka cluster that maps to a backend cluster.
       type: object
       properties:
-        first:
-          description: URI to the first page
+        id:
+          description: The unique identifier of the virtual cluster.
           type: string
-          format: path
-        last:
-          description: URI to the last page
+          format: uuid
+          x-speakeasy-param-suppress-computed-diff: true
+        description:
+          description: A human-readable description of the virtual cluster.
           type: string
-          format: path
-        next:
-          description: URI to the next page
-          type: string
-          format: path
-          nullable: true
-        previous:
-          description: URI to the previous page
-          type: string
-          format: path
-          nullable: true
-        size:
-          description: Requested page size
-          type: number
-          example: 10
+          default: ''
+          maxLength: 512
+        destination:
+          $ref: '#/components/schemas/BackendClusterReference'
+        authentication:
+          $ref: '#/components/schemas/VirtualClusterAuthenticationSensitiveDataAwareSchemes'
+        namespace:
+          $ref: '#/components/schemas/VirtualClusterNamespace'
+        topic_aliases:
+          description: '**Pre-release Feature**
+
+            This feature is currently in beta and is subject to change.
+
+
+            Topic aliases allow exposing backend topics under additional names.
+
+            An alias creates a new entry point to the same physical data.
+
+            The alias `topic` field references namespace-visible names (if namespace is configured).
+
+            Aliases are independent of namespace and can be used without it.
+
+
+            **Requires a minimum runtime version of `1.2`**.'
+          type: array
+          items:
+            $ref: '#/components/schemas/VirtualClusterTopicAlias'
+          x-min-runtime-version: '1.2'
+        name:
+          $ref: '#/components/schemas/VirtualClusterName'
+        dns_label:
+          $ref: '#/components/schemas/VirtualClusterDNSLabel'
+        acl_mode:
+          $ref: '#/components/schemas/VirtualClusterACLMode'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
       required:
-      - size
-      - next
-      - previous
-    VirtualClusterTopicAliasConflict:
-      description: 'How to handle conflicts where an alias shadows a physical topic.
+      - id
+      - name
+      - dns_label
+      - destination
+      - authentication
+      - acl_mode
+      - created_at
+      - updated_at
+    VirtualClusterNamespaceTopicSelectorGlob:
+      type: object
+      properties:
+        type:
+          type: string
+          const: glob
+        glob:
+          description: Expose any backend topic that matches this glob pattern (e.g., `operations_data_*`).
+          type: string
+          format: glob
+          minLength: 1
+          pattern: ^[A-Za-z0-9._?*-]+$
+        conflict:
+          description: 'How to inform the user about conflicts where multiple backend topics would map to the same virtual topic name.
 
-        * warn - activate the alias but log a warning and set the conflict metric to 1.
+            * warn - log in the Event Gateway logs. Additionally, it sets knep_namespace_topic_conflict to 1.
 
-        * ignore - activate the alias silently.
+            * ignore - do not do anything. It does not cause knep_namespace_topic_conflict metric to be set to 1.
 
-        '
+            '
+          type: string
+          default: warn
+          enum:
+          - warn
+          - ignore
+          x-speakeasy-unknown-values: allow
+      required:
+      - type
+      - glob
+    VirtualClusterAuthenticationScheme:
+      discriminator:
+        propertyName: type
+        mapping:
+          anonymous: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
+          sasl_plain: '#/components/schemas/VirtualClusterAuthenticationSaslPlain'
+          sasl_scram: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
+          oauth_bearer: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
+          client_certificate: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
+      oneOf:
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationAnonymous'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslPlain'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationSaslScram'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationOauthBearer'
+      - $ref: '#/components/schemas/VirtualClusterAuthenticationClientCertificate'
+    BackendClusterReferenceById:
+      type: object
+      properties:
+        id:
+          description: The unique identifier of the backend cluster.
+          type: string
+          format: uuid
+          minLength: 1
+      required:
+      - id
+    StringFieldContainsFilter:
+      description: Filters on the given string field value by fuzzy match.
+      type: object
+      properties:
+        contains:
+          type: string
+      additionalProperties: false
+      required:
+      - contains
+      title: StringFieldContainsFilter
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
       type: string
-      default: warn
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
+    VirtualClusterAuthenticationSaslScram:
+      description: SASL/SCRAM authentication scheme for the virtual cluster.
+      type: object
+      properties:
+        type:
+          type: string
+          const: sasl_scram
+        algorithm:
+          description: The algorithm used for SASL/SCRAM authentication.
+          type: string
+          enum:
+          - sha256
+          - sha512
+          x-speakeasy-unknown-values: allow
+      additionalProperties: false
+      required:
+      - type
+      - algorithm
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    VirtualClusterACLMode:
+      description: "Configures whether or not ACL policies are enforced on the gateway.\n- `enforce_on_gateway` means the gateway enforces its own ACL policies for this virtual cluster\n\n\n  and does not forward ACL-related commands to the backend cluster.\n  Note that if there are no ACL policies configured, all access is denied.\n- `passthrough` tells the gateway to forward all ACL-related commands.\n"
+      type: string
       enum:
-      - warn
-      - ignore
-      x-enum-varnames:
-      - VirtualClusterTopicAliasConflictWarn
-      - VirtualClusterTopicAliasConflictIgnore
+      - enforce_on_gateway
+      - passthrough
       x-speakeasy-unknown-values: allow
     VirtualClusterNamespace:
       description: 'Namespace allows to implement multitenancy using a single backend cluster.
@@ -1183,66 +1142,85 @@ components:
       required:
       - mode
       - prefix
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+    InvalidParameterChoiceItem:
       type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-  parameters:
-    PageAfter:
-      name: page[after]
-      description: Request the next page of data, starting with the item after this parameter.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: string
-        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
-    gatewayId:
-      name: gatewayId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your Gateway.
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    VirtualClusterAuthenticationSchemes:
+      description: 'How to handle authentication from clients.
+
+
+        It tries to authenticate with every rule sequentially one by one.
+
+        It succeeds on the first match, and fails if no rule matches.
+
+        '
+      type: array
+      items:
+        $ref: '#/components/schemas/VirtualClusterAuthenticationScheme'
+      minItems: 1
+    VirtualClusterName:
+      description: The name of the virtual cluster.
+      type: string
+      maxLength: 255
+      minLength: 1
+      x-unicode-pattern: ^[\p{L}\p{N}][\p{L}\p{N} _\-\.:/+']*[\p{L}\p{N}]$
   responses:
-    BadRequest:
-      description: Bad Request
+    ListVirtualClustersResponse:
+      description: A paginated list response for a collection of virtual clusters.
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/BadRequestError'
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/CursorMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VirtualCluster'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
+    BadRequest:
+      description: Bad Request
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/ForbiddenError'
+            $ref: '#/components/schemas/BadRequestError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -1269,22 +1247,44 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    ListVirtualClustersResponse:
-      description: A paginated list response for a collection of virtual clusters.
+    Forbidden:
+      description: Forbidden
       content:
-        application/json:
+        application/problem+json:
           schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/CursorMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/VirtualCluster'
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    gatewayId:
+      name: gatewayId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your Gateway.
+    PageAfter:
+      name: page[after]
+      description: Request the next page of data, starting with the item after this parameter.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: string
+        example: ewogICJpZCI6ICJoZWxsbyB3b3JsZCIKfQ
   requestBodies:
-    CreateVirtualClusterRequest:
-      description: The request schema for creating a virtual cluster.
+    UpdateVirtualClusterRequest:
+      description: The request schema for updating a virtual cluster.
       content:
         application/json:
           schema:
@@ -1300,7 +1300,7 @@ components:
               destination:
                 $ref: '#/components/schemas/BackendClusterReferenceModify'
               authentication:
-                $ref: '#/components/schemas/VirtualClusterAuthenticationSchemes'
+                $ref: '#/components/schemas/VirtualClusterAuthenticationSensitiveDataAwareSchemes'
               namespace:
                 $ref: '#/components/schemas/VirtualClusterNamespace'
               topic_aliases:
@@ -1336,8 +1336,8 @@ components:
             - authentication
             - dns_label
             - acl_mode
-    UpdateVirtualClusterRequest:
-      description: The request schema for updating a virtual cluster.
+    CreateVirtualClusterRequest:
+      description: The request schema for creating a virtual cluster.
       content:
         application/json:
           schema:
@@ -1353,7 +1353,7 @@ components:
               destination:
                 $ref: '#/components/schemas/BackendClusterReferenceModify'
               authentication:
-                $ref: '#/components/schemas/VirtualClusterAuthenticationSensitiveDataAwareSchemes'
+                $ref: '#/components/schemas/VirtualClusterAuthenticationSchemes'
               namespace:
                 $ref: '#/components/schemas/VirtualClusterNamespace'
               topic_aliases:

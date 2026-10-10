@@ -332,68 +332,69 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
-  parameters:
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    CertificateId:
-      description: ID of the Certificate to lookup
-      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
-      in: path
-      name: CertificateId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
-    CertificateId_2:
-      description: ID of the Certificate to lookup
-      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
-      in: path
-      name: CertificateId
-      required: true
-      schema:
-        type: string
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
   schemas:
+    Certificate:
+      x-speakeasy-entity: Certificate
+      description: 'A certificate object represents a public certificate, and can be optionally paired with the corresponding private key. These objects are used by Kong to handle SSL/TLS termination for encrypted requests, or for use as a trusted CA store when validating peer certificate of client/service. Certificates are optionally associated with SNI objects to tie a cert/key pair to one or more hostnames. If intermediate certificates are required in addition to the main certificate, they should be concatenated together into one string according to the following order: main certificate on the top, followed by any intermediates.'
+      type: object
+      properties:
+        cert:
+          description: PEM-encoded public certificate chain of the SSL key pair. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
+          type: string
+          x-referenceable: true
+        cert_alt:
+          description: PEM-encoded public certificate chain of the alternate SSL key pair. This should only be set if you have both RSA and ECDSA types of certificate available and would like Kong to prefer serving using ECDSA certs when client advertises support for it. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
+          type: string
+          nullable: true
+          x-referenceable: true
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        key:
+          description: PEM-encoded private key of the SSL key pair. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
+          type: string
+          x-encrypted: true
+          x-referenceable: true
+        key_alt:
+          description: PEM-encoded private key of the alternate SSL key pair. This should only be set if you have both RSA and ECDSA types of certificate available and would like Kong to prefer serving using ECDSA certs when client advertises support for it. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
+          type: string
+          nullable: true
+          x-encrypted: true
+          x-referenceable: true
+        snis:
+          type: array
+          items:
+            description: A string representing a wildcard host name, such as *.example.com.
+            type: string
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Certificate for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      example:
+        cert: '-----BEGIN CERTIFICATE-----
+
+          certificate-content
+
+          -----END CERTIFICATE-----'
+        id: b2f34145-0343-41a4-9602-4c69dec2f269
+        key: REDACTED_PRIVATE_KEY_EXAMPLE
+      additionalProperties: false
+      required:
+      - cert
+      - key
     GatewayUnauthorizedError:
       type: object
       properties:
@@ -404,8 +405,10 @@ components:
       required:
       - message
       - status
-    Certificate:
-      x-speakeasy-entity: Certificate
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    Certificate_2:
       description: 'A certificate object represents a public certificate, and can be optionally paired with the corresponding private key. These objects are used by Kong to handle SSL/TLS termination for encrypted requests, or for use as a trusted CA store when validating peer certificate of client/service. Certificates are optionally associated with SNI objects to tie a cert/key pair to one or more hostnames. If intermediate certificates are required in addition to the main certificate, they should be concatenated together into one string according to the following order: main certificate on the top, followed by any intermediates.'
       type: object
       properties:
@@ -469,70 +472,67 @@ components:
     PaginationNextResponse:
       description: URI to the next page (may be null)
       type: string
-    Certificate_2:
-      description: 'A certificate object represents a public certificate, and can be optionally paired with the corresponding private key. These objects are used by Kong to handle SSL/TLS termination for encrypted requests, or for use as a trusted CA store when validating peer certificate of client/service. Certificates are optionally associated with SNI objects to tie a cert/key pair to one or more hostnames. If intermediate certificates are required in addition to the main certificate, they should be concatenated together into one string according to the following order: main certificate on the top, followed by any intermediates.'
-      type: object
-      properties:
-        cert:
-          description: PEM-encoded public certificate chain of the SSL key pair. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
-          type: string
-          x-referenceable: true
-        cert_alt:
-          description: PEM-encoded public certificate chain of the alternate SSL key pair. This should only be set if you have both RSA and ECDSA types of certificate available and would like Kong to prefer serving using ECDSA certs when client advertises support for it. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
-          type: string
-          nullable: true
-          x-referenceable: true
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        key:
-          description: PEM-encoded private key of the SSL key pair. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
-          type: string
-          x-encrypted: true
-          x-referenceable: true
-        key_alt:
-          description: PEM-encoded private key of the alternate SSL key pair. This should only be set if you have both RSA and ECDSA types of certificate available and would like Kong to prefer serving using ECDSA certs when client advertises support for it. This field is _referenceable_, which means it can be securely stored as a [secret](/gateway/latest/plan-and-deploy/security/secrets-management/getting-started) in a vault. References must follow a [specific format](/gateway/latest/plan-and-deploy/security/secrets-management/reference-format).
-          type: string
-          nullable: true
-          x-encrypted: true
-          x-referenceable: true
-        snis:
-          type: array
-          items:
-            description: A string representing a wildcard host name, such as *.example.com.
-            type: string
-          nullable: true
-        tags:
-          description: An optional set of strings associated with the Certificate for grouping and filtering.
-          type: array
-          items:
-            description: A string representing a tag.
-            type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-      example:
-        cert: '-----BEGIN CERTIFICATE-----
-
-          certificate-content
-
-          -----END CERTIFICATE-----'
-        id: b2f34145-0343-41a4-9602-4c69dec2f269
-        key: REDACTED_PRIVATE_KEY_EXAMPLE
-      additionalProperties: false
-      required:
-      - cert
-      - key
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
-      type: string
+  parameters:
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    CertificateId:
+      description: ID of the Certificate to lookup
+      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
+      in: path
+      name: CertificateId
+      required: true
+      schema:
+        type: string
+      x-speakeasy-match: id
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    CertificateId_2:
+      description: ID of the Certificate to lookup
+      example: ddf3cdaa-3329-4961-822a-ce6dbd38eff7
+      in: path
+      name: CertificateId
+      required: true
+      schema:
+        type: string
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
   responses:
     HTTP401Error:
       description: Unauthorized

@@ -567,6 +567,50 @@ paths:
     - url: https://au.api.konghq.com
 components:
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
+    ConsumerGroup:
+      x-speakeasy-entity: ConsumerGroup
+      type: object
+      properties:
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: integer
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        name:
+          description: The name of the consumer group.
+          type: string
+        tags:
+          description: A set of strings representing tags.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: integer
+          nullable: true
+      additionalProperties: false
+      required:
+      - name
+    ConsumerGroupInsideWrapper:
+      type: object
+      properties:
+        consumer_group:
+          $ref: '#/components/schemas/ConsumerGroup'
     Consumer:
       x-speakeasy-entity: Consumer
       description: The Consumer object represents a consumer - or a user - of a Service. You can either rely on Kong as the primary datastore, or you can map the consumer list with your database to keep consistency between Kong and your existing primary datastore.
@@ -606,23 +650,10 @@ components:
         - silver-tier
         username: bob-the-builder
       additionalProperties: false
-    ConsumerGroupInsideWrapper:
-      type: object
-      properties:
-        consumer_group:
-          $ref: '#/components/schemas/ConsumerGroup'
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
-    ConsumerGroup:
-      x-speakeasy-entity: ConsumerGroup
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
+    ConsumerGroup_2:
       type: object
       properties:
         created_at:
@@ -691,37 +722,6 @@ components:
     PaginationNextResponse:
       description: URI to the next page (may be null)
       type: string
-    ConsumerGroup_2:
-      type: object
-      properties:
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: integer
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        name:
-          description: The name of the consumer group.
-          type: string
-        tags:
-          description: A set of strings representing tags.
-          type: array
-          items:
-            description: A string representing a tag.
-            type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: integer
-          nullable: true
-      additionalProperties: false
-      required:
-      - name
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
-      type: string
   parameters:
     Workspace:
       description: The name of the workspace
@@ -732,15 +732,6 @@ components:
         type: string
         example: team-payments
         default: default
-    ConsumerGroupId:
-      description: ID of the Consumer Group to lookup
-      example: ''
-      in: path
-      name: ConsumerGroupId
-      required: true
-      schema:
-        type: string
-      x-speakeasy-match: id
     ConsumerGroupIdManageConsumers:
       description: The UUID or name of the consumer group
       in: path
@@ -750,7 +741,7 @@ components:
         type: string
         example: cf4c7e60-11db-49dd-b300-7c7e5f0f7e6b
       x-speakeasy-name-override: consumer_group_id
-    ConsumerGroupId_2:
+    ConsumerGroupId:
       description: ID of the Consumer Group to lookup
       example: ''
       in: path
@@ -758,6 +749,7 @@ components:
       required: true
       schema:
         type: string
+      x-speakeasy-match: id
     PaginationTagsFilter:
       allowEmptyValue: true
       description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
@@ -773,16 +765,6 @@ components:
       name: offset
       schema:
         type: string
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
     PaginationSize:
       description: Number of resources to be returned.
       in: query
@@ -799,6 +781,24 @@ components:
       name: list_consumers
       schema:
         type: boolean
+    ConsumerGroupId_2:
+      description: ID of the Consumer Group to lookup
+      example: ''
+      in: path
+      name: ConsumerGroupId
+      required: true
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
   responses:
     HTTP401Error:
       description: Unauthorized

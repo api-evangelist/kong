@@ -173,7 +173,221 @@ paths:
       tags:
       - System Accounts
 components:
+  requestBodies:
+    UpdateSystemAccount:
+      content:
+        application/json:
+          schema:
+            x-speakeasy-entity: SystemAccount
+            type: object
+            properties:
+              name:
+                description: Name of the system account.
+                type: string
+              description:
+                description: Description of the system account.
+                type: string
+      description: The request schema for the update system account request.
+    CreateSystemAccount:
+      content:
+        application/json:
+          schema:
+            x-speakeasy-entity: SystemAccount
+            type: object
+            properties:
+              name:
+                description: Name of the system account.
+                type: string
+              description:
+                description: Description of the system account. Useful when the system account name is not sufficient to differentiate one system account from another.
+                type: string
+              konnect_managed:
+                description: The system account is managed by Konnect (true/false).
+                type: boolean
+            required:
+            - name
+            - description
+      description: The request schema to create a system account.
+  responses:
+    SystemAccountCollection:
+      description: A paginated list response for a collection of system accounts.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SystemAccount'
+            title: System Account Collection Response
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            description: The error response object.
+            type: object
+            properties:
+              status:
+                description: The HTTP status code.
+                type: integer
+                example: 403
+              title:
+                description: The Error Response.
+                type: string
+                example: Unauthorized
+              instance:
+                description: The Konnect traceback code.
+                type: string
+                example: konnect:trace:952172606039454040
+              detail:
+                description: Details about the error response.
+                type: string
+                example: You do not have permission to perform this action
+            $ref: '#/components/schemas/UnauthorizedError'
+            title: Unauthorized Response
+    IdentityConflict:
+      description: Conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    IdentityUnauthenticated:
+      description: Unauthenticated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+    IdentityNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    SystemAccountSingle:
+      description: A response including a single system account.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SystemAccount'
+    IdentityBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
   schemas:
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    LegacyStringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `contains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+      additionalProperties: false
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    BooleanFieldFilter:
+      description: Filter by a boolean value (true/false).
+      type: boolean
+      title: BooleanFieldFilter
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -203,45 +417,6 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    LegacyStringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `contains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-      additionalProperties: false
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    BooleanFieldFilter:
-      description: Filter by a boolean value (true/false).
-      type: boolean
-      title: BooleanFieldFilter
     SystemAccount:
       x-speakeasy-entity: SystemAccount
       description: Schema of the system account.
@@ -279,6 +454,106 @@ components:
         updated_at: '2022-10-05T10:33:49Z'
         konnect_managed: false
       title: System Account
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
     BaseError:
       description: standard error
       type: object
@@ -333,51 +608,6 @@ components:
       - instance
       - detail
       title: Error
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
     InvalidParameterChoiceItem:
       type: object
       properties:
@@ -412,58 +642,21 @@ components:
       - reason
       - rule
       - choices
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    NotFoundError:
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 401
           title:
-            example: Not Found
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
+            example: Invalid credentials
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -497,199 +690,6 @@ components:
       - rule
       - reason
       - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-  responses:
-    IdentityNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-    IdentityBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    SystemAccountCollection:
-      description: A paginated list response for a collection of system accounts.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SystemAccount'
-            title: System Account Collection Response
-    SystemAccountSingle:
-      description: A response including a single system account.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SystemAccount'
-    Unauthorized:
-      description: Unauthorized
-      content:
-        application/problem+json:
-          schema:
-            description: The error response object.
-            type: object
-            properties:
-              status:
-                description: The HTTP status code.
-                type: integer
-                example: 403
-              title:
-                description: The Error Response.
-                type: string
-                example: Unauthorized
-              instance:
-                description: The Konnect traceback code.
-                type: string
-                example: konnect:trace:952172606039454040
-              detail:
-                description: Details about the error response.
-                type: string
-                example: You do not have permission to perform this action
-            $ref: '#/components/schemas/UnauthorizedError'
-            title: Unauthorized Response
-    IdentityUnauthenticated:
-      description: Unauthenticated
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    IdentityConflict:
-      description: Conflict
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-  requestBodies:
-    CreateSystemAccount:
-      content:
-        application/json:
-          schema:
-            x-speakeasy-entity: SystemAccount
-            type: object
-            properties:
-              name:
-                description: Name of the system account.
-                type: string
-              description:
-                description: Description of the system account. Useful when the system account name is not sufficient to differentiate one system account from another.
-                type: string
-              konnect_managed:
-                description: The system account is managed by Konnect (true/false).
-                type: boolean
-            required:
-            - name
-            - description
-      description: The request schema to create a system account.
-    UpdateSystemAccount:
-      content:
-        application/json:
-          schema:
-            x-speakeasy-entity: SystemAccount
-            type: object
-            properties:
-              name:
-                description: Name of the system account.
-                type: string
-              description:
-                description: Description of the system account.
-                type: string
-      description: The request schema for the update system account request.
-  parameters:
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
   securitySchemes:
     personalAccessToken:
       type: http

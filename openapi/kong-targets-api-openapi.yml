@@ -267,7 +267,131 @@ paths:
     - url: https://eu.api.konghq.com
     - url: https://au.api.konghq.com
 components:
+  parameters:
+    UpstreamIdForTarget:
+      description: ID or target of the Target to lookup
+      example: 5a078780-5d4c-4aae-984a-bdc6f52113d8
+      in: path
+      name: UpstreamIdForTarget
+      required: true
+      schema:
+        type: string
+      x-speakeasy-name-override: upstream_id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
+    PaginationTagsFilter:
+      allowEmptyValue: true
+      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
+      example: tag1,tag2
+      in: query
+      name: tags
+      schema:
+        type: string
+    PaginationSize:
+      description: Number of resources to be returned.
+      in: query
+      name: size
+      schema:
+        type: integer
+        default: 100
+        maximum: 1000
+        minimum: 1
+    TargetId:
+      description: ID of the Target to lookup
+      example: 5a078780-5d4c-4aae-984a-bdc6f52113d8
+      in: path
+      name: TargetId
+      required: true
+      schema:
+        type: string
+    PaginationOffset:
+      allowEmptyValue: true
+      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
+      in: query
+      name: offset
+      schema:
+        type: string
+    UpstreamIdForTarget_2:
+      description: ID or target of the Target to lookup
+      example: 5a078780-5d4c-4aae-984a-bdc6f52113d8
+      in: path
+      name: UpstreamIdForTarget
+      required: true
+      schema:
+        type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
   schemas:
+    TargetWithoutParents:
+      x-speakeasy-entity: Target
+      description: A target is an ip address/hostname with a port that identifies an instance of a backend service. Every upstream can have many targets, and the targets can be dynamically added, modified, or deleted. Changes take effect on the fly. To disable a target, post a new one with `weight=0`; alternatively, use the `DELETE` convenience method to accomplish the same. The current target object definition is the one with the latest `created_at`.
+      type: object
+      properties:
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: number
+          nullable: true
+        failover:
+          description: Whether to use this target only as backup or not.
+          type: boolean
+          default: false
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
+          type: string
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Target for grouping and filtering.
+          type: array
+          items:
+            description: A string representing a tag.
+            type: string
+          nullable: true
+        target:
+          description: The target address (ip or hostname) and port. If the hostname resolves to an SRV record, the `port` value will be overridden by the value from the DNS record.
+          type: string
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: number
+          nullable: true
+        upstream:
+          description: The unique identifier or the name of the upstream for which to update the target.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        weight:
+          description: The weight this target gets within the upstream loadbalancer (`0`-`65535`). If the hostname resolves to an SRV record, the `weight` value will be overridden by the value from the DNS record.
+          type: integer
+          default: 100
+          maximum: 65535
+          minimum: 0
+          nullable: true
+      example:
+        id: 089292a7-ba3d-4d88-acf0-97b4b2e2621a
+        target: 203.0.113.42
+        weight: 100
+      additionalProperties: false
+      required:
+      - target
     Target:
       x-speakeasy-entity: Target
       description: A target is an ip address/hostname with a port that identifies an instance of a backend service. Every upstream can have many targets, and the targets can be dynamically added, modified, or deleted. Changes take effect on the fly. To disable a target, post a new one with `weight=0`; alternatively, use the `DELETE` convenience method to accomplish the same. The current target object definition is the one with the latest `created_at`.
@@ -325,61 +449,84 @@ components:
       additionalProperties: false
       required:
       - target
-    TargetWithoutParents:
-      x-speakeasy-entity: Target
-      description: A target is an ip address/hostname with a port that identifies an instance of a backend service. Every upstream can have many targets, and the targets can be dynamically added, modified, or deleted. Changes take effect on the fly. To disable a target, post a new one with `weight=0`; alternatively, use the `DELETE` convenience method to accomplish the same. The current target object definition is the one with the latest `created_at`.
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    InvalidParameterStandard:
       type: object
       properties:
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: number
-          nullable: true
-        failover:
-          description: Whether to use this target only as backup or not.
-          type: boolean
-          default: false
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
+        field:
           type: string
-          nullable: true
-        tags:
-          description: An optional set of strings associated with the Target for grouping and filtering.
-          type: array
-          items:
-            description: A string representing a tag.
-            type: string
-          nullable: true
-        target:
-          description: The target address (ip or hostname) and port. If the hostname resolves to an SRV record, the `port` value will be overridden by the value from the DNS record.
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
           type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: number
-          nullable: true
-        upstream:
-          description: The unique identifier or the name of the upstream for which to update the target.
-          type: object
-          nullable: true
-          properties:
-            id:
-              type: string
-          x-foreign: true
-        weight:
-          description: The weight this target gets within the upstream loadbalancer (`0`-`65535`). If the hostname resolves to an SRV record, the `weight` value will be overridden by the value from the DNS record.
-          type: integer
-          default: 100
-          maximum: 65535
-          minimum: 0
-          nullable: true
-      example:
-        id: 089292a7-ba3d-4d88-acf0-97b4b2e2621a
-        target: 203.0.113.42
-        weight: 100
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
       additionalProperties: false
       required:
-      - target
+      - field
+      - reason
+    PaginationNextResponse:
+      description: URI to the next page (may be null)
+      type: string
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -418,166 +565,6 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
-      type: string
-    TargetWithoutParents_2:
-      description: A target is an ip address/hostname with a port that identifies an instance of a backend service. Every upstream can have many targets, and the targets can be dynamically added, modified, or deleted. Changes take effect on the fly. To disable a target, post a new one with `weight=0`; alternatively, use the `DELETE` convenience method to accomplish the same. The current target object definition is the one with the latest `created_at`.
-      type: object
-      properties:
-        created_at:
-          description: Unix epoch when the resource was created.
-          type: number
-          nullable: true
-        failover:
-          description: Whether to use this target only as backup or not.
-          type: boolean
-          default: false
-          nullable: true
-        id:
-          description: A string representing a UUID (universally unique identifier).
-          type: string
-          nullable: true
-        tags:
-          description: An optional set of strings associated with the Target for grouping and filtering.
-          type: array
-          items:
-            description: A string representing a tag.
-            type: string
-          nullable: true
-        target:
-          description: The target address (ip or hostname) and port. If the hostname resolves to an SRV record, the `port` value will be overridden by the value from the DNS record.
-          type: string
-          nullable: true
-        updated_at:
-          description: Unix epoch when the resource was last updated.
-          type: number
-          nullable: true
-        upstream:
-          description: The unique identifier or the name of the upstream for which to update the target.
-          type: object
-          nullable: true
-          properties:
-            id:
-              type: string
-          x-foreign: true
-        weight:
-          description: The weight this target gets within the upstream loadbalancer (`0`-`65535`). If the hostname resolves to an SRV record, the `weight` value will be overridden by the value from the DNS record.
-          type: integer
-          default: 100
-          maximum: 65535
-          minimum: 0
-          nullable: true
-      example:
-        id: 089292a7-ba3d-4d88-acf0-97b4b2e2621a
-        target: 203.0.113.42
-        weight: 100
-      additionalProperties: false
-      required:
-      - target
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
     Target_2:
       description: A target is an ip address/hostname with a port that identifies an instance of a backend service. Every upstream can have many targets, and the targets can be dynamically added, modified, or deleted. Changes take effect on the fly. To disable a target, post a new one with `weight=0`; alternatively, use the `DELETE` convenience method to accomplish the same. The current target object definition is the one with the latest `created_at`.
       type: object
@@ -634,96 +621,88 @@ components:
       additionalProperties: false
       required:
       - target
-    InvalidParameterMinimumLength:
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    TargetWithoutParents_2:
+      description: A target is an ip address/hostname with a port that identifies an instance of a backend service. Every upstream can have many targets, and the targets can be dynamically added, modified, or deleted. Changes take effect on the fly. To disable a target, post a new one with `weight=0`; alternatively, use the `DELETE` convenience method to accomplish the same. The current target object definition is the one with the latest `created_at`.
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
+        created_at:
+          description: Unix epoch when the resource was created.
+          type: number
           nullable: true
-          readOnly: true
-        reason:
+        failover:
+          description: Whether to use this target only as backup or not.
+          type: boolean
+          default: false
+          nullable: true
+        id:
+          description: A string representing a UUID (universally unique identifier).
           type: string
-          example: is a required field
-          readOnly: true
-        dependents:
+          nullable: true
+        tags:
+          description: An optional set of strings associated with the Target for grouping and filtering.
           type: array
-          items: {}
+          items:
+            description: A string representing a tag.
+            type: string
           nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
+        target:
+          description: The target address (ip or hostname) and port. If the hostname resolves to an SRV record, the `port` value will be overridden by the value from the DNS record.
           type: string
-          example: body
+          nullable: true
+        updated_at:
+          description: Unix epoch when the resource was last updated.
+          type: number
+          nullable: true
+        upstream:
+          description: The unique identifier or the name of the upstream for which to update the target.
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          x-foreign: true
+        weight:
+          description: The weight this target gets within the upstream loadbalancer (`0`-`65535`). If the hostname resolves to an SRV record, the `weight` value will be overridden by the value from the DNS record.
+          type: integer
+          default: 100
+          maximum: 65535
+          minimum: 0
+          nullable: true
+      example:
+        id: 089292a7-ba3d-4d88-acf0-97b4b2e2621a
+        target: 203.0.113.42
+        weight: 100
       additionalProperties: false
       required:
-      - field
-      - rule
-      - reason
-      - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
+      - target
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -757,119 +736,128 @@ components:
       - reason
       - rule
       - maximum
-    PaginationNextResponse:
-      description: URI to the next page (may be null)
-      type: string
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-  parameters:
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
-    UpstreamIdForTarget:
-      description: ID or target of the Target to lookup
-      example: 5a078780-5d4c-4aae-984a-bdc6f52113d8
-      in: path
-      name: UpstreamIdForTarget
-      required: true
-      schema:
-        type: string
-      x-speakeasy-name-override: upstream_id
-    UpstreamIdForTarget_2:
-      description: ID or target of the Target to lookup
-      example: 5a078780-5d4c-4aae-984a-bdc6f52113d8
-      in: path
-      name: UpstreamIdForTarget
-      required: true
-      schema:
-        type: string
-    TargetId:
-      description: ID of the Target to lookup
-      example: 5a078780-5d4c-4aae-984a-bdc6f52113d8
-      in: path
-      name: TargetId
-      required: true
-      schema:
-        type: string
-    PaginationOffset:
-      allowEmptyValue: true
-      description: Offset from which to return the next set of resources. Use the value of the 'offset' field from the response of a list operation as input here to paginate through all the resources
-      in: query
-      name: offset
-      schema:
-        type: string
-    PaginationTagsFilter:
-      allowEmptyValue: true
-      description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
-      example: tag1,tag2
-      in: query
-      name: tags
-      schema:
-        type: string
-    PaginationSize:
-      description: Number of resources to be returned.
-      in: query
-      name: size
-      schema:
-        type: integer
-        default: 100
-        maximum: 1000
-        minimum: 1
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
+    BaseError:
+      description: standard error
+      type: object
+      properties:
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+        type:
+          description: The error type.
+          type: string
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
+          type: string
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
+          type: string
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
   responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -896,6 +884,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     ListTargets:
       description: A paginated list response for a collection of targets.
       content:
@@ -911,6 +905,12 @@ components:
                 $ref: '#/components/schemas/PaginationNextResponse'
               offset:
                 $ref: '#/components/schemas/PaginationOffsetResponse'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   securitySchemes:
     adminToken:
       in: header

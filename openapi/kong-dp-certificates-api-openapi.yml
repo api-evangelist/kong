@@ -137,21 +137,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/KonnectCPLegacyUnauthorizedError'
-    KonnectCPLegacyNotFound:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/KonnectCPLegacyNotFoundError'
-    DataPlaneClientCertificateResponse:
-      description: Response body for retrieving a dp-client-certificate.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              item:
-                $ref: '#/components/schemas/DataPlaneClientCertificate'
     ListDataPlaneCertificatesResponse:
       description: Example response
       content:
@@ -168,30 +153,34 @@ components:
                 properties:
                   total:
                     type: integer
-    KonnectCPLegacyForbidden:
+    KonnectCPLegacyNotFound:
       description: Forbidden
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/KonnectCPLegacyForbiddenError'
+            $ref: '#/components/schemas/KonnectCPLegacyNotFoundError'
     KonnectCPLegacyBadRequest:
       description: Forbidden
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/KonnectCPLegacyBadRequestError'
+    KonnectCPLegacyForbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/KonnectCPLegacyForbiddenError'
+    DataPlaneClientCertificateResponse:
+      description: Response body for retrieving a dp-client-certificate.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              item:
+                $ref: '#/components/schemas/DataPlaneClientCertificate'
   schemas:
-    KonnectCPLegacyBaseError:
-      description: standard error
-      type: object
-      properties:
-        message:
-          description: 'A short summary of the problem.
-
-            '
-          type: string
-          readOnly: true
-      title: Error
     KonnectCPLegacyBadRequestError:
       allOf:
       - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
@@ -199,27 +188,6 @@ components:
         properties:
           message:
             example: Bad Request
-    KonnectCPLegacyForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
-      - type: object
-        properties:
-          message:
-            example: Forbidden
-    KonnectCPLegacyUnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
-      - type: object
-        properties:
-          message:
-            example: Unauthorized
-    KonnectCPLegacyNotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
-      - type: object
-        properties:
-          message:
-            example: Not Found
     DataPlaneClientCertificate:
       x-speakeasy-entity: GatewayDataPlaneClientCertificate
       type: object
@@ -239,24 +207,38 @@ components:
         title:
           description: Title of the certificate.
           type: string
-  parameters:
-    DataPlaneCertificateId:
-      name: certificateId
-      in: path
-      schema:
-        type: string
-      required: true
-      x-speakeasy-match: id
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
+    KonnectCPLegacyUnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
+      - type: object
+        properties:
+          message:
+            example: Unauthorized
+    KonnectCPLegacyForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
+      - type: object
+        properties:
+          message:
+            example: Forbidden
+    KonnectCPLegacyBaseError:
+      description: standard error
+      type: object
+      properties:
+        message:
+          description: 'A short summary of the problem.
+
+            '
+          type: string
+          readOnly: true
+      title: Error
+    KonnectCPLegacyNotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/KonnectCPLegacyBaseError'
+      - type: object
+        properties:
+          message:
+            example: Not Found
   requestBodies:
     DataPlaneClientCertificateRequest:
       content:
@@ -273,6 +255,24 @@ components:
             required:
             - cert
       description: Request body for creating a dp-client-certificate.
+  parameters:
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
+    DataPlaneCertificateId:
+      name: certificateId
+      in: path
+      schema:
+        type: string
+      required: true
+      x-speakeasy-match: id
   securitySchemes:
     personalAccessToken:
       type: http

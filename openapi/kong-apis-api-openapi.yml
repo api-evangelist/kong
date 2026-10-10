@@ -175,141 +175,77 @@ paths:
       tags:
       - APIs
 components:
+  responses:
+    UnsupportedMediaType:
+      description: Unsupported Media Type
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnsupportedMediaTypeError'
+    ApiResponse:
+      description: API
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseSchema'
+    ApiNotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+    ApiVersionPatchConflict:
+      description: Conflict - May occur when constraints are violated
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ConflictError'
+    ListApiResponse:
+      description: List of APIs
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiResponseSchema'
+            additionalProperties: false
+            required:
+            - data
+            - meta
+            title: ListApiResponse
+    ApiForbidden:
+      description: ApiForbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    ApiUnauthorized:
+      description: ApiUnauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
   schemas:
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    UnauthorizedError:
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 401
+            example: 403
           title:
-            example: Unauthorized
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/401
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Invalid credentials
-    ApiSpecType:
-      description: 'The type of specification being stored. This allows us to render the specification correctly.
-
-        '
-      type: string
-      example: oas3
-      enum:
-      - oas2
-      - oas3
-      - asyncapi
-      title: API Spec Type
-      x-speakeasy-unknown-values: allow
-    DateTimeFieldFilter:
-      description: Filters on the given datetime (RFC-3339) field value.
-      oneOf:
-      - type: object
-        title: DateTimeFieldEqualsFilter
-        additionalProperties: false
-        properties:
-          eq:
-            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - eq
-      - type: object
-        title: DateTimeFieldLTFilter
-        additionalProperties: false
-        properties:
-          lt:
-            description: Value is less than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lt
-      - type: object
-        title: DateTimeFieldLTEFilter
-        additionalProperties: false
-        properties:
-          lte:
-            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - lte
-      - type: object
-        title: DateTimeFieldGTFilter
-        additionalProperties: false
-        properties:
-          gt:
-            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gt
-      - type: object
-        title: DateTimeFieldGTEFilter
-        additionalProperties: false
-        properties:
-          gte:
-            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
-            type: string
-            format: date-time
-            example: '2022-03-30T07:20:50Z'
-        required:
-        - gte
-      title: DateTimeFieldFilter
-    LabelsFieldFilter:
-      allOf:
-      - title: LabelsFieldFilter
-        description: "Filters on the resource's `labels` field. Filters must use dot-notation to identify\nthe label key that will be used to filter the results. For example:\n\n\n  - `filter[labels.owner]`\n  - `filter[labels.owner][neq]=kong`\n  - `filter[labels.env]=dev`\n  - `filter[labels.env][ocontains]=dev,test`\n"
-      - $ref: '#/components/schemas/StringFieldFilter'
-    AttributesFieldFilter:
-      allOf:
-      - title: AttributesFieldFilter
-        description: "Filters on the resource's `attributes` field. Filters must use dot-notation to identify\nthe attribute key that will be used to filter the results. For example:\n\n\n  - `filter[attributes.owner]`\n  - `filter[attributes.owner][neq]=kong`\n  - `filter[attributes.env]=dev`\n  - `filter[attributes.env][ocontains]=dev,test`\n"
-      - $ref: '#/components/schemas/StringFieldFilter'
+            example: Forbidden
     SortQuery:
       description: 'The `asc` suffix is optional as the default sort order is ascending.
 
@@ -323,20 +259,78 @@ components:
       type: string
       example: created_at desc
       title: SortQuery
-    UuidFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+    InvalidParameterStandard:
       type: object
       properties:
-        eq:
-          description: The field exactly matches the provided value.
+        field:
           type: string
-        oeq:
-          description: The field matches any of the provided values.
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
           type: string
-        neq:
-          description: The field does not match the provided value.
+          example: body
+        reason:
           type: string
+          example: is a required field
+          readOnly: true
       additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     ApiResponseSchema:
       type: object
       properties:
@@ -442,6 +436,277 @@ components:
       - api_spec_ids
       - current_version_summary
       title: API
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    DateTimeFieldFilter:
+      description: Filters on the given datetime (RFC-3339) field value.
+      oneOf:
+      - type: object
+        title: DateTimeFieldEqualsFilter
+        additionalProperties: false
+        properties:
+          eq:
+            description: Value strictly equals given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - eq
+      - type: object
+        title: DateTimeFieldLTFilter
+        additionalProperties: false
+        properties:
+          lt:
+            description: Value is less than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lt
+      - type: object
+        title: DateTimeFieldLTEFilter
+        additionalProperties: false
+        properties:
+          lte:
+            description: Value is less than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - lte
+      - type: object
+        title: DateTimeFieldGTFilter
+        additionalProperties: false
+        properties:
+          gt:
+            description: Value is greater than the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gt
+      - type: object
+        title: DateTimeFieldGTEFilter
+        additionalProperties: false
+        properties:
+          gte:
+            description: Value is greater than or equal to the given RFC-3339 formatted timestamp in UTC
+            type: string
+            format: date-time
+            example: '2022-03-30T07:20:50Z'
+        required:
+        - gte
+      title: DateTimeFieldFilter
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    ApiSpecType:
+      description: 'The type of specification being stored. This allows us to render the specification correctly.
+
+        '
+      type: string
+      example: oas3
+      enum:
+      - oas2
+      - oas3
+      - asyncapi
+      title: API Spec Type
+      x-speakeasy-unknown-values: allow
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    UnsupportedMediaTypeError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 415
+          title:
+            example: UnsupportedMediaType
+          type:
+            example: https://httpstatuses.com/415
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: UnsupportedMediaType
+    UuidFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    AttributesFieldFilter:
+      allOf:
+      - title: AttributesFieldFilter
+        description: "Filters on the resource's `attributes` field. Filters must use dot-notation to identify\nthe attribute key that will be used to filter the results. For example:\n\n\n  - `filter[attributes.owner]`\n  - `filter[attributes.owner][neq]=kong`\n  - `filter[attributes.env]=dev`\n  - `filter[attributes.env][ocontains]=dev,test`\n"
+      - $ref: '#/components/schemas/StringFieldFilter'
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    ApiAttributes:
+      description: A set of attributes that describe the API
+      type: object
+      example:
+        env:
+        - production
+        domains:
+        - web
+        - mobile
+      default: {}
+      additionalProperties:
+        nullable: true
+        description: Set of attributes with unique keys. Each key can include lowercase letters, numbers, hyphens, and underscores.
+        type: array
+        minItems: 1
+        maxItems: 20
+        items:
+          type: string
+          minLength: 1
+          maxLength: 512
+          pattern: ^[^,<>]*$
+      nullable: false
+      title: API Attributes
+      x-speakeasy-type-override: any
     ApiFilterParameters:
       type: object
       properties:
@@ -462,6 +727,39 @@ components:
         updated_at:
           $ref: '#/components/schemas/DateTimeFieldFilter'
       title: API Filter Parameters
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
     BaseError:
       description: standard error
       type: object
@@ -516,80 +814,6 @@ components:
       - instance
       - detail
       title: Error
-    UnsupportedMediaTypeError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 415
-          title:
-            example: UnsupportedMediaType
-          type:
-            example: https://httpstatuses.com/415
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: UnsupportedMediaType
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    LabelsUpdate:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-        nullable: true
-      maxProperties: 50
-      nullable: true
-      writeOnly: true
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
     InvalidParameterChoiceItem:
       type: object
       properties:
@@ -624,65 +848,67 @@ components:
       - reason
       - rule
       - choices
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterMinimumLength:
+    LabelsFieldFilter:
+      allOf:
+      - title: LabelsFieldFilter
+        description: "Filters on the resource's `labels` field. Filters must use dot-notation to identify\nthe label key that will be used to filter the results. For example:\n\n\n  - `filter[labels.owner]`\n  - `filter[labels.owner][neq]=kong`\n  - `filter[labels.env]=dev`\n  - `filter[labels.env][ocontains]=dev,test`\n"
+      - $ref: '#/components/schemas/StringFieldFilter'
+    ApiVersionSummary:
       type: object
       properties:
-        field:
+        id:
+          description: The API version identifier.
           type: string
-          example: name
+          format: uuid
+          example: 7710d5c4-d902-410b-992f-18b814155b53
           readOnly: true
-        rule:
-          description: invalid parameters rules
+        version:
+          description: The version of this api spec.
           type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
+        spec:
+          type: object
+          additionalProperties: false
+          properties:
+            type:
+              $ref: '#/components/schemas/ApiSpecType'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
       additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    NotFoundError:
+      nullable: true
+      readOnly: true
+      title: API Version Summary
+      x-speakeasy-terraform-ignore: true
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 404
+            example: 401
           title:
-            example: Not Found
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/404
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Not found
+            example: Invalid credentials
+    LabelsUpdate:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nLabels are intended to store **INTERNAL** metadata.\n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+        nullable: true
+      maxProperties: 50
+      nullable: true
+      writeOnly: true
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -716,233 +942,141 @@ components:
       - rule
       - reason
       - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    ApiAttributes:
-      description: A set of attributes that describe the API
-      type: object
-      example:
-        env:
-        - production
-        domains:
-        - web
-        - mobile
-      default: {}
-      additionalProperties:
-        nullable: true
-        description: Set of attributes with unique keys. Each key can include lowercase letters, numbers, hyphens, and underscores.
-        type: array
-        minItems: 1
-        maxItems: 20
-        items:
-          type: string
-          minLength: 1
-          maxLength: 512
-          pattern: ^[^,<>]*$
-      nullable: false
-      title: API Attributes
-      x-speakeasy-type-override: any
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    ApiVersionSummary:
-      type: object
-      properties:
-        id:
-          description: The API version identifier.
-          type: string
-          format: uuid
-          example: 7710d5c4-d902-410b-992f-18b814155b53
-          readOnly: true
-        version:
-          description: The version of this api spec.
-          type: string
-        spec:
-          type: object
-          additionalProperties: false
-          properties:
-            type:
-              $ref: '#/components/schemas/ApiSpecType'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      additionalProperties: false
-      nullable: true
-      readOnly: true
-      title: API Version Summary
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
       x-speakeasy-terraform-ignore: true
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
-  responses:
-    ApiResponse:
-      description: API
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiResponseSchema'
-    ApiVersionPatchConflict:
-      description: Conflict - May occur when constraints are violated
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ConflictError'
-    UnsupportedMediaType:
-      description: Unsupported Media Type
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnsupportedMediaTypeError'
-    ApiForbidden:
-      description: ApiForbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
-    ApiUnauthorized:
-      description: ApiUnauthorized
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/UnauthorizedError'
-    ListApiResponse:
-      description: List of APIs
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    ApiSort:
+      name: sort
+      description: "Sorts a collection of APIs. Supported sort attributes are:\n  - name\n  - version\n  - created_at\n  - updated_at\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
+    ApiFilters:
+      name: filter
+      description: Filters APIs in the response.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/ApiFilterParameters'
+      style: deepObject
+  requestBodies:
+    UpdateApiRequest:
+      required: true
       content:
         application/json:
           schema:
             type: object
             properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
+              id:
+                description: The API identifier.
+                type: string
+                format: uuid
+                example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
+                readOnly: true
+              name:
+                description: 'The name of your API. The `name + version` combination must be unique for each API you publish.
+
+                  '
+                type: string
+                example: MyAPI
+                maxLength: 255
+                minLength: 1
+              description:
+                description: A description of your API. Will be visible on your live Portal.
+                type: string
+                nullable: true
+              version:
+                description: An optional version for your API. Leave this empty if your API is unversioned.
+                type: string
+                maxLength: 255
+                minLength: 1
+                nullable: true
+                x-speakeasy-param-computed: true
+              current_version_summary:
+                $ref: '#/components/schemas/ApiVersionSummary'
+              slug:
+                description: 'The `slug` is used in generated URLs to provide human readable paths.
+
+
+                  Defaults to `slugify(name + version)`
+
+                  '
+                type: string
+                example: my-api-v1
+                nullable: true
+                pattern: ^[\w-]+$
+                x-speakeasy-param-computed: true
+              api_spec_ids:
+                description: The list of API specification ids for the API.
                 type: array
                 items:
-                  $ref: '#/components/schemas/ApiResponseSchema'
+                  type: string
+                  format: uuid
+                  description: The id of the API specification.
+                  example: 123e4567-e89b-12d3-a456-426614174000
+                deprecated: true
+                readOnly: true
+              portals:
+                description: The list of portals which this API is published to.
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required:
+                  - id
+                  - name
+                  - display_name
+                  properties:
+                    id:
+                      description: The portal identifier.
+                      type: string
+                      format: uuid
+                      example: 25a2624c-49fc-4764-99e1-224ed819f200
+                    name:
+                      description: The name of the portal, used to distinguish it from other portals.
+                      type: string
+                      example: My Portal
+                    display_name:
+                      description: The display name of the portal. This value will be the portal's `name` in Portal API.
+                      type: string
+                      example: My Portal
+                nullable: false
+                readOnly: true
+                uniqueItems: true
+              labels:
+                $ref: '#/components/schemas/LabelsUpdate'
+              implementation_mode:
+                description: the implementations that are associated with this api either gateway_entity_binding or access_control_enforcement
+                type: string
+                nullable: true
+                readOnly: true
+              attributes:
+                $ref: '#/components/schemas/ApiAttributes'
+              created_at:
+                $ref: '#/components/schemas/CreatedAt'
+              updated_at:
+                $ref: '#/components/schemas/UpdatedAt'
             additionalProperties: false
-            required:
-            - data
-            - meta
-            title: ListApiResponse
-    ApiNotFound:
-      description: Not Found
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/NotFoundError'
-  requestBodies:
+            title: API
     CreateApiRequest:
       required: true
       content:
@@ -1048,140 +1182,6 @@ components:
             required:
             - name
             title: API
-    UpdateApiRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              id:
-                description: The API identifier.
-                type: string
-                format: uuid
-                example: 9f5061ce-78f6-4452-9108-ad7c02821fd5
-                readOnly: true
-              name:
-                description: 'The name of your API. The `name + version` combination must be unique for each API you publish.
-
-                  '
-                type: string
-                example: MyAPI
-                maxLength: 255
-                minLength: 1
-              description:
-                description: A description of your API. Will be visible on your live Portal.
-                type: string
-                nullable: true
-              version:
-                description: An optional version for your API. Leave this empty if your API is unversioned.
-                type: string
-                maxLength: 255
-                minLength: 1
-                nullable: true
-                x-speakeasy-param-computed: true
-              current_version_summary:
-                $ref: '#/components/schemas/ApiVersionSummary'
-              slug:
-                description: 'The `slug` is used in generated URLs to provide human readable paths.
-
-
-                  Defaults to `slugify(name + version)`
-
-                  '
-                type: string
-                example: my-api-v1
-                nullable: true
-                pattern: ^[\w-]+$
-                x-speakeasy-param-computed: true
-              api_spec_ids:
-                description: The list of API specification ids for the API.
-                type: array
-                items:
-                  type: string
-                  format: uuid
-                  description: The id of the API specification.
-                  example: 123e4567-e89b-12d3-a456-426614174000
-                deprecated: true
-                readOnly: true
-              portals:
-                description: The list of portals which this API is published to.
-                type: array
-                items:
-                  type: object
-                  additionalProperties: false
-                  required:
-                  - id
-                  - name
-                  - display_name
-                  properties:
-                    id:
-                      description: The portal identifier.
-                      type: string
-                      format: uuid
-                      example: 25a2624c-49fc-4764-99e1-224ed819f200
-                    name:
-                      description: The name of the portal, used to distinguish it from other portals.
-                      type: string
-                      example: My Portal
-                    display_name:
-                      description: The display name of the portal. This value will be the portal's `name` in Portal API.
-                      type: string
-                      example: My Portal
-                nullable: false
-                readOnly: true
-                uniqueItems: true
-              labels:
-                $ref: '#/components/schemas/LabelsUpdate'
-              implementation_mode:
-                description: the implementations that are associated with this api either gateway_entity_binding or access_control_enforcement
-                type: string
-                nullable: true
-                readOnly: true
-              attributes:
-                $ref: '#/components/schemas/ApiAttributes'
-              created_at:
-                $ref: '#/components/schemas/CreatedAt'
-              updated_at:
-                $ref: '#/components/schemas/UpdatedAt'
-            additionalProperties: false
-            title: API
-  parameters:
-    ApiSort:
-      name: sort
-      description: "Sorts a collection of APIs. Supported sort attributes are:\n  - name\n  - version\n  - created_at\n  - updated_at\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
-    ApiFilters:
-      name: filter
-      description: Filters APIs in the response.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/ApiFilterParameters'
-      style: deepObject
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
   securitySchemes:
     personalAccessToken:
       type: http

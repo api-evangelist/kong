@@ -60,6 +60,183 @@ paths:
       - Catalog Resource Services
 components:
   schemas:
+    CustomFields:
+      description: 'Map of customizable, catalog-defined fields providing information about a service.
+
+        '
+      type: object
+      example:
+        owner: John Appleseed
+        dashboard:
+          name: On-Call Dashboard
+          link: https://my-dashboard-svc.io/dashboards/1
+      additionalProperties:
+        oneOf:
+        - $ref: '#/components/schemas/TextCustomField'
+        - $ref: '#/components/schemas/NumericCustomField'
+        - $ref: '#/components/schemas/BooleanCustomField'
+        - $ref: '#/components/schemas/UrlCustomField'
+      x-speakeasy-type-override: any
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    NumericFieldFilter:
+      description: Filter by a numeric value.
+      oneOf:
+      - type: number
+        description: Value strictly equals the given numeric value.
+        example: 21
+      - type: object
+        title: NumericFieldEqualsFilter
+        additionalProperties: false
+        properties:
+          eq:
+            description: Value strictly equals the given numeric value.
+            type: number
+            example: 3.14
+        required:
+        - eq
+      - type: object
+        title: NumericFieldLTFilter
+        additionalProperties: false
+        properties:
+          lt:
+            description: Value is less than the given numeric value.
+            type: number
+            example: 10
+        required:
+        - lt
+      - type: object
+        title: NumericFieldLTEFilter
+        additionalProperties: false
+        properties:
+          lte:
+            description: Value is less than or equal to the given numeric value.
+            type: number
+            example: 10
+        required:
+        - lte
+      - type: object
+        title: NumericFieldGTFilter
+        additionalProperties: false
+        properties:
+          gt:
+            description: Value is greater than the given numeric value.
+            type: number
+            example: 1.85
+        required:
+        - gt
+      - type: object
+        title: NumericFieldGTEFilter
+        additionalProperties: false
+        properties:
+          gte:
+            description: Value is greater than or equal to the given numeric value.
+            type: number
+            example: 1.85
+        required:
+        - gte
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    BooleanFieldFilter:
+      description: Filter by a boolean value (true/false).
+      type: boolean
+      title: BooleanFieldFilter
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -89,123 +266,6 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    CatalogService:
-      description: The service object contains information about a Service Catalog service.
-      type: object
-      properties:
-        id:
-          description: The service ID.
-          type: string
-          format: uuid
-          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
-          readOnly: true
-        name:
-          description: 'The machine name of the Service that uniquely identifies it within the catalog.
-
-            '
-          type: string
-          example: user-svc
-          maxLength: 120
-          minLength: 1
-          pattern: ^[0-9a-z.-]+$
-        display_name:
-          description: The display name of the Service.
-          type: string
-          example: User Service
-          maxLength: 120
-          minLength: 1
-        description:
-          description: Optionally provide a description of the Service.
-          type: string
-          maxLength: 2048
-          nullable: true
-        custom_fields:
-          $ref: '#/components/schemas/CustomFields'
-        labels:
-          $ref: '#/components/schemas/Labels'
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      required:
-      - id
-      - name
-      - display_name
-      - description
-      - custom_fields
-      - labels
-      - created_at
-      - updated_at
-      title: CatalogService
-    CatalogServiceFilterParameters:
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/UuidFieldFilter'
-        name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        display_name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        custom_fields:
-          description: "Filter by custom fields using dot-notation to specify the custom field.\nFilter operators are dictated by the custom field type. For example:\n\n\n  - `filter[custom_fields.owner]`\n  - `filter[custom_fields.owner][neq]=kong`\n  - `filter[custom_fields.dashboard.link][contains]=https`\n"
-          oneOf:
-          - $ref: '#/components/schemas/StringFieldFilter'
-          - $ref: '#/components/schemas/BooleanFieldFilter'
-          - $ref: '#/components/schemas/NumericFieldFilter'
-        labels:
-          $ref: '#/components/schemas/LabelsFieldFilter'
-        created_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-        updated_at:
-          $ref: '#/components/schemas/DateTimeFieldFilter'
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        required:
-        - invalid_parameters
-        properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    TextCustomField:
-      type: string
-      nullable: true
-    CustomFields:
-      description: 'Map of customizable, catalog-defined fields providing information about a service.
-
-        '
-      type: object
-      example:
-        owner: John Appleseed
-        dashboard:
-          name: On-Call Dashboard
-          link: https://my-dashboard-svc.io/dashboards/1
-      additionalProperties:
-        oneOf:
-        - $ref: '#/components/schemas/TextCustomField'
-        - $ref: '#/components/schemas/NumericCustomField'
-        - $ref: '#/components/schemas/BooleanCustomField'
-        - $ref: '#/components/schemas/UrlCustomField'
-      x-speakeasy-type-override: any
-    BooleanFieldFilter:
-      description: Filter by a boolean value (true/false).
-      type: boolean
-      title: BooleanFieldFilter
     DateTimeFieldFilter:
       description: Filters on the given datetime (RFC-3339) field value.
       oneOf:
@@ -265,24 +325,60 @@ components:
         required:
         - gte
       title: DateTimeFieldFilter
-    LabelsFieldFilter:
-      allOf:
-      - title: LabelsFieldFilter
-        description: "Filters on the resource's `labels` field. Filters must use dot-notation to identify\nthe label key that will be used to filter the results. For example:\n\n\n  - `filter[labels.owner]`\n  - `filter[labels.owner][neq]=kong`\n  - `filter[labels.env]=dev`\n  - `filter[labels.env][ocontains]=dev,test`\n"
-      - $ref: '#/components/schemas/StringFieldFilter'
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
       type: string
-      example: created_at desc
-      title: SortQuery
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    Labels:
+      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
+      type: object
+      example:
+        env: test
+      additionalProperties:
+        type: string
+        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
+        minLength: 1
+        maxLength: 63
+      maxProperties: 50
+      title: Labels
+    BooleanCustomField:
+      type: boolean
+      nullable: true
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
     UuidFieldFilter:
       description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`'
       type: object
@@ -297,6 +393,113 @@ components:
           description: The field does not match the provided value.
           type: string
       additionalProperties: false
+    TextCustomField:
+      type: string
+      nullable: true
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    NumericCustomField:
+      type: number
+      nullable: true
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    CatalogServiceFilterParameters:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/UuidFieldFilter'
+        name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        display_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        custom_fields:
+          description: "Filter by custom fields using dot-notation to specify the custom field.\nFilter operators are dictated by the custom field type. For example:\n\n\n  - `filter[custom_fields.owner]`\n  - `filter[custom_fields.owner][neq]=kong`\n  - `filter[custom_fields.dashboard.link][contains]=https`\n"
+          oneOf:
+          - $ref: '#/components/schemas/StringFieldFilter'
+          - $ref: '#/components/schemas/BooleanFieldFilter'
+          - $ref: '#/components/schemas/NumericFieldFilter'
+        labels:
+          $ref: '#/components/schemas/LabelsFieldFilter'
+        created_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+        updated_at:
+          $ref: '#/components/schemas/DateTimeFieldFilter'
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
     BaseError:
       description: standard error
       type: object
@@ -351,39 +554,6 @@ components:
       - instance
       - detail
       title: Error
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    NumericCustomField:
-      type: number
-      nullable: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
     InvalidParameterChoiceItem:
       type: object
       properties:
@@ -418,50 +588,26 @@ components:
       - reason
       - rule
       - choices
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
+    LabelsFieldFilter:
+      allOf:
+      - title: LabelsFieldFilter
+        description: "Filters on the resource's `labels` field. Filters must use dot-notation to identify\nthe label key that will be used to filter the results. For example:\n\n\n  - `filter[labels.owner]`\n  - `filter[labels.owner][neq]=kong`\n  - `filter[labels.env]=dev`\n  - `filter[labels.env][ocontains]=dev,test`\n"
+      - $ref: '#/components/schemas/StringFieldFilter'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     UrlCustomField:
       type: object
       properties:
@@ -478,21 +624,54 @@ components:
       required:
       - name
       - link
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
+    CatalogService:
+      description: The service object contains information about a Service Catalog service.
+      type: object
+      properties:
+        id:
+          description: The service ID.
+          type: string
+          format: uuid
+          example: 7f9fd312-a987-4628-b4c5-bb4f4fddd5f7
+          readOnly: true
+        name:
+          description: 'The machine name of the Service that uniquely identifies it within the catalog.
+
+            '
+          type: string
+          example: user-svc
+          maxLength: 120
+          minLength: 1
+          pattern: ^[0-9a-z.-]+$
+        display_name:
+          description: The display name of the Service.
+          type: string
+          example: User Service
+          maxLength: 120
+          minLength: 1
+        description:
+          description: Optionally provide a description of the Service.
+          type: string
+          maxLength: 2048
+          nullable: true
+        custom_fields:
+          $ref: '#/components/schemas/CustomFields'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      required:
+      - id
+      - name
+      - display_name
+      - description
+      - custom_fields
+      - labels
+      - created_at
+      - updated_at
+      title: CatalogService
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -526,192 +705,7 @@ components:
       - rule
       - reason
       - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    NumericFieldFilter:
-      description: Filter by a numeric value.
-      oneOf:
-      - type: number
-        description: Value strictly equals the given numeric value.
-        example: 21
-      - type: object
-        title: NumericFieldEqualsFilter
-        additionalProperties: false
-        properties:
-          eq:
-            description: Value strictly equals the given numeric value.
-            type: number
-            example: 3.14
-        required:
-        - eq
-      - type: object
-        title: NumericFieldLTFilter
-        additionalProperties: false
-        properties:
-          lt:
-            description: Value is less than the given numeric value.
-            type: number
-            example: 10
-        required:
-        - lt
-      - type: object
-        title: NumericFieldLTEFilter
-        additionalProperties: false
-        properties:
-          lte:
-            description: Value is less than or equal to the given numeric value.
-            type: number
-            example: 10
-        required:
-        - lte
-      - type: object
-        title: NumericFieldGTFilter
-        additionalProperties: false
-        properties:
-          gt:
-            description: Value is greater than the given numeric value.
-            type: number
-            example: 1.85
-        required:
-        - gt
-      - type: object
-        title: NumericFieldGTEFilter
-        additionalProperties: false
-        properties:
-          gte:
-            description: Value is greater than or equal to the given numeric value.
-            type: number
-            example: 1.85
-        required:
-        - gte
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    BooleanCustomField:
-      type: boolean
-      nullable: true
-    Labels:
-      description: "Labels store metadata of an entity that can be used for filtering an entity list or for searching across entity types. \n\nKeys must be of length 1-63 characters, and cannot start with \"kong\", \"konnect\", \"mesh\", \"kic\", or \"_\".\n"
-      type: object
-      example:
-        env: test
-      additionalProperties:
-        type: string
-        pattern: ^[a-z0-9A-Z]{1}([a-z0-9A-Z-._]*[a-z0-9A-Z]+)?$
-        minLength: 1
-        maxLength: 63
-      maxProperties: 50
-      title: Labels
   responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
     ListCatalogServicesResponse:
       description: A paginated list response for a collection of services.
       content:
@@ -735,12 +729,6 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -767,15 +755,19 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
   parameters:
-    CatalogServiceFilter:
-      name: filter
-      description: Filters a collection of services.
-      required: false
-      in: query
-      style: deepObject
-      schema:
-        $ref: '#/components/schemas/CatalogServiceFilterParameters'
     PageNumber:
       name: page[number]
       description: Determines which page of the entities to retrieve.
@@ -786,13 +778,6 @@ components:
         type: integer
         example: 1
       x-speakeasy-terraform-ignore: true
-    CatalogServiceSort:
-      name: sort
-      description: "Sorts a collection of services. Supported sort attributes are:\n  - `display_name`\n  - `name`\n  - `created_at`\n  - `updated_at`\n\nDefault sort is `display_name` in ascending order.\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
     PageSize:
       name: page[size]
       description: The maximum number of items to include per page. The last page of a collection may include fewer items.
@@ -803,6 +788,21 @@ components:
         type: integer
         example: 10
       x-speakeasy-terraform-ignore: true
+    CatalogServiceFilter:
+      name: filter
+      description: Filters a collection of services.
+      required: false
+      in: query
+      style: deepObject
+      schema:
+        $ref: '#/components/schemas/CatalogServiceFilterParameters'
+    CatalogServiceSort:
+      name: sort
+      description: "Sorts a collection of services. Supported sort attributes are:\n  - `display_name`\n  - `name`\n  - `created_at`\n  - `updated_at`\n\nDefault sort is `display_name` in ascending order.\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
   securitySchemes:
     personalAccessToken:
       type: http

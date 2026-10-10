@@ -343,15 +343,6 @@ paths:
     - url: https://au.api.konghq.com
 components:
   parameters:
-    Workspace:
-      description: The name of the workspace
-      in: path
-      name: workspace
-      required: true
-      schema:
-        type: string
-        example: team-payments
-        default: default
     VaultIdOrPrefix:
       description: ID or prefix of the Vault to lookup
       example: 9d4d6d19-77c6-428e-a965-9bc9647633e9
@@ -361,6 +352,15 @@ components:
       schema:
         type: string
       x-speakeasy-match: id
+    Workspace:
+      description: The name of the workspace
+      in: path
+      name: workspace
+      required: true
+      schema:
+        type: string
+        example: team-payments
+        default: default
     PaginationTagsFilter:
       allowEmptyValue: true
       description: A list of tags to filter the list of resources on. Multiple tags can be concatenated using ',' to mean AND or using '/' to mean OR.
@@ -376,16 +376,6 @@ components:
       name: offset
       schema:
         type: string
-    controlPlaneId:
-      name: controlPlaneId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
-      description: The UUID of your control plane. This variable is available in the Konnect manager.
-      x-speakeasy-param-force-new: true
     PaginationSize:
       description: Number of resources to be returned.
       in: query
@@ -403,7 +393,27 @@ components:
       required: true
       schema:
         type: string
+    controlPlaneId:
+      name: controlPlaneId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9524ec7d-36d9-465d-a8c5-83a3c9390458
+      description: The UUID of your control plane. This variable is available in the Konnect manager.
+      x-speakeasy-param-force-new: true
   schemas:
+    GatewayUnauthorizedError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+      required:
+      - message
+      - status
     Vault:
       x-speakeasy-entity: Vault
       description: Vault entities are used to configure different Vault connectors. Examples of Vaults are Environment Variables, Hashicorp Vault and AWS Secrets Manager. Configuring a Vault allows referencing the secrets with other entities. For example a certificate entity can store a reference to a certificate and key, stored in a vault, instead of storing the certificate and key within the entity. This allows a proper separation of secrets and configuration and prevents secret sprawl.
@@ -457,16 +467,9 @@ components:
       required:
       - name
       - prefix
-    GatewayUnauthorizedError:
-      type: object
-      properties:
-        message:
-          type: string
-        status:
-          type: integer
-      required:
-      - message
-      - status
+    PaginationOffsetResponse:
+      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
+      type: string
     Vault_2:
       description: Vault entities are used to configure different Vault connectors. Examples of Vaults are Environment Variables, Hashicorp Vault and AWS Secrets Manager. Configuring a Vault allows referencing the secrets with other entities. For example a certificate entity can store a reference to a certificate and key, stored in a vault, instead of storing the certificate and key within the entity. This allows a proper separation of secrets and configuration and prevents secret sprawl.
       type: object
@@ -521,9 +524,6 @@ components:
       - prefix
     PaginationNextResponse:
       description: URI to the next page (may be null)
-      type: string
-    PaginationOffsetResponse:
-      description: Offset is used to paginate through the API. Provide this value to the next list operation to fetch the next page
       type: string
   responses:
     HTTP401Error:

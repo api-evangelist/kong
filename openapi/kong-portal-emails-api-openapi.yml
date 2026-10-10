@@ -424,6 +424,247 @@ paths:
       - Portal Emails
 components:
   schemas:
+    PatchPortalEmailConfig:
+      type: object
+      properties:
+        domain_name:
+          description: The domain name to use for sending emails. Null means default.
+          type: string
+          nullable: true
+        from_name:
+          description: The name to display in the 'From' field of emails.
+          type: string
+          nullable: true
+        from_email:
+          description: The email address to use in the 'From' field.
+          type: string
+          format: email
+          nullable: true
+        reply_to_email:
+          description: The email address to use in the 'Reply-To' field. If set to null, 'Reply-To' header is omitted.
+          type: string
+          format: email
+          nullable: true
+      additionalProperties: false
+    ForbiddenError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    PostPortalEmailConfig:
+      type: object
+      properties:
+        domain_name:
+          description: The domain name to use for sending emails. Null means default.
+          type: string
+          nullable: true
+        from_name:
+          description: The name to display in the 'From' field of emails.
+          type: string
+          nullable: true
+        from_email:
+          description: The email address to use in the 'From' field.
+          type: string
+          format: email
+          nullable: true
+        reply_to_email:
+          description: The email address to use in the 'Reply-To' field. 'Reply-To' header is omitted if omitted or null.
+          type: string
+          format: email
+          nullable: true
+      additionalProperties: false
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    EmailTemplateName:
+      description: 'Short name email template name.
+
+        '
+      type: string
+      enum:
+      - confirm-email-address
+      - app-registration-approved
+      - app-registration-rejected
+      - app-registration-revoked
+      - reset-password
+      - account-access-approved
+      - account-access-rejected
+      - account-access-revoked
+      - api-key-expiring-soon
+      - api-key-expired
+      - developer-invitation
+      x-speakeasy-unknown-values: allow
+    EmailTemplateContent:
+      type: object
+      properties:
+        subject:
+          type: string
+          maxLength: 1024
+          nullable: true
+        title:
+          type: string
+          maxLength: 1024
+          nullable: true
+        body:
+          type: string
+          maxLength: 4096
+          nullable: true
+        button_label:
+          type: string
+          maxLength: 128
+          nullable: true
+      nullable: true
+    DefaultEmailTemplate:
+      type: object
+      properties:
+        default_content:
+          $ref: '#/components/schemas/DefaultEmailTemplateContent'
+        variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailTemplateVariableName'
+        name:
+          $ref: '#/components/schemas/EmailTemplateName'
+        label:
+          description: The label of the email template
+          type: string
+          example: Confirm email Address
+      additionalProperties: false
+      required:
+      - default_content
+      - variables
+      - name
+      - label
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 404
+          title:
+            example: Not Found
+          type:
+            example: https://httpstatuses.com/404
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Not found
+    ListDomains:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailDomain'
+        meta:
+          $ref: '#/components/schemas/PaginatedMeta'
+      required:
+      - data
+      - meta
+    DNSRecord:
+      type: object
+      properties:
+        type:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        value:
+          type: string
+          readOnly: true
+      additionalProperties: false
+      required:
+      - type
+      - name
+      - value
+    EmailDomainPayload:
+      type: object
+      properties:
+        domain:
+          type: string
+      additionalProperties: false
+      required:
+      - domain
+    EmailDeliveryUpdatePayload:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        from_email:
+          type: string
+          format: email
+          nullable: true
+        reply_to_email:
+          type: string
+          format: email
+          nullable: true
+      additionalProperties: false
     InvalidRules:
       description: invalid parameters rules
       type: string
@@ -453,48 +694,28 @@ components:
       nullable: true
       readOnly: true
       x-speakeasy-unknown-values: allow
-    EmailTemplateContent:
-      type: object
-      properties:
-        subject:
-          type: string
-          maxLength: 1024
-          nullable: true
-        title:
-          type: string
-          maxLength: 1024
-          nullable: true
-        body:
-          type: string
-          maxLength: 4096
-          nullable: true
-        button_label:
-          type: string
-          maxLength: 128
-          nullable: true
-      nullable: true
-    PostPortalEmailConfig:
-      type: object
-      properties:
-        domain_name:
-          description: The domain name to use for sending emails. Null means default.
-          type: string
-          nullable: true
-        from_name:
-          description: The name to display in the 'From' field of emails.
-          type: string
-          nullable: true
-        from_email:
-          description: The email address to use in the 'From' field.
-          type: string
-          format: email
-          nullable: true
-        reply_to_email:
-          description: The email address to use in the 'Reply-To' field. 'Reply-To' header is omitted if omitted or null.
-          type: string
-          format: email
-          nullable: true
-      additionalProperties: false
+    CreatedAt:
+      description: An ISO-8601 timestamp representation of entity creation date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
     BadRequestError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
@@ -504,178 +725,16 @@ components:
         properties:
           invalid_parameters:
             $ref: '#/components/schemas/InvalidParameters'
-    EmailTemplateName:
-      description: 'Short name email template name.
-
-        '
-      type: string
-      enum:
-      - confirm-email-address
-      - app-registration-approved
-      - app-registration-rejected
-      - app-registration-revoked
-      - reset-password
-      - account-access-approved
-      - account-access-rejected
-      - account-access-revoked
-      - api-key-expiring-soon
-      - api-key-expired
-      - developer-invitation
-      x-speakeasy-unknown-values: allow
-    EmailTemplateVariableName:
-      description: 'Enum for available portal email template variables.
-
-        '
-      type: string
-      enum:
-      - portal_display_name
-      - portal_domain
-      - developer_email
-      - developer_fullname
-      - dev_portal_reply_to
-      - developer_status
-      - api_documentation_url
-      - api_name
-      - api_version
-      - application_name
-      - credential_name
-      - credential_expires_at
-      x-speakeasy-unknown-values: allow
-    EmailTemplateVariablesList:
+    PaginatedMeta:
+      description: returns the pagination information
       type: object
       properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/EmailTemplateVariable'
-      additionalProperties: false
-    UnauthorizedError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 401
-          title:
-            example: Unauthorized
-          type:
-            example: https://httpstatuses.com/401
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Invalid credentials
-    EmailDomainVerification:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/EmailVerificationStatus'
-        last_time_checked:
-          description: An ISO-8601 timestamp representation of the last time the verification got checked.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-        last_time_success:
-          description: An ISO-8601 timestamp representation of the last time the verification succeeded.
-          type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-      additionalProperties: false
-      readOnly: true
+        page:
+          $ref: '#/components/schemas/PageMeta'
       required:
-      - status
-      - last_time_checked
-      - last_time_success
-    DefaultEmailTemplate:
-      type: object
-      properties:
-        default_content:
-          $ref: '#/components/schemas/DefaultEmailTemplateContent'
-        variables:
-          type: array
-          items:
-            $ref: '#/components/schemas/EmailTemplateVariableName'
-        name:
-          $ref: '#/components/schemas/EmailTemplateName'
-        label:
-          description: The label of the email template
-          type: string
-          example: Confirm email Address
-      additionalProperties: false
-      required:
-      - default_content
-      - variables
-      - name
-      - label
-    SendTestEmailTemplateContent:
-      type: object
-      properties:
-        subject:
-          type: string
-          maxLength: 1024
-          nullable: false
-        title:
-          type: string
-          maxLength: 1024
-          nullable: false
-        body:
-          type: string
-          maxLength: 4096
-          nullable: false
-        button_label:
-          type: string
-          maxLength: 128
-          nullable: false
-      required:
-      - subject
-      - title
-      - body
-    DefaultEmailTemplateContent:
-      type: object
-      properties:
-        subject:
-          type: string
-          nullable: false
-        title:
-          type: string
-          nullable: false
-        body:
-          type: string
-          nullable: false
-        button_label:
-          type: string
-          nullable: false
-      required:
-      - subject
-      - title
-      - body
-    EmailDeliveryUpdatePayload:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-        from_email:
-          type: string
-          format: email
-          nullable: true
-        reply_to_email:
-          type: string
-          format: email
-          nullable: true
-      additionalProperties: false
-    ListDomains:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/EmailDomain'
-        meta:
-          $ref: '#/components/schemas/PaginatedMeta'
-      required:
-      - data
-      - meta
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
     EmailDomain:
       type: object
       properties:
@@ -699,6 +758,253 @@ components:
       - dns_validation_records
       - created_at
       - updated_at
+    EmailTemplateVariableName:
+      description: 'Enum for available portal email template variables.
+
+        '
+      type: string
+      enum:
+      - portal_display_name
+      - portal_domain
+      - developer_email
+      - developer_fullname
+      - dev_portal_reply_to
+      - developer_status
+      - api_documentation_url
+      - api_name
+      - api_version
+      - application_name
+      - credential_name
+      - credential_expires_at
+      x-speakeasy-unknown-values: allow
+    EmailVerificationStatus:
+      description: Specifies the status of the mail domain verification
+      type: string
+      enum:
+      - pending
+      - success
+      - failed
+      - temporary_failure
+      - not_started
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    EmailDomainFilterParameters:
+      type: object
+      properties:
+        domain:
+          $ref: '#/components/schemas/StringFieldFilter'
+        verification_status:
+          $ref: '#/components/schemas/StringFieldFilter'
+      title: EmailDomainFilterParameters
+    SendTestEmailTemplateContent:
+      type: object
+      properties:
+        subject:
+          type: string
+          maxLength: 1024
+          nullable: false
+        title:
+          type: string
+          maxLength: 1024
+          nullable: false
+        body:
+          type: string
+          maxLength: 4096
+          nullable: false
+        button_label:
+          type: string
+          maxLength: 128
+          nullable: false
+      required:
+      - subject
+      - title
+      - body
+    UpdatedAt:
+      description: An ISO-8601 timestamp representation of entity update date.
+      type: string
+      format: date-time
+      example: '2022-11-04T20:10:06.927Z'
+      readOnly: true
+      x-speakeasy-param-suppress-computed-diff: true
+    EmailTemplateVariablesList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailTemplateVariable'
+      additionalProperties: false
+    EmailTemplateVariable:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/EmailTemplateVariableName'
+        description:
+          type: string
+        scope:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailTemplateName'
+        example:
+          description: Example value of the email template variable
+          type: string
+          example: My Company Portal
+      required:
+      - name
+      - description
+      - scope
+      - example
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    DefaultEmailTemplateContent:
+      type: object
+      properties:
+        subject:
+          type: string
+          nullable: false
+        title:
+          type: string
+          nullable: false
+        body:
+          type: string
+          nullable: false
+        button_label:
+          type: string
+          nullable: false
+      required:
+      - subject
+      - title
+      - body
+    EmailDelivery:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        from_email:
+          type: string
+          format: email
+          nullable: true
+        reply_to_email:
+          type: string
+          format: email
+          nullable: true
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      additionalProperties: false
+      required:
+      - enabled
+      - from_email
+      - reply_to_email
+      - created_at
+      - updated_at
+    EmailTemplate:
+      type: object
+      properties:
+        label:
+          description: The label of the email template
+          type: string
+          example: App registration approved
+        name:
+          $ref: '#/components/schemas/EmailTemplateName'
+        default_content:
+          $ref: '#/components/schemas/DefaultEmailTemplateContent'
+        content:
+          $ref: '#/components/schemas/EmailTemplateContent'
+        variables:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailTemplateVariableName'
+        enabled:
+          description: Whether the email template is enabled or disabled for a portal
+          type: boolean
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      required:
+      - name
+      - label
+      - default_content
+      - variables
+      - enabled
+      - created_at
+      - updated_at
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    EmailDomainVerification:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/EmailVerificationStatus'
+        last_time_checked:
+          description: An ISO-8601 timestamp representation of the last time the verification got checked.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        last_time_success:
+          description: An ISO-8601 timestamp representation of the last time the verification succeeded.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+      additionalProperties: false
+      readOnly: true
+      required:
+      - status
+      - last_time_checked
+      - last_time_success
     BaseError:
       description: standard error
       type: object
@@ -753,288 +1059,6 @@ components:
       - instance
       - detail
       title: Error
-    EmailDomainFilterParameters:
-      type: object
-      properties:
-        domain:
-          $ref: '#/components/schemas/StringFieldFilter'
-        verification_status:
-          $ref: '#/components/schemas/StringFieldFilter'
-      title: EmailDomainFilterParameters
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    UpdatedAt:
-      description: An ISO-8601 timestamp representation of entity update date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    EmailDomainPayload:
-      type: object
-      properties:
-        domain:
-          type: string
-      additionalProperties: false
-      required:
-      - domain
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidParameterDependentItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
-          type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - rule
-      - reason
-      - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    CreatedAt:
-      description: An ISO-8601 timestamp representation of entity creation date.
-      type: string
-      format: date-time
-      example: '2022-11-04T20:10:06.927Z'
-      readOnly: true
-      x-speakeasy-param-suppress-computed-diff: true
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    EmailVerificationStatus:
-      description: Specifies the status of the mail domain verification
-      type: string
-      enum:
-      - pending
-      - success
-      - failed
-      - temporary_failure
-      - not_started
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    EmailTemplateVariable:
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/EmailTemplateVariableName'
-        description:
-          type: string
-        scope:
-          type: array
-          items:
-            $ref: '#/components/schemas/EmailTemplateName'
-        example:
-          description: Example value of the email template variable
-          type: string
-          example: My Company Portal
-      required:
-      - name
-      - description
-      - scope
-      - example
-    DNSRecord:
-      type: object
-      properties:
-        type:
-          type: string
-          readOnly: true
-        name:
-          type: string
-          readOnly: true
-        value:
-          type: string
-          readOnly: true
-      additionalProperties: false
-      required:
-      - type
-      - name
-      - value
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -1068,56 +1092,6 @@ components:
       - reason
       - rule
       - maximum
-    PatchPortalEmailConfig:
-      type: object
-      properties:
-        domain_name:
-          description: The domain name to use for sending emails. Null means default.
-          type: string
-          nullable: true
-        from_name:
-          description: The name to display in the 'From' field of emails.
-          type: string
-          nullable: true
-        from_email:
-          description: The email address to use in the 'From' field.
-          type: string
-          format: email
-          nullable: true
-        reply_to_email:
-          description: The email address to use in the 'Reply-To' field. If set to null, 'Reply-To' header is omitted.
-          type: string
-          format: email
-          nullable: true
-      additionalProperties: false
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
     PortalEmailConfig:
       type: object
       properties:
@@ -1156,127 +1130,95 @@ components:
       - reply_to_email
       - created_at
       - updated_at
-    EmailTemplate:
+    InvalidParameterChoiceItem:
       type: object
       properties:
-        label:
-          description: The label of the email template
+        field:
           type: string
-          example: App registration approved
-        name:
-          $ref: '#/components/schemas/EmailTemplateName'
-        default_content:
-          $ref: '#/components/schemas/DefaultEmailTemplateContent'
-        content:
-          $ref: '#/components/schemas/EmailTemplateContent'
-        variables:
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
           type: array
-          items:
-            $ref: '#/components/schemas/EmailTemplateVariableName'
-        enabled:
-          description: Whether the email template is enabled or disabled for a portal
-          type: boolean
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
-      required:
-      - name
-      - label
-      - default_content
-      - variables
-      - enabled
-      - created_at
-      - updated_at
-    EmailDelivery:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-        from_email:
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
           type: string
-          format: email
-          nullable: true
-        reply_to_email:
-          type: string
-          format: email
-          nullable: true
-        created_at:
-          $ref: '#/components/schemas/CreatedAt'
-        updated_at:
-          $ref: '#/components/schemas/UpdatedAt'
+          example: body
       additionalProperties: false
       required:
-      - enabled
-      - from_email
-      - reply_to_email
-      - created_at
-      - updated_at
-  requestBodies:
-    PostPortalEmailConfigPayload:
-      description: Create a portal email configuration.
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PostPortalEmailConfig'
-    PostSendTestEmailPayload:
-      description: Send a test email using a custom email template.
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              content:
-                $ref: '#/components/schemas/SendTestEmailTemplateContent'
-            required:
-            - content
-    PatchCustomPortalEmailTemplatePayload:
-      description: Update a custom portal email template.
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              content:
-                $ref: '#/components/schemas/EmailTemplateContent'
-              enabled:
-                description: Whether the email template is enabled or disabled for a portal
-                type: boolean
-                default: true
-    PatchPortalEmailConfigPayload:
-      description: Update a portal email configured.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PatchPortalEmailConfig'
+      - field
+      - reason
+      - rule
+      - choices
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
+    InvalidParameterDependentItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
   responses:
-    PortalEmailConfigResponse:
-      description: Portal email config.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PortalEmailConfig'
-    EmailTemplateVariables:
-      description: Successful response of usable variables for use in portal email templates.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EmailTemplateVariablesList'
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -1303,36 +1245,6 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
-    PatchEmailTemplateResponse:
-      description: Modifying an email template.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EmailTemplate'
-    EmailTemplate:
-      description: Successful Retrieval for a portal email template.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/EmailTemplate'
-    ListEmailTemplates:
-      description: A list of customized email templates used in a portal.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmailTemplate'
-            additionalProperties: false
-    DefaultEmailTemplate:
-      description: Details about a default email template.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/DefaultEmailTemplate'
     ListDefaultEmailTemplates:
       description: A list of the default email templates in a portal. This is a static list that will always be populated.
       content:
@@ -1345,7 +1257,75 @@ components:
                 items:
                   $ref: '#/components/schemas/DefaultEmailTemplate'
             additionalProperties: false
+    ListEmailTemplates:
+      description: A list of customized email templates used in a portal.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmailTemplate'
+            additionalProperties: false
+    PatchEmailTemplateResponse:
+      description: Modifying an email template.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EmailTemplate'
+    EmailTemplateVariables:
+      description: Successful response of usable variables for use in portal email templates.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EmailTemplateVariablesList'
+    EmailTemplate:
+      description: Successful Retrieval for a portal email template.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EmailTemplate'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    PortalEmailConfigResponse:
+      description: Portal email config.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PortalEmailConfig'
+    DefaultEmailTemplate:
+      description: Details about a default email template.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DefaultEmailTemplate'
   parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
     PortalId:
       schema:
         type: string
@@ -1362,23 +1342,6 @@ components:
       required: false
       schema:
         type: string
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    EmailTemplateName:
-      name: templateName
-      description: Name of the email template.
-      in: path
-      required: true
-      schema:
-        $ref: '#/components/schemas/EmailTemplateName'
     EmailDomain:
       name: emailDomain
       in: path
@@ -1386,16 +1349,53 @@ components:
       description: Email domain for custom portal email sender
       schema:
         type: string
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
+    EmailTemplateName:
+      name: templateName
+      description: Name of the email template.
+      in: path
+      required: true
       schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+        $ref: '#/components/schemas/EmailTemplateName'
+  requestBodies:
+    PostSendTestEmailPayload:
+      description: Send a test email using a custom email template.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content:
+                $ref: '#/components/schemas/SendTestEmailTemplateContent'
+            required:
+            - content
+    PostPortalEmailConfigPayload:
+      description: Create a portal email configuration.
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PostPortalEmailConfig'
+    PatchCustomPortalEmailTemplatePayload:
+      description: Update a custom portal email template.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content:
+                $ref: '#/components/schemas/EmailTemplateContent'
+              enabled:
+                description: Whether the email template is enabled or disabled for a portal
+                type: boolean
+                default: true
+    PatchPortalEmailConfigPayload:
+      description: Update a portal email configured.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PatchPortalEmailConfig'
   securitySchemes:
     personalAccessToken:
       type: http

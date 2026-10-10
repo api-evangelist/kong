@@ -50,59 +50,156 @@ paths:
       - Criteria Templates
 components:
   schemas:
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    BadRequestError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
+    CriteriaTemplateSchema:
+      oneOf:
+      - title: EmptySchema
+        type: object
+        nullable: true
       - type: object
         required:
-        - invalid_parameters
+        - type
+        - definition
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
-    UnauthorizedError:
+          type:
+            type: string
+            enum:
+            - simple
+          definition:
+            type: object
+            additionalProperties:
+              type: string
+              enum:
+              - string
+              - number
+              - boolean
+        title: CriteriaTemplateSimpleSchema
+        description: 'Defines the parameters required to evaluate the criteria using simple schema.
+
+          Set to `null` when the given criteria does not rely on parameterization.
+
+          '
+      - type: object
+        required:
+        - type
+        - definition
+        properties:
+          type:
+            type: string
+            enum:
+            - json_schema
+          definition:
+            type: object
+            additionalProperties: true
+        title: CriteriaTemplateJSONSchema
+        description: 'Defines the parameters required to evaluate the criteria using JSON schema.
+
+          Set to `null` when the given criteria does not rely on parameterization.
+
+          '
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 401
+            example: 403
           title:
-            example: Unauthorized
+            example: Forbidden
           type:
-            example: https://httpstatuses.com/401
+            example: https://httpstatuses.com/403
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Invalid credentials
+            example: Forbidden
+    CriteriaTemplateName:
+      description: Reference to the unique `name` of the criteria template.
+      type: string
+      example: time_to_merge
+    SortQuery:
+      description: 'The `asc` suffix is optional as the default sort order is ascending.
+
+        The `desc` suffix is used to specify a descending order.
+
+        Multiple sort attributes may be provided via a comma separated list.
+
+        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
+
+        '
+      type: string
+      example: created_at desc
+      title: SortQuery
+    CriteriaTemplateFilterParameters:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        display_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+        installed:
+          $ref: '#/components/schemas/BooleanFieldFilter'
+        integration_name:
+          $ref: '#/components/schemas/StringFieldFilter'
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    InvalidParameterMinimumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - minimum
+    BooleanFieldFilter:
+      description: Filter by a boolean value (true/false).
+      type: boolean
+      title: BooleanFieldFilter
     CriteriaTemplate:
       description: Representation of a criteria template.
       type: object
@@ -179,73 +276,140 @@ components:
       - installed
       - schema
       - required_integration_capability
-    BooleanFieldFilter:
-      description: Filter by a boolean value (true/false).
-      type: boolean
-      title: BooleanFieldFilter
-    CriteriaTemplateSchema:
-      oneOf:
-      - title: EmptySchema
-        type: object
-        nullable: true
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
       - type: object
         required:
-        - type
-        - definition
+        - invalid_parameters
         properties:
-          type:
-            type: string
-            enum:
-            - simple
-          definition:
-            type: object
-            additionalProperties:
-              type: string
-              enum:
-              - string
-              - number
-              - boolean
-        title: CriteriaTemplateSimpleSchema
-        description: 'Defines the parameters required to evaluate the criteria using simple schema.
-
-          Set to `null` when the given criteria does not rely on parameterization.
-
-          '
-      - type: object
-        required:
-        - type
-        - definition
-        properties:
-          type:
-            type: string
-            enum:
-            - json_schema
-          definition:
-            type: object
-            additionalProperties: true
-        title: CriteriaTemplateJSONSchema
-        description: 'Defines the parameters required to evaluate the criteria using JSON schema.
-
-          Set to `null` when the given criteria does not rely on parameterization.
-
-          '
-    SortQuery:
-      description: 'The `asc` suffix is optional as the default sort order is ascending.
-
-        The `desc` suffix is used to specify a descending order.
-
-        Multiple sort attributes may be provided via a comma separated list.
-
-        JSONPath notation may be used to specify a sub-attribute (eg: ''foo.bar desc'').
-
-        '
-      type: string
-      example: created_at desc
-      title: SortQuery
-    CriteriaTemplateName:
-      description: Reference to the unique `name` of the criteria template.
-      type: string
-      example: time_to_merge
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
+    PaginatedMeta:
+      description: returns the pagination information
+      type: object
+      properties:
+        page:
+          $ref: '#/components/schemas/PageMeta'
+      required:
+      - page
+      title: PaginatedMeta
+      x-speakeasy-terraform-ignore: true
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
+    StringFieldFilter:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+      type: object
+      properties:
+        eq:
+          description: The field exactly matches the provided value.
+          type: string
+        contains:
+          description: The field contains the provided value.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        neq:
+          description: The field does not match the provided value.
+          type: string
+      additionalProperties: false
+    InvalidParameterMaximumLength:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - max_length
+          - max_items
+          - max
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        maximum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must not have more than 8 characters
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - maximum
     BaseError:
       description: standard error
       type: object
@@ -300,36 +464,6 @@ components:
       - instance
       - detail
       title: Error
-    PaginatedMeta:
-      description: returns the pagination information
-      type: object
-      properties:
-        page:
-          $ref: '#/components/schemas/PageMeta'
-      required:
-      - page
-      title: PaginatedMeta
-      x-speakeasy-terraform-ignore: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
     InvalidParameterChoiceItem:
       type: object
       properties:
@@ -364,54 +498,21 @@ components:
       - reason
       - rule
       - choices
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
-    CriteriaTemplateFilterParameters:
-      type: object
-      properties:
-        name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        display_name:
-          $ref: '#/components/schemas/StringFieldFilter'
-        installed:
-          $ref: '#/components/schemas/BooleanFieldFilter'
-        integration_name:
-          $ref: '#/components/schemas/StringFieldFilter'
+    UnauthorizedError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 401
+          title:
+            example: Unauthorized
+          type:
+            example: https://httpstatuses.com/401
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Invalid credentials
     InvalidParameterDependentItem:
       type: object
       properties:
@@ -445,156 +546,7 @@ components:
       - rule
       - reason
       - dependents
-    InvalidParameterStandard:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-    StringFieldFilter:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
-      type: object
-      properties:
-        eq:
-          description: The field exactly matches the provided value.
-          type: string
-        contains:
-          description: The field contains the provided value.
-          type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-        oeq:
-          description: The field matches any of the provided values.
-          type: string
-        neq:
-          description: The field does not match the provided value.
-          type: string
-      additionalProperties: false
-    InvalidParameterMaximumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - max_length
-          - max_items
-          - max
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        maximum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must not have more than 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - maximum
-    ForbiddenError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 403
-          title:
-            example: Forbidden
-          type:
-            example: https://httpstatuses.com/403
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-  parameters:
-    CriteriaTemplateFilter:
-      name: filter
-      description: Filters a collection of criteria templates.
-      required: false
-      in: query
-      style: deepObject
-      schema:
-        $ref: '#/components/schemas/CriteriaTemplateFilterParameters'
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    CriteriaTemplateSort:
-      name: sort
-      description: "Sorts a collection of criteria templates. Supported sort attributes are:\n  - `display_name`\n  - `name`\n\nDefault sort is `display_name` in ascending order.\n"
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/SortQuery'
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
   responses:
-    BadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -621,6 +573,12 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
     ListCriteriaTemplatesResponse:
       description: A paginated list response for a collection of criteria templates.
       content:
@@ -638,6 +596,48 @@ components:
             required:
             - meta
             - data
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    CriteriaTemplateFilter:
+      name: filter
+      description: Filters a collection of criteria templates.
+      required: false
+      in: query
+      style: deepObject
+      schema:
+        $ref: '#/components/schemas/CriteriaTemplateFilterParameters'
+    CriteriaTemplateSort:
+      name: sort
+      description: "Sorts a collection of criteria templates. Supported sort attributes are:\n  - `display_name`\n  - `name`\n\nDefault sort is `display_name` in ascending order.\n"
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/SortQuery'
   securitySchemes:
     personalAccessToken:
       type: http

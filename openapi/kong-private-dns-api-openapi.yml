@@ -189,59 +189,170 @@ paths:
         retryConnectionErrors: false
 components:
   schemas:
-    InvalidRules:
-      description: invalid parameters rules
-      type: string
-      enum:
-      - required
-      - is_array
-      - is_base64
-      - is_boolean
-      - is_date_time
-      - is_integer
-      - is_null
-      - is_number
-      - is_object
-      - is_string
-      - is_uuid
-      - is_fqdn
-      - is_arn
-      - unknown_property
-      - missing_reference
-      - is_label
-      - matches_regex
-      - invalid
-      - is_supported_network_availability_zone_list
-      - is_supported_network_cidr_block
-      - is_supported_provider_region
-      - type
-      nullable: true
-      readOnly: true
-      x-speakeasy-unknown-values: allow
-    PrivateDnsResolverConfig:
-      description: 'Object that contains mappings from proxied internal domains to remote DNS server IP address for a Private DNS Resolver.
-
-        '
+    GcpPrivateHostedZoneAttachmentConfig:
       type: object
-      example:
-        global.api.konghq.com:
-          remote_dns_server_ip_addresses:
-          - 10.0.0.2
-        us.api.konghq.dev:
-          remote_dns_server_ip_addresses:
-          - 10.0.0.8
-      additionalProperties:
-        $ref: '#/components/schemas/PrivateDnsResolverConfigObject'
-      title: Private DNS Resolver Config Item
-    BadRequestError:
+      properties:
+        kind:
+          enum:
+          - gcp-private-hosted-zone-attachment
+          title: GCP Private Hosted Zone Type
+        domain_name:
+          description: Domain name to create attachment to.
+          type: string
+          title: Domain Name
+        peer_project_id:
+          description: Customer's GCP Project ID.
+          type: string
+          title: Peer Project Id
+        peer_vpc_name:
+          description: Customer's GCP VPC ID.
+          type: string
+          title: Peer VPC Name
+      additionalProperties: false
+      required:
+      - kind
+      - domain_name
+      - peer_project_id
+      - peer_vpc_name
+      title: GCP Private Hosted Zone Attachment Config
+    AzurePrivateDnsResolverResponse:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/PrivateDnsId'
+        state:
+          $ref: '#/components/schemas/PrivateDnsState'
+        state_metadata:
+          description: 'Metadata describing the backing state of the Private Dns and why it may be in an erroneous state.
+
+            '
+          type: object
+          additionalProperties: false
+          properties:
+            reported_status:
+              description: Reported status of the Private Dns from backing infrastructure.
+              type: string
+              example: ERROR
+            reason:
+              description: 'Reason why the Private Dns may be in an erroneous state, reported from backing infrastructure.
+
+                '
+              type: string
+              example: 'Failed to create Private Dns due to invalid Cloud Provider configuration.
+
+                '
+          title: PrivateDnsStateMetadata
+        entity_version:
+          description: 'Monotonically-increasing version count of the Private DNS, to indicate the order of updates to the
+
+            Private DNS.
+
+            '
+          type: integer
+          example: 1
+          readOnly: true
+        created_at:
+          description: An RFC-3339 timestamp representation of Private DNS creation date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        updated_at:
+          description: An RFC-3339 timestamp representation of Private DNS update date.
+          type: string
+          format: date-time
+          example: '2022-11-04T20:10:06.927Z'
+          readOnly: true
+        name:
+          $ref: '#/components/schemas/PrivateDnsName'
+        private_dns_attachment_config:
+          $ref: '#/components/schemas/AzurePrivateDnsResolverAttachmentConfig'
+      required:
+      - id
+      - state
+      - state_metadata
+      - entity_version
+      - created_at
+      - updated_at
+      - name
+      - private_dns_attachment_config
+    ForbiddenError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
-        required:
-        - invalid_parameters
         properties:
-          invalid_parameters:
-            $ref: '#/components/schemas/InvalidParameters'
+          status:
+            example: 403
+          title:
+            example: Forbidden
+          type:
+            example: https://httpstatuses.com/403
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Forbidden
+    PrivateDnsStateFieldOrEqualityFilter:
+      description: 'Filter Private DNS state by determining if the value is equal to any in a set of values, where the set is a
+
+        comma-delimited list.
+
+        '
+      type: object
+      properties:
+        oeq:
+          type: string
+      required:
+      - oeq
+      title: PrivateDnsStateFieldOrEqualityFilter
+    InvalidParameterStandard:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          $ref: '#/components/schemas/InvalidRules'
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+      additionalProperties: false
+      required:
+      - field
+      - reason
+    PrivateDnsState:
+      description: 'The current state of the Private DNS attachment. Possible values:
+
+        - `created` - The attachment has been created but is not attached to Private DNS.
+
+        - `initializing` - The attachment is in the process of being initialized and is setting up necessary resources.
+
+        - `pending-association` The attachment request is awaiting association to the cloud provider infrastructure in order for provisioning to proceed.
+
+        - `ready` - The attachment is fully operational and can route traffic as configured.
+
+        - `error` - The attachment is in an error state, and is not operational.
+
+        - `terminating` - The attachment is in the process of being deleted.
+
+        - `terminated` - The attachment has been fully deleted and is no longer available.
+
+        '
+      type: string
+      enum:
+      - created
+      - initializing
+      - pending-association
+      - ready
+      - error
+      - terminating
+      - terminated
+      title: Private DNS State
+      x-speakeasy-unknown-values: allow
     AwsPrivateDnsResolverResponse:
       type: object
       properties:
@@ -303,73 +414,70 @@ components:
       - updated_at
       - name
       - private_dns_attachment_config
-    PrivateDnsStateFieldOrEqualityFilter:
-      description: 'Filter Private DNS state by determining if the value is equal to any in a set of values, where the set is a
-
-        comma-delimited list.
-
-        '
+    InvalidParameterMinimumLength:
       type: object
       properties:
-        oeq:
+        field:
           type: string
-      required:
-      - oeq
-      title: PrivateDnsStateFieldOrEqualityFilter
-    AzurePrivateDnsResolverAttachmentConfig:
-      type: object
-      properties:
-        kind:
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
           enum:
-          - azure-outbound-resolver
-          title: Azure Private DNS Resolver Type
-        dns_config:
-          $ref: '#/components/schemas/PrivateDnsResolverConfig'
-      example:
-        kind: azure-outbound-resolver
-        dns_config:
-          global.api.konghq.com:
-            remote_dns_server_ip_addresses:
-            - 10.0.0.2
-          us.api.konghq.dev:
-            remote_dns_server_ip_addresses:
-            - 10.0.0.8
+          - min_length
+          - min_digits
+          - min_lowercase
+          - min_uppercase
+          - min_symbols
+          - min_items
+          - min
+          nullable: false
+          readOnly: true
+          x-speakeasy-unknown-values: allow
+        minimum:
+          type: integer
+          example: 8
+        source:
+          type: string
+          example: body
+        reason:
+          type: string
+          example: must have at least 8 characters
+          readOnly: true
       additionalProperties: false
       required:
-      - kind
-      - dns_config
-      title: Azure Private DNS Resolver Attachment Config
-    PrivateDnsResponse:
-      oneOf:
-      - $ref: '#/components/schemas/AwsPrivateHostedZoneResponse'
-      - $ref: '#/components/schemas/AwsPrivateDnsResolverResponse'
-      - $ref: '#/components/schemas/GcpPrivateHostedZoneResponse'
-      - $ref: '#/components/schemas/AzurePrivateHostedZoneResponse'
-      - $ref: '#/components/schemas/AzurePrivateDnsResolverResponse'
-    UnauthorizedError:
+      - field
+      - reason
+      - rule
+      - minimum
+    NotFoundError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 401
+            example: 404
           title:
-            example: Unauthorized
+            example: Not Found
           type:
-            example: https://httpstatuses.com/401
+            example: https://httpstatuses.com/404
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Invalid credentials
-    PrivateDnsStateFieldNotEqualsFilter:
-      description: Filter private-dns state by inequality match.
-      type: object
-      properties:
-        neq:
-          $ref: '#/components/schemas/PrivateDnsState'
-      required:
-      - neq
-      title: PrivateDnsStateFieldNotEqualsFilter
+            example: Not found
+    PrivateDnsStateFieldEqualsFilter:
+      description: Filter Private DNS state by exact match.
+      oneOf:
+      - $ref: '#/components/schemas/PrivateDnsState'
+      - type: object
+        title: PrivateDnsStateFieldEqualsComparison
+        properties:
+          eq:
+            $ref: '#/components/schemas/PrivateDnsState'
+        required:
+        - eq
+      title: PrivateDnsStateFieldEqualsFilter
     AwsPrivateHostedZoneResponse:
       type: object
       properties:
@@ -431,18 +539,79 @@ components:
       - updated_at
       - name
       - private_dns_attachment_config
-    PrivateDnsResolverConfigObject:
+    InvalidRules:
+      description: invalid parameters rules
+      type: string
+      enum:
+      - required
+      - is_array
+      - is_base64
+      - is_boolean
+      - is_date_time
+      - is_integer
+      - is_null
+      - is_number
+      - is_object
+      - is_string
+      - is_uuid
+      - is_fqdn
+      - is_arn
+      - unknown_property
+      - missing_reference
+      - is_label
+      - matches_regex
+      - invalid
+      - is_supported_network_availability_zone_list
+      - is_supported_network_cidr_block
+      - is_supported_provider_region
+      - type
+      nullable: true
+      readOnly: true
+      x-speakeasy-unknown-values: allow
+    PatchAwsPrivateDnsResolver:
+      description: Request schema for updating a Private DNS AWS Resolver.
+      properties:
+        name:
+          $ref: '#/components/schemas/PrivateDnsName'
+        private_dns_attachment_config:
+          $ref: '#/components/schemas/AwsPrivateDnsResolverAttachmentConfig'
+    AwsPrivateHostedZoneAttachmentConfig:
       type: object
       properties:
-        remote_dns_server_ip_addresses:
-          description: IP addresses of remote DNS servers used by the Private DNS Resolver for DNS resolution.
-          type: array
-          items:
-            type: string
-          example:
-          - 10.0.0.2
+        kind:
+          enum:
+          - aws-private-hosted-zone-attachment
+          title: AWS Private Hosted Zone Type
+        hosted_zone_id:
+          description: AWS Hosted Zone to create attachment to.
+          type: string
+          title: Hosted Zone Id
+      additionalProperties: false
       required:
-      - remote_dns_server_ip_addresses
+      - kind
+      - hosted_zone_id
+      title: AWS Private Hosted Zone Attachment Config
+    ConflictError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        properties:
+          status:
+            example: 409
+          title:
+            example: Conflict
+          type:
+            example: https://httpstatuses.com/409
+          instance:
+            example: kong:trace:1234567890
+          detail:
+            example: Conflict
+    PrivateDnsStateFieldFilter:
+      oneOf:
+      - $ref: '#/components/schemas/PrivateDnsStateFieldEqualsFilter'
+      - $ref: '#/components/schemas/PrivateDnsStateFieldNotEqualsFilter'
+      - $ref: '#/components/schemas/PrivateDnsStateFieldOrEqualityFilter'
+      title: PrivateDnsStateFieldFilter
     AzurePrivateHostedZoneAttachmentConfig:
       type: object
       properties:
@@ -486,110 +655,15 @@ components:
       - peer_resource_group_id
       - peer_vnet_link_name
       title: Azure Private Hosted Zone Attachment Config
-    GcpPrivateHostedZoneAttachmentConfig:
-      type: object
-      properties:
-        kind:
-          enum:
-          - gcp-private-hosted-zone-attachment
-          title: GCP Private Hosted Zone Type
-        domain_name:
-          description: Domain name to create attachment to.
-          type: string
-          title: Domain Name
-        peer_project_id:
-          description: Customer's GCP Project ID.
-          type: string
-          title: Peer Project Id
-        peer_vpc_name:
-          description: Customer's GCP VPC ID.
-          type: string
-          title: Peer VPC Name
-      additionalProperties: false
-      required:
-      - kind
-      - domain_name
-      - peer_project_id
-      - peer_vpc_name
-      title: GCP Private Hosted Zone Attachment Config
-    PatchAzurePrivateDnsResolver:
-      description: Request schema for updating a Private DNS Azure Resolver.
-      properties:
-        name:
-          $ref: '#/components/schemas/PrivateDnsName'
-        private_dns_attachment_config:
-          $ref: '#/components/schemas/AzurePrivateDnsResolverAttachmentConfig'
-    PrivateDnsId:
-      type: string
-      format: uuid
-      example: 1850820b-c69f-4a2a-b9be-bbcdbc5cd618
-      readOnly: true
-    PrivateDnsName:
-      description: Human-readable name of the Private DNS.
-      type: string
-      example: us-east-2 private dns
-      title: Private DNS Name
-    BaseError:
-      description: standard error
-      type: object
-      properties:
-        status:
-          description: 'The HTTP status code of the error. Useful when passing the response
-
-            body to child properties in a frontend UI. Must be returned as an integer.
-
-            '
-          type: integer
-          readOnly: true
-        title:
-          description: 'A short, human-readable summary of the problem. It should not
-
-            change between occurences of a problem, except for localization.
-
-            Should be provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-        type:
-          description: The error type.
-          type: string
-          readOnly: true
-        instance:
-          description: 'Used to return the correlation ID back to the user, in the format
-
-            kong:trace:<correlation_id>. This helps us find the relevant logs
-
-            when a customer reports an issue.
-
-            '
-          type: string
-          readOnly: true
-        detail:
-          description: 'A human readable explanation specific to this occurence of the problem.
-
-            This field may contain request/entity data to help the user understand
-
-            what went wrong. Enclose variable values in square brackets. Should be
-
-            provided as "Sentence case" for direct use in the UI.
-
-            '
-          type: string
-          readOnly: true
-      required:
-      - status
-      - title
-      - instance
-      - detail
-      title: Error
-    PatchPrivateDnsRequest:
-      description: Request schema for updating a Private DNS.
-      type: object
-      oneOf:
-      - $ref: '#/components/schemas/PatchAwsPrivateDnsResolver'
-      - $ref: '#/components/schemas/PatchAzurePrivateDnsResolver'
-      title: PatchPrivateDnsRequest
+    BadRequestError:
+      allOf:
+      - $ref: '#/components/schemas/BaseError'
+      - type: object
+        required:
+        - invalid_parameters
+        properties:
+          invalid_parameters:
+            $ref: '#/components/schemas/InvalidParameters'
     PaginatedMeta:
       description: returns the pagination information
       type: object
@@ -661,141 +735,6 @@ components:
       - updated_at
       - name
       - private_dns_attachment_config
-    PatchAwsPrivateDnsResolver:
-      description: Request schema for updating a Private DNS AWS Resolver.
-      properties:
-        name:
-          $ref: '#/components/schemas/PrivateDnsName'
-        private_dns_attachment_config:
-          $ref: '#/components/schemas/AwsPrivateDnsResolverAttachmentConfig'
-    NetworkId:
-      description: The network ID to operate on. For serverless.v1 kind of cloud gateways, this field should be omitted.
-      type: string
-      format: uuid
-      example: 36ae63d3-efd1-4bec-b246-62aa5d3f5695
-      x-speakeasy-param-suppress-computed-diff: true
-    PageMeta:
-      description: Contains pagination query parameters and the total number of objects returned.
-      type: object
-      properties:
-        number:
-          type: number
-          example: 1
-          x-speakeasy-terraform-ignore: true
-        size:
-          type: number
-          example: 10
-          x-speakeasy-terraform-ignore: true
-        total:
-          type: number
-          example: 100
-          x-speakeasy-terraform-ignore: true
-      required:
-      - number
-      - size
-      - total
-    AwsPrivateHostedZoneAttachmentConfig:
-      type: object
-      properties:
-        kind:
-          enum:
-          - aws-private-hosted-zone-attachment
-          title: AWS Private Hosted Zone Type
-        hosted_zone_id:
-          description: AWS Hosted Zone to create attachment to.
-          type: string
-          title: Hosted Zone Id
-      additionalProperties: false
-      required:
-      - kind
-      - hosted_zone_id
-      title: AWS Private Hosted Zone Attachment Config
-    ConflictError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 409
-          title:
-            example: Conflict
-          type:
-            example: https://httpstatuses.com/409
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Conflict
-    InvalidParameterChoiceItem:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - enum
-          nullable: false
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        choices:
-          type: array
-          items: {}
-          minItems: 1
-          nullable: false
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - choices
-    InvalidParameterMinimumLength:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - min_length
-          - min_digits
-          - min_lowercase
-          - min_uppercase
-          - min_symbols
-          - min_items
-          - min
-          nullable: false
-          readOnly: true
-          x-speakeasy-unknown-values: allow
-        minimum:
-          type: integer
-          example: 8
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: must have at least 8 characters
-          readOnly: true
-      additionalProperties: false
-      required:
-      - field
-      - reason
-      - rule
-      - minimum
     AzurePrivateHostedZoneResponse:
       type: object
       properties:
@@ -857,74 +796,124 @@ components:
       - updated_at
       - name
       - private_dns_attachment_config
-    NotFoundError:
-      allOf:
-      - $ref: '#/components/schemas/BaseError'
-      - type: object
-        properties:
-          status:
-            example: 404
-          title:
-            example: Not Found
-          type:
-            example: https://httpstatuses.com/404
-          instance:
-            example: kong:trace:1234567890
-          detail:
-            example: Not found
-    InvalidParameterDependentItem:
+    PatchPrivateDnsRequest:
+      description: Request schema for updating a Private DNS.
+      type: object
+      oneOf:
+      - $ref: '#/components/schemas/PatchAwsPrivateDnsResolver'
+      - $ref: '#/components/schemas/PatchAzurePrivateDnsResolver'
+      title: PatchPrivateDnsRequest
+    PrivateDnsResolverConfigObject:
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          description: invalid parameters rules
-          type: string
-          enum:
-          - dependent_fields
-          nullable: true
-          readOnly: true
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
-        dependents:
+        remote_dns_server_ip_addresses:
+          description: IP addresses of remote DNS servers used by the Private DNS Resolver for DNS resolution.
           type: array
-          items: {}
-          nullable: true
-          readOnly: true
-          uniqueItems: true
-        source:
-          type: string
-          example: body
-      additionalProperties: false
+          items:
+            type: string
+          example:
+          - 10.0.0.2
       required:
-      - field
-      - rule
-      - reason
-      - dependents
-    InvalidParameterStandard:
+      - remote_dns_server_ip_addresses
+    PrivateDnsResponse:
+      oneOf:
+      - $ref: '#/components/schemas/AwsPrivateHostedZoneResponse'
+      - $ref: '#/components/schemas/AwsPrivateDnsResolverResponse'
+      - $ref: '#/components/schemas/GcpPrivateHostedZoneResponse'
+      - $ref: '#/components/schemas/AzurePrivateHostedZoneResponse'
+      - $ref: '#/components/schemas/AzurePrivateDnsResolverResponse'
+    InvalidParameters:
+      description: invalid parameters
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/InvalidParameterStandard'
+        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
+        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
+        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
+        - $ref: '#/components/schemas/InvalidParameterDependentItem'
+      minItems: 1
+      nullable: false
+      uniqueItems: true
+    PrivateDnsFilterParameters:
       type: object
       properties:
-        field:
-          type: string
-          example: name
-          readOnly: true
-        rule:
-          $ref: '#/components/schemas/InvalidRules'
-        source:
-          type: string
-          example: body
-        reason:
-          type: string
-          example: is a required field
-          readOnly: true
+        name:
+          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
+        state:
+          $ref: '#/components/schemas/PrivateDnsStateFieldFilter'
+      additionalProperties: false
+      title: PrivateDnsFilterParameters
+    PatchAzurePrivateDnsResolver:
+      description: Request schema for updating a Private DNS Azure Resolver.
+      properties:
+        name:
+          $ref: '#/components/schemas/PrivateDnsName'
+        private_dns_attachment_config:
+          $ref: '#/components/schemas/AzurePrivateDnsResolverAttachmentConfig'
+    PrivateDnsStateFieldNotEqualsFilter:
+      description: Filter private-dns state by inequality match.
+      type: object
+      properties:
+        neq:
+          $ref: '#/components/schemas/PrivateDnsState'
+      required:
+      - neq
+      title: PrivateDnsStateFieldNotEqualsFilter
+    AwsPrivateDnsResolverAttachmentConfig:
+      type: object
+      properties:
+        kind:
+          enum:
+          - aws-outbound-resolver
+          title: AWS Private DNS Resolver Type
+        dns_config:
+          $ref: '#/components/schemas/PrivateDnsResolverConfig'
       additionalProperties: false
       required:
-      - field
-      - reason
+      - kind
+      - dns_config
+      title: AWS Private DNS Resolver Attachment Config
+    PrivateDnsResolverConfig:
+      description: 'Object that contains mappings from proxied internal domains to remote DNS server IP address for a Private DNS Resolver.
+
+        '
+      type: object
+      example:
+        global.api.konghq.com:
+          remote_dns_server_ip_addresses:
+          - 10.0.0.2
+        us.api.konghq.dev:
+          remote_dns_server_ip_addresses:
+          - 10.0.0.8
+      additionalProperties:
+        $ref: '#/components/schemas/PrivateDnsResolverConfigObject'
+      title: Private DNS Resolver Config Item
+    PrivateDnsId:
+      type: string
+      format: uuid
+      example: 1850820b-c69f-4a2a-b9be-bbcdbc5cd618
+      readOnly: true
+    PageMeta:
+      description: Contains pagination query parameters and the total number of objects returned.
+      type: object
+      properties:
+        number:
+          type: number
+          example: 1
+          x-speakeasy-terraform-ignore: true
+        size:
+          type: number
+          example: 10
+          x-speakeasy-terraform-ignore: true
+        total:
+          type: number
+          example: 100
+          x-speakeasy-terraform-ignore: true
+      required:
+      - number
+      - size
+      - total
     CreatePrivateDnsRequest:
       description: Request schema for creating a Private DNS.
       type: object
@@ -939,73 +928,26 @@ components:
           - $ref: '#/components/schemas/AzurePrivateHostedZoneAttachmentConfig'
           - $ref: '#/components/schemas/AzurePrivateDnsResolverAttachmentConfig'
       title: CreatePrivateDnsRequest
-    AzurePrivateDnsResolverResponse:
+    CloudGatewaysStringFieldFilterOverride:
+      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
       type: object
       properties:
-        id:
-          $ref: '#/components/schemas/PrivateDnsId'
-        state:
-          $ref: '#/components/schemas/PrivateDnsState'
-        state_metadata:
-          description: 'Metadata describing the backing state of the Private Dns and why it may be in an erroneous state.
-
-            '
-          type: object
-          additionalProperties: false
-          properties:
-            reported_status:
-              description: Reported status of the Private Dns from backing infrastructure.
-              type: string
-              example: ERROR
-            reason:
-              description: 'Reason why the Private Dns may be in an erroneous state, reported from backing infrastructure.
-
-                '
-              type: string
-              example: 'Failed to create Private Dns due to invalid Cloud Provider configuration.
-
-                '
-          title: PrivateDnsStateMetadata
-        entity_version:
-          description: 'Monotonically-increasing version count of the Private DNS, to indicate the order of updates to the
-
-            Private DNS.
-
-            '
-          type: integer
-          example: 1
-          readOnly: true
-        created_at:
-          description: An RFC-3339 timestamp representation of Private DNS creation date.
+        eq:
+          description: The field exactly matches the provided value.
           type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-        updated_at:
-          description: An RFC-3339 timestamp representation of Private DNS update date.
+        contains:
+          description: The field contains the provided value.
           type: string
-          format: date-time
-          example: '2022-11-04T20:10:06.927Z'
-          readOnly: true
-        name:
-          $ref: '#/components/schemas/PrivateDnsName'
-        private_dns_attachment_config:
-          $ref: '#/components/schemas/AzurePrivateDnsResolverAttachmentConfig'
-      required:
-      - id
-      - state
-      - state_metadata
-      - entity_version
-      - created_at
-      - updated_at
-      - name
-      - private_dns_attachment_config
-    PrivateDnsStateFieldFilter:
-      oneOf:
-      - $ref: '#/components/schemas/PrivateDnsStateFieldEqualsFilter'
-      - $ref: '#/components/schemas/PrivateDnsStateFieldNotEqualsFilter'
-      - $ref: '#/components/schemas/PrivateDnsStateFieldOrEqualityFilter'
-      title: PrivateDnsStateFieldFilter
+        neq:
+          description: The field does not match the provided value.
+          type: string
+        oeq:
+          description: The field matches any of the provided values.
+          type: string
+        ocontains:
+          description: The field contains any of the provided values.
+          type: string
+      additionalProperties: false
     InvalidParameterMaximumLength:
       type: object
       properties:
@@ -1039,205 +981,183 @@ components:
       - reason
       - rule
       - maximum
-    PrivateDnsStateFieldEqualsFilter:
-      description: Filter Private DNS state by exact match.
-      oneOf:
-      - $ref: '#/components/schemas/PrivateDnsState'
-      - type: object
-        title: PrivateDnsStateFieldEqualsComparison
-        properties:
-          eq:
-            $ref: '#/components/schemas/PrivateDnsState'
-        required:
-        - eq
-      title: PrivateDnsStateFieldEqualsFilter
-    CloudGatewaysStringFieldFilterOverride:
-      description: 'Filter using **one** of the following operators: `eq`, `oeq`, `neq`, `contains`, `ocontains`'
+    PrivateDnsName:
+      description: Human-readable name of the Private DNS.
+      type: string
+      example: us-east-2 private dns
+      title: Private DNS Name
+    BaseError:
+      description: standard error
       type: object
       properties:
-        eq:
-          description: The field exactly matches the provided value.
+        status:
+          description: 'The HTTP status code of the error. Useful when passing the response
+
+            body to child properties in a frontend UI. Must be returned as an integer.
+
+            '
+          type: integer
+          readOnly: true
+        title:
+          description: 'A short, human-readable summary of the problem. It should not
+
+            change between occurences of a problem, except for localization.
+
+            Should be provided as "Sentence case" for direct use in the UI.
+
+            '
           type: string
-        contains:
-          description: The field contains the provided value.
+          readOnly: true
+        type:
+          description: The error type.
           type: string
-        neq:
-          description: The field does not match the provided value.
+          readOnly: true
+        instance:
+          description: 'Used to return the correlation ID back to the user, in the format
+
+            kong:trace:<correlation_id>. This helps us find the relevant logs
+
+            when a customer reports an issue.
+
+            '
           type: string
-        oeq:
-          description: The field matches any of the provided values.
+          readOnly: true
+        detail:
+          description: 'A human readable explanation specific to this occurence of the problem.
+
+            This field may contain request/entity data to help the user understand
+
+            what went wrong. Enclose variable values in square brackets. Should be
+
+            provided as "Sentence case" for direct use in the UI.
+
+            '
           type: string
-        ocontains:
-          description: The field contains any of the provided values.
-          type: string
-      additionalProperties: false
-    AwsPrivateDnsResolverAttachmentConfig:
+          readOnly: true
+      required:
+      - status
+      - title
+      - instance
+      - detail
+      title: Error
+    AzurePrivateDnsResolverAttachmentConfig:
       type: object
       properties:
         kind:
           enum:
-          - aws-outbound-resolver
-          title: AWS Private DNS Resolver Type
+          - azure-outbound-resolver
+          title: Azure Private DNS Resolver Type
         dns_config:
           $ref: '#/components/schemas/PrivateDnsResolverConfig'
+      example:
+        kind: azure-outbound-resolver
+        dns_config:
+          global.api.konghq.com:
+            remote_dns_server_ip_addresses:
+            - 10.0.0.2
+          us.api.konghq.dev:
+            remote_dns_server_ip_addresses:
+            - 10.0.0.8
       additionalProperties: false
       required:
       - kind
       - dns_config
-      title: AWS Private DNS Resolver Attachment Config
-    ForbiddenError:
+      title: Azure Private DNS Resolver Attachment Config
+    InvalidParameterChoiceItem:
+      type: object
+      properties:
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - enum
+          nullable: false
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        choices:
+          type: array
+          items: {}
+          minItems: 1
+          nullable: false
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
+      additionalProperties: false
+      required:
+      - field
+      - reason
+      - rule
+      - choices
+    UnauthorizedError:
       allOf:
       - $ref: '#/components/schemas/BaseError'
       - type: object
         properties:
           status:
-            example: 403
+            example: 401
           title:
-            example: Forbidden
+            example: Unauthorized
           type:
-            example: https://httpstatuses.com/403
+            example: https://httpstatuses.com/401
           instance:
             example: kong:trace:1234567890
           detail:
-            example: Forbidden
-    InvalidParameters:
-      description: invalid parameters
-      type: array
-      items:
-        oneOf:
-        - $ref: '#/components/schemas/InvalidParameterStandard'
-        - $ref: '#/components/schemas/InvalidParameterMinimumLength'
-        - $ref: '#/components/schemas/InvalidParameterMaximumLength'
-        - $ref: '#/components/schemas/InvalidParameterChoiceItem'
-        - $ref: '#/components/schemas/InvalidParameterDependentItem'
-      minItems: 1
-      nullable: false
-      uniqueItems: true
-    PrivateDnsFilterParameters:
+            example: Invalid credentials
+    NetworkId:
+      description: The network ID to operate on. For serverless.v1 kind of cloud gateways, this field should be omitted.
+      type: string
+      format: uuid
+      example: 36ae63d3-efd1-4bec-b246-62aa5d3f5695
+      x-speakeasy-param-suppress-computed-diff: true
+    InvalidParameterDependentItem:
       type: object
       properties:
-        name:
-          $ref: '#/components/schemas/CloudGatewaysStringFieldFilterOverride'
-        state:
-          $ref: '#/components/schemas/PrivateDnsStateFieldFilter'
+        field:
+          type: string
+          example: name
+          readOnly: true
+        rule:
+          description: invalid parameters rules
+          type: string
+          enum:
+          - dependent_fields
+          nullable: true
+          readOnly: true
+        reason:
+          type: string
+          example: is a required field
+          readOnly: true
+        dependents:
+          type: array
+          items: {}
+          nullable: true
+          readOnly: true
+          uniqueItems: true
+        source:
+          type: string
+          example: body
       additionalProperties: false
-      title: PrivateDnsFilterParameters
-    PrivateDnsState:
-      description: 'The current state of the Private DNS attachment. Possible values:
-
-        - `created` - The attachment has been created but is not attached to Private DNS.
-
-        - `initializing` - The attachment is in the process of being initialized and is setting up necessary resources.
-
-        - `pending-association` The attachment request is awaiting association to the cloud provider infrastructure in order for provisioning to proceed.
-
-        - `ready` - The attachment is fully operational and can route traffic as configured.
-
-        - `error` - The attachment is in an error state, and is not operational.
-
-        - `terminating` - The attachment is in the process of being deleted.
-
-        - `terminated` - The attachment has been fully deleted and is no longer available.
-
-        '
-      type: string
-      enum:
-      - created
-      - initializing
-      - pending-association
-      - ready
-      - error
-      - terminating
-      - terminated
-      title: Private DNS State
-      x-speakeasy-unknown-values: allow
-  parameters:
-    NetworkId:
-      name: networkId
-      in: path
-      description: The network to operate on.
-      required: true
-      schema:
-        $ref: '#/components/schemas/NetworkId'
-      x-speakeasy-match: id
-    PrivateDnsFilter:
-      name: filter
-      description: Filters supported for Private DNS.
-      required: false
-      in: query
-      schema:
-        $ref: '#/components/schemas/PrivateDnsFilterParameters'
-      style: deepObject
-    PrivateDnsId:
-      name: privateDnsId
-      in: path
-      description: The ID of the Private DNS to operate on.
-      required: true
-      schema:
-        $ref: '#/components/schemas/PrivateDnsId'
-      x-speakeasy-match: id
-    PageNumber:
-      name: page[number]
-      description: Determines which page of the entities to retrieve.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 1
-      x-speakeasy-terraform-ignore: true
-    PageSize:
-      name: page[size]
-      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
-      required: false
-      in: query
-      allowEmptyValue: true
-      schema:
-        type: integer
-        example: 10
-      x-speakeasy-terraform-ignore: true
+      required:
+      - field
+      - rule
+      - reason
+      - dependents
   responses:
-    PatchPrivateDnsResponse:
-      description: Response format for updating a Private DNS.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PrivateDnsResponse'
-    CloudGatewaysBadRequest:
-      description: Bad Request
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/BadRequestError'
-    ListPrivateDnsResponse:
-      description: A paginated list for a collection of Private DNS for a network.
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              meta:
-                $ref: '#/components/schemas/PaginatedMeta'
-              data:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PrivateDnsResponse'
-            required:
-            - meta
-            - data
-            title: ListPrivateDnsResponse
     NotFound:
       description: Not Found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/NotFoundError'
-    Forbidden:
-      description: Forbidden
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ForbiddenError'
     Unauthorized:
       description: Unauthorized
       content:
@@ -1264,14 +1184,43 @@ components:
                 example: You do not have permission to perform this action
             $ref: '#/components/schemas/UnauthorizedError'
             title: Unauthorized Response
+    RetrievePrivateDnsResponse:
+      description: Response format for retrieving a Private DNS.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PrivateDnsResponse'
+    ListPrivateDnsResponse:
+      description: A paginated list for a collection of Private DNS for a network.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              meta:
+                $ref: '#/components/schemas/PaginatedMeta'
+              data:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrivateDnsResponse'
+            required:
+            - meta
+            - data
+            title: ListPrivateDnsResponse
     Conflict:
       description: Conflict
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ConflictError'
-    RetrievePrivateDnsResponse:
-      description: Response format for retrieving a Private DNS.
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+    PatchPrivateDnsResponse:
+      description: Response format for updating a Private DNS.
       content:
         application/json:
           schema:
@@ -1282,6 +1231,57 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/PrivateDnsResponse'
+    CloudGatewaysBadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/BadRequestError'
+  parameters:
+    PageNumber:
+      name: page[number]
+      description: Determines which page of the entities to retrieve.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 1
+      x-speakeasy-terraform-ignore: true
+    PageSize:
+      name: page[size]
+      description: The maximum number of items to include per page. The last page of a collection may include fewer items.
+      required: false
+      in: query
+      allowEmptyValue: true
+      schema:
+        type: integer
+        example: 10
+      x-speakeasy-terraform-ignore: true
+    NetworkId:
+      name: networkId
+      in: path
+      description: The network to operate on.
+      required: true
+      schema:
+        $ref: '#/components/schemas/NetworkId'
+      x-speakeasy-match: id
+    PrivateDnsFilter:
+      name: filter
+      description: Filters supported for Private DNS.
+      required: false
+      in: query
+      schema:
+        $ref: '#/components/schemas/PrivateDnsFilterParameters'
+      style: deepObject
+    PrivateDnsId:
+      name: privateDnsId
+      in: path
+      description: The ID of the Private DNS to operate on.
+      required: true
+      schema:
+        $ref: '#/components/schemas/PrivateDnsId'
+      x-speakeasy-match: id
   securitySchemes:
     personalAccessToken:
       type: http
