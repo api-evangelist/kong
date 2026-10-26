@@ -1,0 +1,351 @@
+# Kong (kong)
+
+<!-- API-EVANGELIST-PROVENANCE:BEGIN -->
+> ### About this repository
+>
+> **This is not our API.** This repository is an independent, third-party profile of a company's
+> **publicly available** API surface, maintained by [API Evangelist](https://apievangelist.com).
+> API Evangelist does not operate, host, resell, or support this company's APIs, and is not
+> affiliated with or endorsed by the company unless stated on the profile.
+>
+> **Where the information came from.** Everything here is assembled from material a member of the
+> public can reach with a browser and no credentials — the company's own website, developer portal
+> and documentation, the specifications it publishes for public use (OpenAPI, AsyncAPI, JSON Schema,
+> `apis.json`, `llms.txt` and similar), its public repositories, and its public status, pricing and
+> changelog pages. **Nothing here is obtained by breaching a system, defeating an access control, or
+> using credentials of any kind.**
+>
+> **The rating is an independent assessment.** The Kin Score and Agent Readiness rating are
+> independently calculated scores of a company's *public* API artifacts, produced by API Evangelist
+> against a published rubric. They are not certifications, endorsements, security assessments, or
+> audits, and they score published artifacts — not the quality, safety, or security of the software.
+>
+> **Corrections, re-scores, and removal are free.** No partnership, contract, or purchase is
+> required, and you do not need to justify the request.
+>
+> - **Something wrong?** Open an issue on this repository, or email
+>   [info@apievangelist.com](mailto:info@apievangelist.com).
+> - **Published something new?** Ask for a re-score and we will re-run the rating.
+> - **Want the listing taken down?** Say so and we will honor it. The profile is reduced to your
+>   company name, a factual description, and a link to your own site, and the company is recorded as
+>   **unrated** — never scored zero for having asked.
+>
+> **Response times.** Acknowledgement within **one business day**; removal or restriction within
+> **two business days**; corrections and re-scores within **five business days**.
+>
+> **Not from the company, and here with a question?** You are welcome here — we would rather be the
+> front line and point you the right way than have a good report go nowhere. What this repository
+> can answer is narrow, though, so it is worth knowing who you are actually looking for:
+>
+> - **A question about how the API works, an account, billing, or a bug in the service** — that is
+>   the company's own support, not us. We profile this API; we do not operate it and cannot see
+>   your account.
+> - **A bug in an open-source project we only catalog** — file it on that project's own repository.
+>   This has happened with a real and correct bug report that reached us instead of the people who
+>   could fix it, which helped nobody.
+> - **Anything about this listing itself** — the description, the tags, the rating, a missing or
+>   wrong artifact — is ours. Open an issue here.
+> - **Not sure, or something general about API Evangelist or APIs.io** — open an issue on the
+>   [APIs.io Inbox](https://github.com/api-search/inbox) and we will route it.
+>
+> **This repository contains no software, and we will never ask you to download anything.** There is
+> no build, release, installer, or binary here — only text and machine-readable API descriptions, so
+> there is nothing here that can be "corrupt" or need "repairing". Any issue, comment, or email
+> claiming otherwise and offering a download link is not from us and is hostile. Do not follow the
+> link; it is a lure. Report it to GitHub and, if you like, tell us at
+> [info@apievangelist.com](mailto:info@apievangelist.com) so we can take it down.
+>
+> **On a security or compliance team?** Email
+> [info@apievangelist.com](mailto:info@apievangelist.com) with *security* in the subject line and
+> you will get a person, not a form. We will tell you exactly which public URLs this profile was
+> built from so your team can see the same surface we did, and we will take the listing down on
+> request while you work through it.
+>
+> Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
+<!-- API-EVANGELIST-PROVENANCE:END -->
+
+Kong is the AI Connectivity Company. Its platform spans Kong Gateway (the open-source API gateway built on NGINX and Lua), Kong Konnect (the SaaS control plane), Kong AI Gateway (LLM, MCP, and agent-to-agent traffic governance with semantic caching, token budgeting, and prompt firewalls), Kong Agent Gateway, Kong Event Gateway (Kafka-native governance), Kong Mesh (service mesh on Kuma and Envoy), Kong MCP Registry (centralized directory of MCP servers and tools for AI agents), Kong Context Mesh, and Kong Insomnia (API design and testing). Together they unify governance across APIs, real-time event streams, LLM calls, MCP tools, and agent-to-agent communication for the agentic era.
+
+**APIs.json:** [https://raw.githubusercontent.com/api-evangelist/kong/refs/heads/main/apis.yml](https://raw.githubusercontent.com/api-evangelist/kong/refs/heads/main/apis.yml)
+
+## Scope
+
+- **Type:** Index
+
+## Tags
+
+- API Gateway
+- AI Gateway
+- AI Connectivity
+- Agent Gateway
+- Event Gateway
+- MCP Registry
+- Service Mesh
+- LLM
+- Kafka
+- Konnect
+- Open Source
+
+## Timestamps
+
+- **Created:** 2026-03-18
+- **Modified:** 2026-05-19
+
+## APIs
+
+### Kong Gateway
+
+Kong Gateway is the open-source, lightweight, cloud-native API gateway optimized for microservices, delivering low-latency performance and scalability through a rich plugin ecosystem. It is the data-plane foundation underneath every other Kong product.
+
+- **Human URL:** [https://konghq.com/products/kong-gateway](https://konghq.com/products/kong-gateway)
+
+#### Tags
+
+- API Gateway
+- Open Source
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/gateway/)
+- [Getting Started](https://developer.konghq.com/gateway/install/)
+- [Changelog](https://developer.konghq.com/gateway/changelog/)
+- [GitHub Repository](https://github.com/Kong/kong)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+### Kong Gateway Admin API
+
+The Kong Gateway Admin API provides a RESTful interface for configuring and managing Kong Gateway instances, including services, routes, plugins, consumers, certificates, RBAC, workspaces, and event hooks. It is the programmatic surface operators use to configure the gateway directly or via decK declarative configuration.
+
+- **Human URL:** [https://developer.konghq.com/api/gateway/admin-ee/](https://developer.konghq.com/api/gateway/admin-ee/)
+- **Base URL:** `https://konghq.com/`
+
+#### Tags
+
+- Admin API
+- Configuration
+- Gateway
+- REST API
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/api/gateway/admin-ee/3.14/)
+- [OpenAPI](openapi/kong-gateway-admin-api.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [JSON Schema](json-schema/kong-service-schema.json) — [JSON Schema](https://json-schema.org/specification)
+- [JSON-LD](json-ld/kong-context.jsonld) — [JSON-LD](https://www.w3.org/TR/json-ld11/)
+- [GitHub Repository](https://github.com/Kong/kong)
+
+### Kong Konnect Platform API
+
+The Kong Konnect Platform API is the unified programmatic surface for the Konnect SaaS control plane. It exposes control planes, API products, developer portals, service catalog, identity and team management, analytics dashboards, audit logging, dedicated cloud gateways, CMEK, Event Gateway configuration, MCP Registry, Mesh Manager, metering & billing, notification hub, and search across the platform — over 20 individual API surfaces under one OpenAPI 3.1 document.
+
+- **Human URL:** [https://developer.konghq.com/api/](https://developer.konghq.com/api/)
+- **Base URL:** `https://us.api.konghq.com/`
+
+#### Tags
+
+- Cloud
+- Konnect
+- Management
+- REST API
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/api/)
+- [OpenAPI](openapi/kong-konnect-platform-api.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [API Reference](https://developer.konghq.com/api/)
+- [Authentication](https://developer.konghq.com/konnect-platform/personal-access-tokens/)
+- [SDK](https://github.com/Kong/sdk-konnect-go)
+
+### Kong AI Gateway
+
+Kong AI Gateway is the connectivity and governance layer for AI-native applications. Built on Kong Gateway, it provides a universal LLM API across providers (OpenAI, Anthropic, Gemini, Bedrock, Azure AI, Databricks, Mistral, HuggingFace and more), semantic caching, prompt firewalls and PII guardrails, automated RAG injection, token-level observability, MCP traffic governance, and Agent Gateway support for agent-to-agent (A2A) communication.
+
+- **Human URL:** [https://konghq.com/products/kong-ai-gateway](https://konghq.com/products/kong-ai-gateway)
+
+#### Tags
+
+- AI Gateway
+- LLM
+- MCP
+- A2A
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/ai-gateway/)
+- [Changelog](https://developer.konghq.com/gateway/changelog/)
+- [GitHub Repository](https://github.com/Kong/kong)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+### Kong Agent Gateway
+
+Kong Agent Gateway is a capability of Kong AI Gateway (GA April 2026 with AI Gateway 3.14) that governs agent-to-agent (A2A) communication. It enforces agent identity verification, real-time policy and prompt-injection inspection, per-agent cost allocation, and unified observability across LLM calls, MCP tool invocations, and A2A messages.
+
+- **Human URL:** [https://konghq.com/blog/product-releases/kong-agent-gateway](https://konghq.com/blog/product-releases/kong-agent-gateway)
+
+#### Tags
+
+- Agent Gateway
+- A2A
+- AI Gateway
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/ai-gateway/)
+- [Blog](https://konghq.com/blog/product-releases/kong-agent-gateway)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+### Kong Event Gateway
+
+Kong Event Gateway is a Kafka-native gateway that proxies the native Kafka protocol between producers, consumers, and backend clusters. It governs Kafka traffic through virtual clusters, listener-level policies, identity-aware ACLs, mTLS, and per-topic quotas — bringing the same governance pattern Kong Gateway provides for HTTP/gRPC to real-time event streams.
+
+- **Human URL:** [https://konghq.com/products/event-gateway](https://konghq.com/products/event-gateway)
+- **Base URL:** `https://konghq.com/`
+
+#### Tags
+
+- Event Gateway
+- Kafka
+- Streaming
+- Governance
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/event-gateway/)
+- [OpenAPI](https://developer.konghq.com/api/konnect/event-gateway/v1/) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+### Kong MCP Registry
+
+Kong MCP Registry (launched February 2026) is an enterprise directory inside Kong Konnect for registering, discovering, and governing MCP servers and AI-native tools. It provides dynamic discovery for AI agents, governance gates on which MCP resources are approved for use, and centralized observability of tool usage, health, and failures.
+
+- **Human URL:** [https://konghq.com/products/mcp-registry](https://konghq.com/products/mcp-registry)
+
+#### Tags
+
+- MCP
+- Registry
+- Konnect
+- Agentic AI
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/)
+- [Blog](https://konghq.com/blog/product-releases/kong-mcp-registry-tech-preview)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+### Kong Context Mesh
+
+Kong Context Mesh (launched February 2026, tech preview in Konnect) automatically discovers enterprise APIs, transforms them into agent-consumable tooling, packages them as MCP definitions with schemas and authentication, and publishes them to Kong AI Gateway with inherited access controls and runtime policy enforcement.
+
+- **Human URL:** [https://konghq.com/blog/product-releases/introducing-kong-context-mesh](https://konghq.com/blog/product-releases/introducing-kong-context-mesh)
+
+#### Tags
+
+- Context Mesh
+- MCP
+- Agentic AI
+- Konnect
+
+#### Properties
+
+- [Blog](https://konghq.com/blog/product-releases/introducing-kong-context-mesh)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+### Kong Mesh
+
+Kong Mesh is an enterprise-grade service mesh built on Kuma and Envoy, providing universal service mesh capabilities across Kubernetes and virtual machine environments. It supports mTLS, traffic policies, service discovery, observability, and multi-zone deployments.
+
+- **Human URL:** [https://developer.konghq.com/mesh/](https://developer.konghq.com/mesh/)
+- **Base URL:** `https://konghq.com/`
+
+#### Tags
+
+- Envoy
+- Kubernetes
+- mTLS
+- Service Mesh
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/mesh/)
+- [Changelog](https://developer.konghq.com/mesh/changelog/)
+- [Getting Started](https://developer.konghq.com/mesh/)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+### Kong Insomnia
+
+Kong Insomnia is an open-source API development platform for designing, debugging, and testing APIs. It supports REST, GraphQL, gRPC, and WebSocket protocols and provides collections, environments, mock servers, OpenAPI editing, Git Sync, and native vault integrations for developers and platform teams.
+
+- **Human URL:** [https://developer.konghq.com/insomnia/](https://developer.konghq.com/insomnia/)
+- **Base URL:** `https://konghq.com/`
+
+#### Tags
+
+- API Client
+- Developer Tools
+- Open Source
+- Testing
+
+#### Properties
+
+- [Documentation](https://developer.konghq.com/insomnia/)
+- [GitHub Repository](https://github.com/Kong/insomnia)
+- [Postman Collection](collections/kong-gateway-admin-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-gateway-admin-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Postman Collection](collections/kong-konnect-platform-api.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
+- [Open Collection](collections/kong-konnect-platform-api.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+
+## Common Properties
+
+- [LinkedIn](https://www.linkedin.com/company/konghq)
+- [Documentation](https://developer.konghq.com/)
+- [Getting Started](https://developer.konghq.com/gateway/install/)
+- [Blog](https://konghq.com/blog)
+- [Changelog](https://developer.konghq.com/gateway/changelog/)
+- [GitHub Organization](https://github.com/Kong)
+- [GitHub Repository](https://github.com/Kong/kong)
+- [SDK](https://github.com/Kong/sdk-konnect-go)
+- [SDK](https://github.com/Kong/sdk-portal-js)
+- [C L I](https://github.com/Kong/kongctl)
+- [Support](https://discuss.konghq.com/)
+- [Pricing](https://konghq.com/pricing)
+- [Plans](plans/kong-plans-pricing.yml)
+- [Rate Limits](rate-limits/kong-rate-limits.yml)
+- [Fin Ops](finops/kong-finops.yml)
+- [JSON Schema](json-schema/kong-service-schema.json) — [JSON Schema](https://json-schema.org/specification)
+- [JSON-LD](json-ld/kong-context.jsonld) — [JSON-LD](https://www.w3.org/TR/json-ld11/)
+- [Features](undefined)
+- [Use Cases](undefined)
+- [Integrations](undefined)
+- [M C P Server](https://github.com/Kong/mcp-konnect)
+- [L L Ms Txt](https://developer.konghq.com/llms.txt)
+
+## Maintainers
+
+**FN:** Kin Lane
+**Email:** kin@apievangelist.com
